@@ -1,0 +1,48 @@
+# Build directories
+/build/
+/build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+
+# Compiled object files and libraries
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Visual Studio / IDE files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln
+*.vcxproj*
+*.ipch
+*.pdb
+
+# CUDA / NVIDIA artifacts
+*.cubin
+*.ptx
+*.fatbin
+*.nvcc
+*.nvprof
+*.nvvp
+*.cuobj*
+*.cudafe*
+
+# Logs
+*.log
+
+# Misc
+.DS_Store
+*.swp
+
+# Ignore markdown files (generated docs or archives). Remove this line if you want to track README/MD files.
+*.md
