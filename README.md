@@ -11,6 +11,9 @@ Small Windows project for learning CUDA with CMake and nvcc.
 - `src/vec_add.cu` – CUDA vector add example (`A + B -> C`).
 - `src/multiply.cu` – CUDA element-wise multiply by a constant.
 - `src/vec_add_cpu.cpp` – CPU fallback version of the vector add.
+- `src/Vector Addition/` – vector add GPU challenge (`question.md`, `solution.cu`, `test_solution.cu`).
+- `src/Relu/` – ReLU activation challenge (`question.md`, `solution.cu`, `test_solution.cu`).
+- `src/Matrix Addition/` – matrix add challenge (`question.md`, `solution.cu`, `test_solution.cu`).
 
 
 ## Prerequisites (on Windows)
@@ -46,6 +49,32 @@ cmake --build build --config Release
 # If nvcc is NOT found, only the CPU fallback exists
 .\build\Release\vecadd.exe
 ```
+
+## Running the small challenge tests
+
+Each challenge folder under `src/` (e.g. `Vector Addition`, `Relu`,
+`Matrix Addition`) has:
+
+- `question.md` – problem statement.
+- `solution.cu` – your GPU implementation.
+- `test_solution.cu` – a small host test harness.
+
+To compile and run a test for a given challenge directly with `nvcc`
+(example shown for ReLU):
+
+```powershell
+cd "C:\Users\admin\Desktop\Learning Cuda"
+mkdir build -Force
+
+nvcc -o .\build\test_relu.exe `
+	".\src\Relu\solution.cu" `
+	".\src\Relu\test_solution.cu" `
+	-ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe" `
+	-O2
+
+.\build\test_relu.exe
+```
+
 
 ## Adding new CUDA examples
 
