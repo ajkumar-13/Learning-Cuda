@@ -14,6 +14,7 @@ Small Windows project for learning CUDA with CMake and nvcc.
 - `src/Vector Addition/` – vector add GPU challenge (`question.md`, `solution.cu`, `test_solution.cu`).
 - `src/Relu/` – ReLU activation challenge (`question.md`, `solution.cu`, `test_solution.cu`).
 - `src/Matrix Addition/` – matrix add challenge (`question.md`, `solution.cu`, `test_solution.cu`).
+- `src/Matrix Transpose/` – matrix transpose challenge (`question.md`, `solution.cu`, `test_solution.cu`).
 
 
 ## Prerequisites (on Windows)
@@ -53,7 +54,7 @@ cmake --build build --config Release
 ## Running the small challenge tests
 
 Each challenge folder under `src/` (e.g. `Vector Addition`, `Relu`,
-`Matrix Addition`) has:
+`Matrix Addition`, `Matrix Transpose`) has:
 
 - `question.md` – problem statement.
 - `solution.cu` – your GPU implementation.
