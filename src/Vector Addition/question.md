@@ -20,10 +20,8 @@ Implement a program that performs **element-wise addition** of two vectors conta
   - Vector `B` – length `N`, elements are 32-bit floating point numbers (`float`).
   - `A` and `B` have **identical lengths**.
 - Output:
-  - Vector `C` – length `N`, where:
-    \[
-    C[i] = A[i] + B[i] \quad \text{for } i = 0, 1, \dots, N-1
-    \]
+  - Vector `C` – length `N`, where `C[i] = A[i] + B[i]` for
+    all indices `i = 0, 1, ..., N-1`.
 
 ---
 
@@ -69,7 +67,7 @@ Explanation:
 ## Constraints
 
 - `A` and `B` have the **same length** `N`.
-- \( 1 \leq N \leq 100{,}000{,}000 \)
+- `1 <= N <= 100000000`.
 - Elements are 32-bit floating point values (`float`).
 - The algorithm must:
   - Correctly handle large vectors up to the given limit.
