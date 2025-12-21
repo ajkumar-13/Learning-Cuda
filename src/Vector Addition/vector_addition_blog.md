@@ -24,7 +24,7 @@ Yes! Modern CPUs have multiple cores (typically 4–16), and you could use OpenM
 But here's the thing: a modern GPU has **thousands** of cores. An NVIDIA RTX 3080 has 8,704 CUDA cores. An RTX 4090 has 16,384. While each GPU core is simpler and slower than a CPU core, the sheer *quantity* means the GPU can process thousands of independent operations simultaneously—and chew through millions of total operations in a fraction of the time.
 
 > **Wait, if there are only 16K cores, how do we run 10 million threads?**  
-> Great question! The GPU doesn't run all 10 million threads at the *exact* same instant. Instead, it **schedules** them in batches called *warps* (32 threads each). While one warp waits for memory, another runs—keeping all cores busy. Think of it like a restaurant with 100 tables but 1,000 reservations: they cycle customers through quickly, so everyone gets served fast.
+> The GPU doesn't run all 10 million threads at the *exact* same instant. Instead, it **schedules** them in batches called *warps* (32 threads each). While one warp waits for memory, another runs—keeping all cores busy. Think of it like a restaurant with 100 tables but 1,000 reservations: they cycle customers through quickly, so everyone gets served fast.
 
 | Approach | Parallel Workers | Best For |
 |----------|------------------|----------|
@@ -315,11 +315,11 @@ I ran benchmarks on my machine (GTX 1650, 12-thread CPU) comparing:
 
 | N (elements) | CPU (1 thread) | CPU (12 threads) | GPU (w/ transfer) | GPU (kernel only) |
 |--------------|----------------|------------------|-------------------|-------------------|
-| 1,000 | 0.001 ms ✅ | 1.46 ms ❌ | 0.28 ms | 0.09 ms |
+| 1,000 | 0.001 ms ✅ | 1.46 ms | 0.28 ms | 0.09 ms |
 | 10,000 | 0.02 ms | 0.07 ms | 0.23 ms | 0.06 ms |
 | 100,000 | 0.40 ms | 0.02 ms ✅ | 0.50 ms | 0.06 ms |
 | 1,000,000 | 2.07 ms | 0.95 ms | 2.83 ms | 0.13 ms |
-| 10,000,000 | 19.1 ms | 11.2 ms | 29.8 ms ❌ | **0.85 ms** ✅ |
+| 10,000,000 | 19.1 ms | 11.2 ms | 29.8 ms | **0.85 ms** ✅ |
 
 ![Benchmark Chart](images/benchmark_chart.png)
 
@@ -354,7 +354,7 @@ You just wrote your first CUDA kernel! Let's recap what you learned:
 5. **The tradeoff**: GPUs shine when `N` is large; small problems suffer from transfer overhead.
 
 
-Happy coding, and welcome to the parallel world! 🚀
+Happy coding, and welcome to the parallel world!
 
 ---
 
