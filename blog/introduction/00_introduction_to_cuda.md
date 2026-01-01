@@ -38,26 +38,7 @@ The GPU is designed for **throughput**, it excels at executing thousands of thre
 
 A modern GPU might have thousands of simpler cores, each weaker than a CPU core, but together capable of vastly more parallel computation.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        CPU vs GPU Architecture                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   CPU: Few powerful cores              GPU: Many simple cores       │
-│   ┌─────────────────────┐              ┌─────────────────────┐     │
-│   │ ████  ████  ████    │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   │ ████  ████  ████    │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   │                     │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   │ ████  CACHE  ████   │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   │ ████  █████  ████   │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   │       █████         │              │ ▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪▪ │     │
-│   └─────────────────────┘              └─────────────────────┘     │
-│                                                                     │
-│   Latency-optimized                    Throughput-optimized        │
-│   ~8-16 cores                          ~1000s of cores             │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![GPU CPU Architecture Comparision](\images\cpu_vs_gpu_architecture.png)
 
 ### When to Use Each
 
@@ -89,29 +70,7 @@ A typical CUDA application:
 5. **Copies results** back from device to host
 6. **Frees memory** on both sides
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Heterogeneous Computing Model                    │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│    HOST (CPU)                          DEVICE (GPU)                 │
-│   ┌─────────────┐                     ┌─────────────┐              │
-│   │   System    │ ───── PCIe ──────▶ │   Video     │              │
-│   │     RAM     │ ◀───── Bus ──────── │    RAM      │              │
-│   └─────────────┘                     └─────────────┘              │
-│         │                                    │                      │
-│         ▼                                    ▼                      │
-│   Serial Code                          Parallel Kernel              │
-│   (main(), etc.)                      (thousands of threads)       │
-│                                                                     │
-│   1. Allocate memory ─────────────────────────▶                    │
-│   2. Copy input data ─────────────────────────▶                    │
-│   3. Launch kernel   ─────────────────────────▶ Execute!           │
-│   4. Copy results    ◀─────────────────────────                    │
-│   5. Free memory                                                    │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![Heterogeneous Computing Model](\images\heterogeneous_computing.png)
 
 ### What is a Kernel?
 
@@ -153,34 +112,7 @@ Managing millions of threads requires strict organization. CUDA groups threads i
 | **Thread Block** | A group of threads that can cooperate and share memory | Up to 1024 threads |
 | **Grid** | A collection of thread blocks that execute a kernel | Up to billions of threads |
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Thread Hierarchy                            │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│                              GRID                                   │
-│   ┌─────────────────────────────────────────────────────────────┐  │
-│   │  Block(0,0)    Block(1,0)    Block(2,0)    Block(3,0)       │  │
-│   │  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  └─────────┘   └─────────┘   └─────────┘   └─────────┘      │  │
-│   │                                                              │  │
-│   │  Block(0,1)    Block(1,1)    Block(2,1)    Block(3,1)       │  │
-│   │  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  │ T T T T │   │ T T T T │   │ T T T T │   │ T T T T │      │  │
-│   │  └─────────┘   └─────────┘   └─────────┘   └─────────┘      │  │
-│   └─────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-│   gridDim = (4, 2)     blockDim = (4, 4)     Total = 128 threads   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![Thread Hierarchy](\images\thread_hierarchy.png)
 
 ### Built-in Variables
 
@@ -401,37 +333,7 @@ When you write CUDA C++, the compiler (NVCC) breaks it down into two stages:
 
 ### The Compilation Pipeline
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      CUDA Compilation Pipeline                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   CUDA C++ Source (.cu)                                            │
-│         │                                                           │
-│         ▼                                                           │
-│   ┌─────────────┐                                                  │
-│   │    NVCC     │  (NVIDIA CUDA Compiler)                          │
-│   └─────────────┘                                                  │
-│         │                                                           │
-│         ├──────────────────────┐                                   │
-│         ▼                      ▼                                    │
-│   ┌─────────────┐        ┌─────────────┐                           │
-│   │     PTX     │        │    Cubin    │                           │
-│   │  (Virtual   │        │  (Binary    │                           │
-│   │  Assembly)  │        │   Code)     │                           │
-│   └─────────────┘        └─────────────┘                           │
-│         │                      │                                    │
-│         │    ┌─────────────────┘                                   │
-│         ▼    ▼                                                      │
-│   ┌─────────────┐                                                  │
-│   │   Fatbin    │  (Fat Binary - contains both)                    │
-│   └─────────────┘                                                  │
-│         │                                                           │
-│         ▼                                                           │
-│   Executable (.exe / ELF)                                          │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![Compilation pipeline](\images\compilation_pipeline.png)
 
 ### PTX: Portable Intermediate Representation
 
@@ -658,11 +560,12 @@ CUDA transforms the GPU from a graphics card into a massive parallel computer. B
 
 This introduction covered the fundamentals. In upcoming posts, we'll dive into:
 
-1. **Matrix Multiplication** - The workhorse of deep learning
-2. **Parallel Reduction** - Summing millions of numbers efficiently
-3. **Memory Coalescing** - Maximizing memory bandwidth
-4. **Occupancy Optimization** - Keeping the GPU fully utilized
-5. **Profiling with NSight** - Finding and fixing bottlenecks
+1. **Vector Addition** - 
+2. **Matrix Multiplication** - The workhorse of deep learning
+3. **Parallel Reduction** - Summing millions of numbers efficiently
+4. **Memory Coalescing** - Maximizing memory bandwidth
+5. **Occupancy Optimization** - Keeping the GPU fully utilized
+6. **Profiling with NSight** - Finding and fixing bottlenecks
 
 The journey to GPU mastery starts with understanding these fundamentals. Master them, and you'll be ready to tackle the most demanding parallel computing challenges!
 
