@@ -38,7 +38,7 @@ The GPU is designed for **throughput**, it excels at executing thousands of thre
 
 A modern GPU might have thousands of simpler cores, each weaker than a CPU core, but together capable of vastly more parallel computation.
 
-![GPU CPU Architecture Comparision](\images\cpu_vs_gpu_architecture.png)
+![GPU CPU Architecture Comparision](images/cpu_vs_gpu_architecture.png)
 
 ### When to Use Each
 
@@ -70,7 +70,7 @@ A typical CUDA application:
 5. **Copies results** back from device to host
 6. **Frees memory** on both sides
 
-![Heterogeneous Computing Model](\images\heterogeneous_computing.png)
+![Heterogeneous Computing Model](images/heterogeneous_computing.png)
 
 ### What is a Kernel?
 
@@ -112,7 +112,7 @@ Managing millions of threads requires strict organization. CUDA groups threads i
 | **Thread Block** | A group of threads that can cooperate and share memory | Up to 1024 threads |
 | **Grid** | A collection of thread blocks that execute a kernel | Up to billions of threads |
 
-![Thread Hierarchy](\images\thread_hierarchy.png)
+![Thread Hierarchy](images/thread_hierarchy.png)
 
 ### Built-in Variables
 
@@ -164,7 +164,7 @@ The GPU is composed of many **Streaming Multiprocessors (SMs)**. When you launch
 
 
 
-![ GPU Hardware Architecture](\images\streaming_multiprocessor.png)
+![ GPU Hardware Architecture](images/streaming_multiprocessor.png)
 
 ### Warps: The SIMT Execution Model
 
@@ -179,7 +179,7 @@ Inside an SM, threads are executed in groups of **32** called **warps**.
 **SIMT (Single-Instruction, Multiple-Threads)**: All 32 threads in a warp execute the **exact same instruction at the same time**, but on different data.
 
 
-![Warp Execution](\images\warp_execution.png)
+![Warp Execution](images/warp_execution.png)
 
 ### Warp Divergence: The Performance Killer
 
@@ -202,7 +202,7 @@ Since all threads in a warp must execute the same instruction, the hardware **se
 
 This is called **warp divergence**, and it can significantly reduce performance.
 
-![Warp Divergence](\images\warp_divergence.png)
+![Warp Divergence](images/warp_divergence.png)
 
 > **Best Practice**: Structure your code so threads within a warp follow the same execution path whenever possible.
 
@@ -212,7 +212,7 @@ This is called **warp divergence**, and it can significantly reduce performance.
 
 Just like CPUs, GPUs have different levels of memory with different speeds and scopes:
 
-![Memory Hierarchy](\images\memory_hierarchy.png)
+![Memory Hierarchy](images/memory_hierarchy.png)
 
 
 ### Memory Types
@@ -264,7 +264,7 @@ When you write CUDA C++, the compiler (NVCC) breaks it down into two stages:
 
 ### The Compilation Pipeline
 
-![Compilation pipeline](\images\compilation_pipeline.png)
+![Compilation pipeline](images/compilation_pipeline.png)
 
 ### PTX: Portable Intermediate Representation
 
