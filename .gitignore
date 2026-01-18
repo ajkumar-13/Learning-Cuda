@@ -43,6 +43,8 @@ install_manifest.txt
 # Misc
 .DS_Store
 *.swp
+*.excalidraw
 
-# Ignore markdown files (generated docs or archives). Remove this line if you want to track README/MD files.
-*.md
+# Keep internal/private documentation local-only (do not push to GitHub)
+SETUP_RESOLUTION.md
+INSTALL_WINDOWS.md
