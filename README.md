@@ -285,12 +285,6 @@ cat .\src\relu\question.md
 - [NVIDIA CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)
 - [CUDA Samples (GitHub)](https://github.com/NVIDIA/cuda-samples)
 
-### This Repository
-- [GPU vs CPU Architecture](blog/introduction/00_introduction_to_cuda.md#1-the-core-difference-cpu-vs-gpu)
-- [Thread Hierarchy Explained](blog/introduction/00_introduction_to_cuda.md#3-organizing-the-chaos-the-thread-hierarchy)
-- [Memory Model Deep Dive](blog/introduction/00_introduction_to_cuda.md#5-the-memory-hierarchy)
-- [Warp Execution & Divergence](blog/introduction/00_introduction_to_cuda.md#warps-the-simt-execution-model)
-
 ### Community & Forums
 - [NVIDIA Developer Forums](https://forums.developer.nvidia.com/c/gpu-accelerated-libraries/cuda/)
 - [Stack Overflow - CUDA tag](https://stackoverflow.com/questions/tagged/cuda)
