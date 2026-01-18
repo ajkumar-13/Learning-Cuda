@@ -1,8 +1,8 @@
-# 🚀 Learning CUDA
+# Learning CUDA
 
 A **comprehensive, hands-on guide to CUDA programming** on Windows. This repository contains step-by-step tutorials, practical challenges, and working examples to help you master GPU computing from the ground up.
 
-**What is CUDA?** CUDA (Compute Unified Device Architecture) is NVIDIA's parallel computing platform that lets you harness GPUs for general-purpose computing—powering everything from AI/deep learning to scientific simulations.
+**What is CUDA?** CUDA (Compute Unified Device Architecture) is NVIDIA's parallel computing platform that lets you harness GPUs for general-purpose computing, powering everything from AI/deep learning to scientific simulations.
 
 ---
 
@@ -63,7 +63,7 @@ Vector Addition: [Success] Computed values match
 Multiply: [Success] All elements computed correctly
 ```
 
-> **⚠️ First time setup?** See [SETUP.md](SETUP.md) for complete Windows CUDA installation guide.
+> **First time setup?** See [SETUP.md](SETUP.md) for complete Windows CUDA installation guide.
 
 ---
 
@@ -147,24 +147,39 @@ If all return `True` or version info, you're ready to build!
 
 ## 🎓 Learning Path
 
-### **Beginner**
-1. Read [Introduction to CUDA](blog/introduction/00_introduction_to_cuda.md) ← Start here
-2. Understand thread hierarchy, memory model, warps
-3. Compile and run `src/vec_add.cu` example
+### **Current Content (Published)**
 
-### **Intermediate**
-4. Solve [Vector Addition Challenge](src/vector_addition/question.md)
-5. Solve [ReLU Challenge](src/relu/question.md)
-6. Read matrix operation tutorials (coming soon)
+#### Blog Posts
+- **[📖 Unlocking Supercomputing: An Introduction to CUDA](blog/introduction/00_introduction_to_cuda.md)** ← **Start here!**
+  - GPU vs CPU architecture
+  - Thread hierarchy (threads, blocks, grids)
+  - Heterogeneous computing model
+  - Memory hierarchy and optimization
+  - Warp execution and divergence
+  - CUDA compilation pipeline
 
-### **Advanced**
-7. Solve [Matrix Addition Challenge](src/matrix_addition/question.md)
-8. Solve [Matrix Transpose Challenge](src/matrix_transpose/question.md)
-9. Study advanced topics: reduction, scan, tensor operations
+#### Examples
+- `src/vec_add.cu` – Vector addition kernel
+- `src/multiply.cu` – Element-wise multiplication
+
+#### Challenges (Ready to solve)
+- `src/vector_addition/` – Vector operations challenge
+- `src/relu/` – ReLU activation challenge
+- `src/matrix_addition/` – Matrix addition challenge
+- `src/matrix_transpose/` – Matrix transpose challenge
+
+### **Upcoming Content**
+- Matrix multiplication blog post
+- Reduction patterns
+- Scan algorithms
+- Tensor core operations
+- Advanced optimization techniques
+
+*More blog posts and challenges coming soon! Check back regularly.*
 
 ---
 
-## 🏗️ Build & Run Examples
+## Build & Run Examples
 
 ### Using Visual Studio Generator (Recommended)
 
@@ -279,23 +294,6 @@ cat .\src\relu\question.md
 ### Community & Forums
 - [NVIDIA Developer Forums](https://forums.developer.nvidia.com/c/gpu-accelerated-libraries/cuda/)
 - [Stack Overflow - CUDA tag](https://stackoverflow.com/questions/tagged/cuda)
-
----
-
-## 💡 Tips for Success
-
-✅ **Do this:**
-- Start with [Introduction blog post](blog/introduction/00_introduction_to_cuda.md)
-- Run the provided examples first before modifying them
-- Use `-ccbin` with full path for reliable compilation
-- Test with small data sizes before scaling up
-- Read error messages carefully (check [TROUBLESHOOTING.md](TROUBLESHOOTING.md))
-
-❌ **Avoid this:**
-- Assuming threads execute sequentially (they don't!)
-- Ignoring memory coalescing patterns
-- Creating too many blocks/threads (memory limits)
-- Forgetting `cudaDeviceSynchronize()` before CPU-GPU sync
 
 ---
 
