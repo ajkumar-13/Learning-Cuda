@@ -43,8 +43,8 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 🔄 Blog 2: Vector Addition - Your First CUDA Kernel
-**Status:** In Progress  
+#### ✅ Blog 2: Vector Addition - Your First CUDA Kernel
+**Status:** Published  
 **File:** `blog/vector_addition/vector_addition_medium_blog.md`  
 **Topics:**
 - Writing your first `__global__` kernel
@@ -365,15 +365,15 @@ Modern Features (Tensor Cores, libraries, transformers)
 **Target:** 1-2 blog posts per week
 
 **Current Status:**
-- ✅ Blog 1: Published
-- 🔄 Blog 2: In Progress (Vector Addition)
+- ✅ Blog 1: Published (Introduction to CUDA)
+- ✅ Blog 2: Published (Vector Addition)
 - 🔄 Blog 3: In Progress (Matrix Operations)
 - 📝 Blogs 4-14: Planned
 
 **Next Steps:**
-1. Complete and publish Blog 2 (Vector Addition)
-2. Complete and publish Blog 3 (Matrix Operations)
-3. Begin work on Blog 4 (Matrix Multiplication Deep Dive)
+1. Complete and publish Blog 3 (Matrix Operations)
+2. Begin work on Blog 4 (Matrix Multiplication Deep Dive)
+3. Develop reduction patterns content
 
 ---
 

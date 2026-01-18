@@ -158,6 +158,14 @@ If all return `True` or version info, you're ready to build!
   - Warp execution and divergence
   - CUDA compilation pipeline
 
+- **[🚀 Stop Looping. Start Launching: Vector Addition on the GPU](blog/vector_addition/vector_addition_medium_blog.md)**
+  - Writing your first CUDA kernel
+  - Memory management (cudaMalloc, cudaMemcpy, cudaFree)
+  - Kernel launch syntax and thread indexing
+  - CPU vs GPU performance comparison
+  - Proper GPU benchmarking techniques
+  - Error handling and debugging
+
 #### Examples
 - `src/vec_add.cu` – Vector addition kernel
 - `src/multiply.cu` – Element-wise multiplication
