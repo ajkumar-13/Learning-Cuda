@@ -19,16 +19,19 @@ if (NVCC_EXECUTABLE)
     set(MULTIPLY_OUT  ${CMAKE_BINARY_DIR}/multiply_nvcc)
   endif()
 
+  # Use full path to cl.exe for better Ninja support
+  set(MSVC_COMPILER_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe")
+
   # vec_add.cu -> vecadd_nvcc
   add_custom_command(OUTPUT ${VECADD_OUT}
-    COMMAND "${NVCC_EXECUTABLE}" -o "${VECADD_OUT}" "${CMAKE_SOURCE_DIR}/src/vec_add.cu" -ccbin cl.exe -O2
+    COMMAND "${NVCC_EXECUTABLE}" -o "${VECADD_OUT}" "${CMAKE_SOURCE_DIR}/src/vec_add.cu" -ccbin "${MSVC_COMPILER_PATH}" -O2
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Compiling vec_add.cu with nvcc"
     VERBATIM)
 
   # multiply.cu -> multiply_nvcc
   add_custom_command(OUTPUT ${MULTIPLY_OUT}
-    COMMAND "${NVCC_EXECUTABLE}" -o "${MULTIPLY_OUT}" "${CMAKE_SOURCE_DIR}/src/multiply.cu" -ccbin cl.exe -O2
+    COMMAND "${NVCC_EXECUTABLE}" -o "${MULTIPLY_OUT}" "${CMAKE_SOURCE_DIR}/src/multiply.cu" -ccbin "${MSVC_COMPILER_PATH}" -O2
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Compiling multiply.cu with nvcc"
     VERBATIM)

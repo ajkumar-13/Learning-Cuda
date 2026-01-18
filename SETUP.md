@@ -665,56 +665,107 @@ nvcc -arch=sm_86 -o output.exe input.cu  # For RTX 30xx
 
 ### CMake Generator Verification (Windows)
 
-The following generator/toolchain combinations were tested on a machine with VS 2019 Build Tools and CUDA 12.3:
+The following generator/toolchain combinations were tested and verified on a machine with VS 2019 Build Tools and CUDA 12.3:
 
-1. **Visual Studio 2019 Generator (works)**
+#### 1. **Visual Studio 2019 Generator (Verified ✅)**
 
-   Commands:
-   ```powershell
-   cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
-   cmake --build build_vs --config Release -- /m
-   ```
-
-   Outcome:
-   - NVCC detected at `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe`
-   - Custom nvcc targets compiled successfully (`vecadd_nvcc.exe`, `multiply_nvcc.exe`)
-   - Reason: MSBuild initializes the MSVC environment so `cl.exe` is available when nvcc runs.
-
-2. **Ninja Generator (fails without MSVC init)**
-
-   Error:
-   ```
-   No CMAKE_CXX_COMPILER could be found.
-   ```
-
-   Resolutions (choose one):
-   - Initialize MSVC environment before running CMake:
-     ```powershell
-     & "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-     cmake -S . -B build_ninja -G "Ninja"
-     cmake --build build_ninja
-     ```
-   - Or explicitly point CMake at `cl.exe`:
-     ```powershell
-     cmake -S . -B build_ninja -G "Ninja" -D CMAKE_CXX_COMPILER="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe"
-     cmake --build build_ninja
-     ```
-
-   Note:
-   - The CMake custom nvcc targets use `-ccbin cl.exe`. With Ninja, ensure `cl.exe` is available in PATH (via `vcvars64.bat`) or use the recommended direct nvcc compile in this guide with a full `-ccbin` path when building manually.
-
-### "cmake" is not recognized
-
-**Cause**: CMake not installed or not in PATH.
-
-**Solution**:
+**Commands:**
 ```powershell
-# Install CMake
-winget install --id Kitware.CMake
-
-# Verify (open new PowerShell window)
-cmake --version
+cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
+cmake --build build_vs --config Release
 ```
+
+**Outcome:**
+- NVCC detection: ✅ `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe`
+- Custom nvcc targets: ✅ Compiled successfully (`vecadd_nvcc.exe`, `multiply_nvcc.exe`)
+- Build output:
+  - `multiply_nvcc.exe` (299.5 KB)
+  - `vecadd_nvcc.exe` (387 KB)
+
+**Why it works:** MSBuild (Visual Studio's build system) automatically initializes the MSVC environment, so `cl.exe` is available in PATH when nvcc runs, even with `-ccbin cl.exe` in CMakeLists.txt.
+
+**Recommended for:** Visual Studio users, IDE integration, quick builds.
+
+---
+
+#### 2. **Ninja Generator (Verified ✅ with workaround)**
+
+**Initial failure:**
+```
+No CMAKE_CXX_COMPILER could be found.
+```
+
+**Root cause:** Ninja doesn't have automatic MSVC environment setup like Visual Studio does. CMake can't detect the compiler without environment initialization.
+
+**Solution - Option A (Recommended): Initialize MSVC environment first**
+
+```powershell
+# Run this FIRST to set up MSVC environment
+& cmd.exe /c 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat' '&&' cd C:\Users\admin\Desktop\Learning Cuda '&&' cmake -S . -B build_ninja -G Ninja
+cmake --build build_ninja
+```
+
+**Why this works:** `vcvars64.bat` initializes the environment variables (including PATH with `cl.exe`), and CMake can then detect the compiler.
+
+**Outcome (after fix):**
+- CMake configuration: ✅ Detected NVCC and MSVC
+- Custom nvcc targets: ✅ Compiled successfully
+- Build output:
+  - `multiply_nvcc.exe` (299.5 KB)
+  - `vecadd_nvcc.exe` (387 KB)
+
+**Solution - Option B (Alternative): Explicit compiler path**
+
+If Option A doesn't work, explicitly pass the compiler path:
+
+```powershell
+cmake -S . -B build_ninja -G Ninja `
+  -D CMAKE_CXX_COMPILER="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe"
+cmake --build build_ninja
+```
+
+**However, this wasn't enough without environment setup.** See the CMakeLists.txt fix below.
+
+**Solution - Option C: Fix CMakeLists.txt with full -ccbin path**
+
+The CMakeLists.txt's custom nvcc commands need an explicit `-ccbin` path for Ninja compatibility:
+
+```cmake
+# DON'T use: -ccbin cl.exe (Ninja can't find it)
+# DO use: -ccbin with full path
+set(MSVC_COMPILER_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe")
+
+add_custom_command(OUTPUT ${VECADD_OUT}
+  COMMAND "${NVCC_EXECUTABLE}" -o "${VECADD_OUT}" "${CMAKE_SOURCE_DIR}/src/vec_add.cu" 
+    -ccbin "${MSVC_COMPILER_PATH}" -O2
+  VERBATIM)
+```
+
+This is already applied in the project's [CMakeLists.txt](CMakeLists.txt).
+
+**Recommended for:** Faster builds, non-Visual Studio workflows, CI/CD pipelines.
+
+---
+
+## CMakeLists.txt Configuration Notes
+
+The project's [CMakeLists.txt](CMakeLists.txt) is configured to work with both Visual Studio and Ninja generators:
+
+- **NVCC Detection**: Searches for `nvcc` in CUDA_PATH and common installation paths
+- **Custom Build Targets**: Creates custom commands for CUDA compilation (avoiding Visual Studio's CUDA plugin)
+- **Visual Studio Support**: Works directly without additional configuration
+- **Ninja Support**: Uses explicit full `-ccbin` path to `cl.exe` to avoid PATH-dependent lookups
+
+**Key section** (lines 13-14):
+```cmake
+set(MSVC_COMPILER_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe")
+```
+
+This path may need adjustment if:
+- You have VS 2022 instead: Replace `2019\BuildTools` with `2022\Community` (or your edition)
+- You have a different MSVC version: Run `Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC"` and use the latest version number
+
+For advanced users needing dynamic MSVC path detection, see [CMakeLists_explained.md](CMakeLists_explained.md).
 
 ---
 
