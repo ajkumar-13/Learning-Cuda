@@ -66,51 +66,34 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 3: Matrix Operations Fundamentals
-**Status:** Planned  
-**File:** `blog/matrix_multiplication/matrix_operations_blog.md`  
+#### �️ Blog 3: Matrix Multiplication
+**Status:** In Progress  
+**File:** `blog/matrix_multiplication/matrix_multiplication_medium_blog.md`  
 **Topics:**
 - 2D thread indexing
 - Row-major vs column-major storage
-- Matrix addition kernel
-- Matrix transpose kernel
-- Coalesced memory access patterns
-- Shared memory basics
-- Tiled matrix operations
-
-**Code Examples:**
-- Naive matrix addition
-- Naive matrix transpose
-- Optimized transpose with shared memory
-- Performance analysis
-
-**Challenge:** Implement matrix transpose with minimal bank conflicts
-
----
-
-### **Phase 2: Optimization Techniques (Intermediate)**
-
-#### �️ Blog 4: Matrix Multiplication Deep Dive
-**Status:** In Progress  
-**Topics:**
 - Naive matrix multiplication
 - Tiled multiplication with shared memory
-- Memory bandwidth optimization
-- Register usage optimization
-- Occupancy analysis
-- Performance profiling with `nvprof`/`nsys`
+- Memory coalescing patterns
+- Performance profiling and optimization
 
 **Progression:**
 1. Naive implementation (global memory only)
 2. Shared memory tiling
-3. Register blocking
-4. Comparison with cuBLAS
+3. Comparison with cuBLAS
+
+**Code Examples:**
+- Naive matrix multiplication kernel
+- Tiled matrix multiplication with shared memory
+- Performance benchmarking
 
 **Challenge:** Optimize matrix multiplication to reach 70% of cuBLAS performance
 
 ---
 
-#### 📝 Blog 5: Reduction Patterns
+### **Phase 2: Optimization Techniques (Intermediate)**
+
+#### 📝 Blog 4: Reduction Patterns
 **Status:** Planned  
 **File:** `blog/reduction/`  
 **Topics:**
@@ -131,7 +114,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 6: Scan (Prefix Sum) Algorithms
+#### 📝 Blog 5: Scan (Prefix Sum) Algorithms
 **Status:** Planned  
 **File:** `blog/scan/`  
 **Topics:**
@@ -410,3 +393,4 @@ Modern Features (Tensor Cores, libraries, transformers)
 **Last Updated:** January 19, 2026  
 **Series Started:** January 2026  
 **Completion Target:** Q2 2026
+
