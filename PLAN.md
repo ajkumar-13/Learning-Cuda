@@ -133,7 +133,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 7: Advanced Memory Patterns
+#### 📝 Blog 6: Advanced Memory Patterns
 **Status:** Planned  
 **Topics:**
 - Memory coalescing in detail
@@ -150,7 +150,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ### **Phase 3: Advanced Patterns (Advanced)**
 
-#### 📝 Blog 8: Streams and Concurrency
+#### 📝 Blog 7: Streams and Concurrency
 **Status:** Planned  
 **File:** `blog/streams/`  
 **Topics:**
@@ -169,7 +169,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 9: Kernel Fusion and Optimization
+#### 📝 Blog 8: Kernel Fusion and Optimization
 **Status:** Planned  
 **File:** `blog/kernel_fusion/`  
 **Topics:**
@@ -183,7 +183,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 10: Convolution and Image Processing
+#### 📝 Blog 9: Convolution and Image Processing
 **Status:** Planned  
 **File:** `blog/convolution/`  
 **Topics:**
@@ -203,7 +203,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 11: Histogram and Atomic Operations
+#### 📝 Blog 10: Histogram and Atomic Operations
 **Status:** Planned  
 **File:** `blog/histogram/`  
 **Topics:**
@@ -219,7 +219,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ### **Phase 4: Modern CUDA Features (Expert)**
 
-#### 📝 Blog 12: Tensor Cores and Mixed Precision
+#### 📝 Blog 11: Tensor Cores and Mixed Precision
 **Status:** Planned  
 **File:** `blog/tensor_cores/`  
 **Topics:**
@@ -235,7 +235,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 13: Advanced Matrix Multiplication (Triton & CUTLASS)
+#### 📝 Blog 12: Advanced Matrix Multiplication (Triton & CUTLASS)
 **Status:** Planned  
 **File:** `blog/cutlass_triton/`  
 **Topics:**
@@ -253,7 +253,7 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ---
 
-#### 📝 Blog 14: Flash Attention and Modern Transformers
+#### 📝 Blog 13: Flash Attention and Modern Transformers
 **Status:** Planned  
 **File:** `blog/flash_attention/`  
 **Topics:**
@@ -289,9 +289,9 @@ Modern Features (Tensor Cores, libraries, transformers)
 
 ### Difficulty Progression
 - **Beginner (Blogs 1-3):** Core concepts, basic kernels, simple optimization
-- **Intermediate (Blogs 4-7):** Memory optimization, parallel algorithms, profiling
-- **Advanced (Blogs 8-11):** Concurrency, fusion, complex kernels
-- **Expert (Blogs 12-14):** Modern hardware features, library integration, production patterns
+- **Intermediate (Blogs 4-6):** Memory optimization, parallel algorithms, profiling
+- **Advanced (Blogs 7-10):** Concurrency, fusion, complex kernels
+- **Expert (Blogs 11-13):** Modern hardware features, library integration, production patterns
 
 ---
 
@@ -350,13 +350,13 @@ Modern Features (Tensor Cores, libraries, transformers)
 **Current Status:**
 - ✅ Blog 1: Published (Introduction to CUDA)
 - ✅ Blog 2: Published (Vector Addition)
-- 🔄 Blog 3: In Progress (Matrix Operations)
-- 📝 Blogs 4-14: Planned
+- 🔄 Blog 3: In Progress (Matrix Multiplication)
+- 📝 Blogs 4-13: Planned
 
 **Next Steps:**
-1. Complete and publish Blog 3 (Matrix Operations)
-2. Begin work on Blog 4 (Matrix Multiplication Deep Dive)
-3. Develop reduction patterns content
+1. Complete and publish Blog 3 (Matrix Multiplication)
+2. Begin work on Blog 4 (Reduction Patterns)
+3. Develop scan algorithms content
 
 ---
 
