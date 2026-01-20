@@ -130,7 +130,7 @@ If you only need the compiler without the full IDE:
 2. Scroll down to **Tools for Visual Studio**
 3. Download **Build Tools for Visual Studio** (2019, 2022, or your preferred version)
 4. Run the installer
-5. Select: ✅ **Desktop development with C++**
+5. Select:  **Desktop development with C++**
 6. Click **Install**
 
 ### Option B: Visual Studio Community (Full IDE)
@@ -140,7 +140,7 @@ If you want the complete IDE with editor, debugger, and IntelliSense:
 1. Go to [Visual Studio Downloads](https://visualstudio.microsoft.com/downloads/)
 2. Download **Visual Studio Community** (2019, 2022, or your preferred version - free)
 3. In the **Workloads** tab, select:
-   - ✅ **Desktop development with C++**
+   -  **Desktop development with C++**
 4. Click **Install**
 
 > This may take 15-30 minutes depending on your internet speed.
@@ -194,11 +194,11 @@ usage: cl [ option... ] filename... [ /link linkoption... ]
 1. Run the downloaded `.exe` file
 2. Choose **Custom** installation
 3. Select components:
-   - ✅ **CUDA** → Development → Compiler → nvcc
-   - ✅ **CUDA** → Development → Libraries
-   - ✅ **CUDA** → Runtime
-   - ✅ **CUDA** → Documentation (optional)
-   - ✅ **CUDA** → Samples (optional but helpful)
+   -  **CUDA** → Development → Compiler → nvcc
+   -  **CUDA** → Development → Libraries
+   -  **CUDA** → Runtime
+   -  **CUDA** → Documentation (optional)
+   -  **CUDA** → Samples (optional but helpful)
 4. Accept default installation paths:
    - Default: `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.x`
 5. Click **Install**
@@ -415,7 +415,7 @@ nvcc fatal   : Cannot find compiler 'cl.exe' in PATH
 
 **Solutions** (choose one):
 
-1. **✅ Use Developer Command Prompt** (Easiest):
+1. **Use Developer Command Prompt** (Easiest):
    - Press `Win` key and search for **"Developer Command Prompt for VS"**
    - Select the one matching your VS version (e.g., "Developer Command Prompt for VS 2019")
    - Navigate to your project folder and run `nvcc` commands there
@@ -503,7 +503,7 @@ nvcc error   : 'cudafe++' died with status 0xC0000005 (ACCESS_VIOLATION)
 
 **Solutions** (in order of reliability):
 
-1. **✅ Use `-ccbin` flag ALWAYS** (Most reliable - **RECOMMENDED**):
+1. **Use `-ccbin` flag ALWAYS** (Most reliable - **RECOMMENDED**):
    ```powershell
    # Works from any PowerShell window (regular or Developer Command Prompt)
    nvcc -o test_cuda.exe test_cuda.cu `
@@ -667,7 +667,7 @@ nvcc -arch=sm_86 -o output.exe input.cu  # For RTX 30xx
 
 The following generator/toolchain combinations were tested and verified on a machine with VS 2019 Build Tools and CUDA 12.3:
 
-#### 1. **Visual Studio 2019 Generator (Verified ✅)**
+#### 1. **Visual Studio 2019 Generator (Verified )**
 
 **Commands:**
 ```powershell
@@ -676,8 +676,8 @@ cmake --build build_vs --config Release
 ```
 
 **Outcome:**
-- NVCC detection: ✅ `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe`
-- Custom nvcc targets: ✅ Compiled successfully (`vecadd_nvcc.exe`, `multiply_nvcc.exe`)
+- NVCC detection:  `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe`
+- Custom nvcc targets:  Compiled successfully (`vecadd_nvcc.exe`, `multiply_nvcc.exe`)
 - Build output:
   - `multiply_nvcc.exe` (299.5 KB)
   - `vecadd_nvcc.exe` (387 KB)
@@ -688,7 +688,7 @@ cmake --build build_vs --config Release
 
 ---
 
-#### 2. **Ninja Generator (Verified ✅ with workaround)**
+#### 2. **Ninja Generator (Verified  with workaround)**
 
 **Initial failure:**
 ```
@@ -708,8 +708,8 @@ cmake --build build_ninja
 **Why this works:** `vcvars64.bat` initializes the environment variables (including PATH with `cl.exe`), and CMake can then detect the compiler.
 
 **Outcome (after fix):**
-- CMake configuration: ✅ Detected NVCC and MSVC
-- Custom nvcc targets: ✅ Compiled successfully
+- CMake configuration:  Detected NVCC and MSVC
+- Custom nvcc targets:  Compiled successfully
 - Build output:
   - `multiply_nvcc.exe` (299.5 KB)
   - `vecadd_nvcc.exe` (387 KB)

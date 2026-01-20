@@ -1,0 +1,10 @@
+^C:\USERS\ADMIN\DESKTOP\LEARNING CUDA\BUILD_VS\CMAKEFILES\2D49E325B5A5F2969B5AB94E82642A29\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/admin/Desktop/Learning Cuda" "-BC:/Users/admin/Desktop/Learning Cuda/build_vs" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/admin/Desktop/Learning Cuda/build_vs/LearningCuda.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

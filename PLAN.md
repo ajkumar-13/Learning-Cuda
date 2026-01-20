@@ -67,8 +67,8 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 ---
 
 #### 📝 Blog 3: Matrix Operations Fundamentals
-**Status:** In Progress  
-**File:** `blog/matrix_multiplication/matrix_multiplication_medium_blog.md`  
+**Status:** Planned  
+**File:** `blog/matrix_multiplication/matrix_operations_blog.md`  
 **Topics:**
 - 2D thread indexing
 - Row-major vs column-major storage
@@ -90,8 +90,8 @@ This document outlines the complete blog series roadmap for **Learning CUDA**, f
 
 ### **Phase 2: Optimization Techniques (Intermediate)**
 
-#### 📝 Blog 4: Matrix Multiplication Deep Dive
-**Status:** Planned  
+#### �️ Blog 4: Matrix Multiplication Deep Dive
+**Status:** In Progress  
 **Topics:**
 - Naive matrix multiplication
 - Tiled multiplication with shared memory

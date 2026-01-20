@@ -344,16 +344,18 @@ You now know how to:
 
 ## What's Next?
 
-Ready to go deeper? In the next post, we'll tackle **matrix operations**:
+**Next up:** [Matrix Multiplication Deep Dive](../matrix_multiplication/matrix_multiplication_medium_blog.md) (coming soon)
 
-- 2D thread indexing
-- Shared memory optimization
+In the next post, we move from 1D to 2D:
+
+- 2D thread indexing for matrices
+- Tiled matrix multiplication with shared memory
 - Memory coalescing patterns
-- Tiled algorithms
+- Performance optimization techniques
 
-Until then, try modifying the vector addition kernel:
+**Practice challenges:** Try modifying the vector addition kernel:
 - Implement element-wise multiplication
-- Implement element-wise subtraction
+- Implement element-wise subtraction  
 - Try different block sizes (128, 512, 1024) and measure the impact
 
 Happy coding, and welcome to the parallel world!

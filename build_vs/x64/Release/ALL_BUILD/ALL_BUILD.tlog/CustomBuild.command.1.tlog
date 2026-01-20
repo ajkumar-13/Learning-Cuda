@@ -1,0 +1,10 @@
+^C:\USERS\ADMIN\DESKTOP\LEARNING CUDA\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/admin/Desktop/Learning Cuda" "-BC:/Users/admin/Desktop/Learning Cuda/build_vs" --check-stamp-file "C:/Users/admin/Desktop/Learning Cuda/build_vs/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

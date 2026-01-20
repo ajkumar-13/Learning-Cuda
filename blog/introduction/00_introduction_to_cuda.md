@@ -489,14 +489,21 @@ CUDA transforms the GPU from a graphics card into a massive parallel computer. B
 
 ## What's Next?
 
-This introduction covered the fundamentals. In upcoming posts, we'll dive into:
+This introduction covered the fundamentals. Now it's time to write code!
 
-1. **Vector Addition** - 
-2. **Matrix Multiplication** - The workhorse of deep learning
-3. **Parallel Reduction** - Summing millions of numbers efficiently
-4. **Memory Coalescing** - Maximizing memory bandwidth
-5. **Occupancy Optimization** - Keeping the GPU fully utilized
-6. **Profiling with NSight** - Finding and fixing bottlenecks
+**Next up:** [Stop Looping. Start Launching: Vector Addition on the GPU](../vector_addition/vector_addition_medium_blog.md)
+
+In the next post, you'll:
+- Write your first `__global__` kernel
+- Manage GPU memory with `cudaMalloc` and `cudaMemcpy`
+- Benchmark GPU vs CPU performance
+- Learn when the GPU actually wins (and when it doesn't)
+
+**Coming later in the series:**
+- Matrix Operations and 2D indexing
+- Parallel Reduction patterns
+- Memory Coalescing optimization
+- Profiling with NSight
 
 The journey to GPU mastery starts with understanding these fundamentals. Master them, and you'll be ready to tackle the most demanding parallel computing challenges!
 

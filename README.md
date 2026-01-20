@@ -176,14 +176,17 @@ If all return `True` or version info, you're ready to build!
 - `src/matrix_addition/` – Matrix addition challenge
 - `src/matrix_transpose/` – Matrix transpose challenge
 
+### **In Progress**
+- 🗓️ **Matrix Multiplication Deep Dive** - Tiled algorithms, shared memory optimization
+
 ### **Upcoming Content**
-- Matrix multiplication blog post
+- Matrix Operations Fundamentals (2D indexing, transpose)
 - Reduction patterns
-- Scan algorithms
+- Scan algorithms  
 - Tensor core operations
 - Advanced optimization techniques
 
-*More blog posts and challenges coming soon! Check back regularly.*
+*See [PLAN.md](PLAN.md) for the complete 14-blog series roadmap.*
 
 ---
 

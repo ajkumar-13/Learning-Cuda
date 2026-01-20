@@ -1,0 +1,32 @@
+^C:\USERS\ADMIN\DESKTOP\LEARNING CUDA\BUILD_VS\CMAKEFILES\49DDA226B1C82675F6BAAEA251C6ECE6\MULTIPLY_NVCC.EXE.RULE
+setlocal
+cd "C:\Users\admin\Desktop\Learning Cuda\build_vs"
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe" -o "C:/Users/admin/Desktop/Learning Cuda/build_vs/multiply_nvcc.exe" "C:/Users/admin/Desktop/Learning Cuda/src/multiply.cu" -ccbin cl.exe -O2
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ADMIN\DESKTOP\LEARNING CUDA\BUILD_VS\CMAKEFILES\2D49E325B5A5F2969B5AB94E82642A29\MULTIPLY.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ADMIN\DESKTOP\LEARNING CUDA\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/admin/Desktop/Learning Cuda" "-BC:/Users/admin/Desktop/Learning Cuda/build_vs" --check-stamp-file "C:/Users/admin/Desktop/Learning Cuda/build_vs/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

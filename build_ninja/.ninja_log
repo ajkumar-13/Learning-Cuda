@@ -1,0 +1,7 @@
+# ninja log v7
+5	85	7904574051063040	build.ninja	e8c9cb039ff22b77
+5	85	7904574051063040	C:/Users/admin/Desktop/Learning Cuda/build_ninja/cmake_install.cmake	e8c9cb039ff22b77
+10	3076	7904574081888126	multiply_nvcc.exe	aa65f28c172a1219
+10	3076	7904574081888126	C:/Users/admin/Desktop/Learning Cuda/build_ninja/multiply_nvcc.exe	aa65f28c172a1219
+3	4945	7904574090324507	vecadd_nvcc.exe	ad8cbc79819ac92
+3	4945	7904574090324507	C:/Users/admin/Desktop/Learning Cuda/build_ninja/vecadd_nvcc.exe	ad8cbc79819ac92
