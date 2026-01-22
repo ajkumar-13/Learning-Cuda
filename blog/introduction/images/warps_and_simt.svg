@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 920" width="1100" height="920">
+  <style>
+    .title { font: bold 32px Arial, sans-serif; fill: #1e1e1e; }
+    .subtitle { font: 16px Arial, sans-serif; fill: #868e96; }
+    .section-title { font: bold 20px Arial, sans-serif; }
+    .label { font: bold 14px Arial, sans-serif; }
+    .code { font: 13px 'Courier New', monospace; }
+    .small { font: 12px Arial, sans-serif; fill: #495057; }
+    .key-text { font: 14px Arial, sans-serif; fill: #1e1e1e; }
+  </style>
+  
+  <!-- Background -->
+  <rect width="1100" height="920" fill="#ffffff"/>
+  
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" class="title">WARPS &amp; SIMT Execution Model</text>
+  <text x="550" y="70" text-anchor="middle" class="subtitle">How GPU executes thousands of threads in groups of 32</text>
+  
+  <!-- Section 1: Thread Block to Warps -->
+  <text x="50" y="110" class="section-title" fill="#1971c2">1. Thread Block → Warps</text>
+  
+  <!-- Thread Block Container -->
+  <rect x="50" y="130" width="450" height="300" rx="8" fill="#e7f5ff" stroke="#1971c2" stroke-width="2"/>
+  <text x="275" y="160" text-anchor="middle" class="label" fill="#1971c2">Thread Block (256 threads)</text>
+  
+  <!-- Warp 0 -->
+  <rect x="70" y="180" width="410" height="55" rx="6" fill="#ffe3e3" stroke="#e03131" stroke-width="2"/>
+  <text x="90" y="200" class="label" fill="#e03131">Warp 0</text>
+  <text x="280" y="220" text-anchor="middle" class="code" fill="#1e1e1e">T0  T1  T2  T3  T4  ...  T29  T30  T31</text>
+  
+  <!-- Warp 1 -->
+  <rect x="70" y="245" width="410" height="55" rx="6" fill="#d3f9d8" stroke="#2f9e44" stroke-width="2"/>
+  <text x="90" y="265" class="label" fill="#2f9e44">Warp 1</text>
+  <text x="280" y="285" text-anchor="middle" class="code" fill="#1e1e1e">T32  T33  T34  T35  ...  T61  T62  T63</text>
+  
+  <!-- Warp 2 -->
+  <rect x="70" y="310" width="410" height="55" rx="6" fill="#f3d9fa" stroke="#9c36b5" stroke-width="2"/>
+  <text x="90" y="330" class="label" fill="#9c36b5">Warp 2</text>
+  <text x="280" y="350" text-anchor="middle" class="code" fill="#1e1e1e">T64  T65  T66  T67  ...  T93  T94  T95</text>
+  
+  <!-- More warps indicator -->
+  <text x="275" y="395" text-anchor="middle" class="small">... Warp 3, 4, 5, 6, 7 (256 / 32 = 8 warps total)</text>
+  
+  <!-- Formula box -->
+  <rect x="70" y="405" width="410" height="35" rx="6" fill="#fff4e6" stroke="#f08c00" stroke-width="2"/>
+  <text x="275" y="428" text-anchor="middle" class="code" fill="#e8590c"># Warps = ceil(Block Size / 32)</text>
+  
+  <!-- Section 2: SIMT Execution -->
+  <text x="550" y="110" class="section-title" fill="#e03131">2. SIMT Execution (Lockstep)</text>
+  
+  <!-- SIMT Container -->
+  <rect x="550" y="130" width="500" height="310" rx="8" fill="#fff5f5" stroke="#e03131" stroke-width="2"/>
+  <text x="800" y="158" text-anchor="middle" class="small">All 32 threads execute SAME instruction, DIFFERENT data</text>
+  
+  <!-- Timeline -->
+  <text x="570" y="195" class="small">Cycle 1:</text>
+  <rect x="640" y="175" width="390" height="30" rx="4" fill="#d0ebff" stroke="#1971c2" stroke-width="1"/>
+  <text x="835" y="196" text-anchor="middle" class="code" fill="#1971c2">LOAD A[i]  → all 32 threads load A[0..31]</text>
+  
+  <text x="570" y="235" class="small">Cycle 2:</text>
+  <rect x="640" y="215" width="390" height="30" rx="4" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1"/>
+  <text x="835" y="236" text-anchor="middle" class="code" fill="#2f9e44">LOAD B[i]  → all 32 threads load B[0..31]</text>
+  
+  <text x="570" y="275" class="small">Cycle 3:</text>
+  <rect x="640" y="255" width="390" height="30" rx="4" fill="#fff4e6" stroke="#f08c00" stroke-width="1"/>
+  <text x="835" y="276" text-anchor="middle" class="code" fill="#e8590c">ADD A[i]+B[i]  → 32 parallel additions!</text>
+  
+  <text x="570" y="315" class="small">Cycle 4:</text>
+  <rect x="640" y="295" width="390" height="30" rx="4" fill="#f3d9fa" stroke="#9c36b5" stroke-width="1"/>
+  <text x="835" y="316" text-anchor="middle" class="code" fill="#9c36b5">STORE C[i]  → all 32 threads store C[0..31]</text>
+  
+  <!-- SIMT explanation -->
+  <text x="570" y="360" class="label" fill="#e03131">⚡ Single Instruction, Multiple Threads (SIMT)</text>
+  <text x="570" y="385" class="code" fill="#1e1e1e">Thread 0: C[0] = A[0] + B[0]</text>
+  <text x="570" y="405" class="code" fill="#1e1e1e">Thread 1: C[1] = A[1] + B[1]</text>
+  <text x="570" y="425" class="code" fill="#1e1e1e">Thread 31: C[31] = A[31] + B[31]  ← All in ONE cycle!</text>
+  
+  <!-- Section 3: SM and Warp Scheduler -->
+  <text x="50" y="480" class="section-title" fill="#2f9e44">3. Warp Scheduler &amp; Execution on SM</text>
+  
+  <!-- SM Container -->
+  <rect x="50" y="500" width="1000" height="180" rx="8" fill="#ebfbee" stroke="#2f9e44" stroke-width="2"/>
+  <text x="70" y="525" class="label" fill="#2f9e44">Streaming Multiprocessor (SM)</text>
+  
+  <!-- Warp Scheduler -->
+  <rect x="70" y="545" width="180" height="70" rx="6" fill="#d0ebff" stroke="#1971c2" stroke-width="2"/>
+  <text x="160" y="570" text-anchor="middle" class="label" fill="#1971c2">Warp Scheduler</text>
+  <text x="160" y="595" text-anchor="middle" class="small">Picks ready warps</text>
+  
+  <!-- Arrow -->
+  <path d="M 260 580 L 320 580" stroke="#1971c2" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1971c2"/>
+    </marker>
+  </defs>
+  <text x="290" y="570" text-anchor="middle" class="small">dispatch</text>
+  
+  <!-- CUDA Cores -->
+  <rect x="340" y="545" width="690" height="70" rx="6" fill="#ffe3e3" stroke="#c92a2a" stroke-width="2"/>
+  <text x="685" y="570" text-anchor="middle" class="label" fill="#c92a2a">CUDA Cores (Execution Units)</text>
+  <text x="685" y="598" text-anchor="middle" class="code" fill="#495057">[Core 0] [Core 1] [Core 2] ... [Core 31]  ← 32 cores execute 1 warp in parallel</text>
+  
+  <!-- Latency hiding note -->
+  <text x="70" y="655" class="small">💡 Latency Hiding: When Warp 0 stalls (waiting for memory), scheduler instantly switches to Warp 1, 2, etc.</text>
+  <text x="90" y="675" class="small">This keeps CUDA cores busy 100% of the time → Maximum throughput!</text>
+  
+  <!-- Key Takeaways Box -->
+  <rect x="50" y="710" width="1000" height="130" rx="8" fill="#f8f0fc" stroke="#862e9c" stroke-width="2"/>
+  <text x="550" y="740" text-anchor="middle" class="section-title" fill="#862e9c">🔑 Key Takeaways</text>
+  
+  <text x="70" y="775" class="key-text">• Warp = 32 threads executing in LOCKSTEP (same instruction, same clock cycle)</text>
+  <text x="70" y="800" class="key-text">• SIMT = Same instruction on different data elements → massive parallelism</text>
+  <text x="70" y="825" class="key-text">• Multiple warps per SM hide memory latency by switching between ready warps</text>
+  <text x="600" y="775" class="key-text" fill="#c92a2a">⚠️ Avoid warp divergence!</text>
+  <text x="600" y="800" class="key-text">If threads in a warp take different code paths,</text>
+  <text x="600" y="825" class="key-text">execution serializes → performance drops!</text>
+</svg>

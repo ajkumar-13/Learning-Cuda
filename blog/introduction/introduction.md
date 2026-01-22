@@ -178,6 +178,7 @@ Inside an SM, threads are executed in groups of **32** called **warps**.
 
 **SIMT (Single-Instruction, Multiple-Threads)**: All 32 threads in a warp execute the **exact same instruction at the same time**, but on different data.
 
+![Warps and SIMT Execution](images/warps_and_simt.svg)
 
 ![Warp Execution](images/warp_execution.png)
 
@@ -491,7 +492,7 @@ CUDA transforms the GPU from a graphics card into a massive parallel computer. B
 
 This introduction covered the fundamentals. Now it's time to write code!
 
-**Next up:** [Stop Looping. Start Launching: Vector Addition on the GPU](../vector_addition/vector_addition_medium_blog.md)
+**Next up:** [Stop Looping. Start Launching: Vector Addition on the GPU](../vector_addition/vector_addition.md)
 
 In the next post, you'll:
 - Write your first `__global__` kernel
