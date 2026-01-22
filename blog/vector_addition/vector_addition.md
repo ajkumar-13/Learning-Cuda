@@ -109,7 +109,7 @@ cudaDeviceSynchronize();
 // 5. Copy result: Device → Host
 cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
 
-// 7. Free device memory
+// 6. Free device memory
 cudaFree(d_A);
 cudaFree(d_B);
 cudaFree(d_C);
@@ -344,7 +344,7 @@ You now know how to:
 
 ## What's Next?
 
-**Next up:** [Matrix Multiplication Deep Dive](../matrix_multiplication/matrix_multiplication_medium_blog.md) (coming soon)
+**Next up:** [Matrix Multiplication](../matrix_multiplication/matrix_multiplication_medium_blog.md) (coming soon)
 
 In the next post, we move from 1D to 2D:
 
