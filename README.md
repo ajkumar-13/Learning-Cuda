@@ -51,10 +51,10 @@ cmake --build build_vs --config Release
 
 ```powershell
 # Run vector addition
-.\build_vs\Release\vecadd_nvcc.exe
+.\build_vs\vecadd_nvcc.exe
 
 # Run element-wise multiply
-.\build_vs\Release\multiply_nvcc.exe
+.\build_vs\multiply_nvcc.exe
 ```
 
 **Expected Output:**
@@ -204,8 +204,8 @@ cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
 cmake --build build_vs --config Release
 
 # Run examples
-.\build_vs\Release\vecadd_nvcc.exe
-.\build_vs\Release\multiply_nvcc.exe
+.\build_vs\vecadd_nvcc.exe
+.\build_vs\multiply_nvcc.exe
 ```
 
 ✅ **Advantages:** Fast, automatic MSVC environment setup, IDE integration
@@ -213,9 +213,13 @@ cmake --build build_vs --config Release
 ### Using Ninja Generator (Faster builds)
 
 ```powershell
-# Initialize MSVC environment first
-& cmd.exe /c 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat' && `
-cmake -S . -B build_ninja -G Ninja && `
+# Run entire build chain inside cmd.exe (required for vcvars64.bat to work)
+cmd.exe /c """C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"" && cmake -S . -B build_ninja -G Ninja && cmake --build build_ninja"
+```
+
+**Alternative:** Open "Developer PowerShell for VS 2019" from Start Menu, then:
+```powershell
+cmake -S . -B build_ninja -G Ninja
 cmake --build build_ninja
 ```
 
