@@ -6,22 +6,34 @@ This file tells CMake how to build your project.
 
 From your project root (`C:\Users\admin\Desktop\Learning Cuda`):
 
+### Using Visual Studio Generator (Recommended)
+
 ```powershell
 cd "C:\Users\admin\Desktop\Learning Cuda"
 
-# 1) Configure CMake (creates the build files in .\build)
-cmake -S . -B build
+# 1) Configure CMake (creates build files in .\build_vs)
+cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
 
 # 2) Build the project (Release configuration)
-cmake --build build --config Release
+cmake --build build_vs --config Release
 
-# 3) Run the executable (path depends on CUDA vs CPU)
-# If nvcc is found, you'll typically get vecadd_nvcc.exe
-./build/vecadd_nvcc.exe
-
-# If nvcc is NOT found, CMake builds the CPU fallback named vecadd.exe
-./build/Release/vecadd.exe
+# 3) Run the executables (directly in build_vs folder)
+.\build_vs\vecadd_nvcc.exe
+.\build_vs\multiply_nvcc.exe
 ```
+
+### Using Ninja Generator (Faster builds)
+
+```powershell
+# Run entire build chain inside cmd.exe
+cmd.exe /c """C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"" && cmake -S . -B build_ninja -G Ninja && cmake --build build_ninja"
+
+# Run the executables
+.\build_ninja\vecadd_nvcc.exe
+.\build_ninja\multiply_nvcc.exe
+```
+
+**Note:** Executables are placed **directly** in the build folder (e.g., `build_vs/vecadd_nvcc.exe`), not in a `Release/` subfolder, because the CMakeLists.txt uses custom commands that output to `${CMAKE_BINARY_DIR}`.
 
 Below is a line‑by‑line explanation of your current `CMakeLists.txt`.
 
@@ -77,46 +89,75 @@ Prints a status message during CMake configuration, for example:
 `-- NVCC found: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.3/bin/nvcc.exe`.
 
 ```cmake
+  # Output executable paths
   if (WIN32)
-    set(VECADD_OUT ${CMAKE_BINARY_DIR}/vecadd_nvcc.exe)
+    set(VECADD_OUT    ${CMAKE_BINARY_DIR}/vecadd_nvcc.exe)
+    set(MULTIPLY_OUT  ${CMAKE_BINARY_DIR}/multiply_nvcc.exe)
   else()
-    set(VECADD_OUT ${CMAKE_BINARY_DIR}/vecadd_nvcc)
+    set(VECADD_OUT    ${CMAKE_BINARY_DIR}/vecadd_nvcc)
+    set(MULTIPLY_OUT  ${CMAKE_BINARY_DIR}/multiply_nvcc)
   endif()
 ```
-This block chooses the name of the **output executable**:
-- On Windows (`WIN32` is true): use `vecadd_nvcc.exe`.
-- On other systems (Linux/macOS): use `vecadd_nvcc` without `.exe`.
+This block chooses the name of the **output executables** for both programs:
+- On Windows (`WIN32` is true): use `.exe` extension (e.g., `vecadd_nvcc.exe`, `multiply_nvcc.exe`).
+- On other systems (Linux/macOS): no `.exe` extension.
 
-`CMAKE_BINARY_DIR` is the build directory (for example `build/`).
-So the final path is something like `build/vecadd_nvcc.exe`.
+`CMAKE_BINARY_DIR` is the build directory (for example `build_vs/` or `build_ninja/`).
+So the final paths are like `build_vs/vecadd_nvcc.exe` and `build_vs/multiply_nvcc.exe`.
 
 ```cmake
+  # Use full path to cl.exe for better Ninja support
+  set(MSVC_COMPILER_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe")
+```
+Sets the **full path to the MSVC compiler** (`cl.exe`):
+- `nvcc` needs a C++ compiler to compile host (CPU) code.
+- Using the full path makes it work with **Ninja generator** (which doesn't auto-detect MSVC).
+- Visual Studio generator can auto-detect this, but the explicit path ensures consistency.
+
+**Note:** This path is specific to Visual Studio 2019 BuildTools version 14.29.30133. If your VS version differs, you may need to update this path.
+
+```cmake
+  # vec_add.cu -> vecadd_nvcc
   add_custom_command(OUTPUT ${VECADD_OUT}
-    COMMAND "${NVCC_EXECUTABLE}" -o "${VECADD_OUT}" "${CMAKE_SOURCE_DIR}/src/vec_add.cu" -ccbin cl.exe -O2
+    COMMAND "${NVCC_EXECUTABLE}" -o "${VECADD_OUT}" "${CMAKE_SOURCE_DIR}/src/vec_add.cu" -ccbin "${MSVC_COMPILER_PATH}" -O2
+    DEPENDS "${CMAKE_SOURCE_DIR}/src/vec_add.cu"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Compiling CUDA binary with nvcc"
+    COMMENT "Compiling vec_add.cu with nvcc"
     VERBATIM)
 ```
 Defines **how to build** the file `${VECADD_OUT}` using a custom command:
-- `OUTPUT ${VECADD_OUT}`: this command will create the executable file.
-- `COMMAND "${NVCC_EXECUTABLE}" ...`: the actual command to run:
+- `OUTPUT ${VECADD_OUT}`: this command will create the `vecadd_nvcc.exe` executable.
+- `COMMAND "${NVCC_EXECUTABLE}" ...`: the actual compilation command:
   - Calls `nvcc` using its full path.
   - `-o "${VECADD_OUT}"`: sets the output file name.
   - `"${CMAKE_SOURCE_DIR}/src/vec_add.cu"`: input CUDA source file.
-  - `-ccbin cl.exe`: tells `nvcc` to use MSVC (`cl.exe`) as the host C++ compiler.
+  - `-ccbin "${MSVC_COMPILER_PATH}"`: tells `nvcc` to use the specified MSVC compiler for host code.
   - `-O2`: enables optimization level 2.
+- `DEPENDS "${CMAKE_SOURCE_DIR}/src/vec_add.cu"`: CMake tracks this dependency - if `vec_add.cu` changes, the executable will be rebuilt automatically.
 - `WORKING_DIRECTORY ${CMAKE_BINARY_DIR}`: run the command inside the build folder.
-- `COMMENT "Compiling CUDA binary with nvcc"`: text shown while building.
+- `COMMENT "Compiling vec_add.cu with nvcc"`: text shown during build.
 - `VERBATIM`: tells CMake not to modify or re‑interpret the arguments.
 
 ```cmake
-  add_custom_target(vecadd ALL DEPENDS ${VECADD_OUT})
+  # multiply.cu -> multiply_nvcc
+  add_custom_command(OUTPUT ${MULTIPLY_OUT}
+    COMMAND "${NVCC_EXECUTABLE}" -o "${MULTIPLY_OUT}" "${CMAKE_SOURCE_DIR}/src/multiply.cu" -ccbin "${MSVC_COMPILER_PATH}" -O2
+    DEPENDS "${CMAKE_SOURCE_DIR}/src/multiply.cu"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Compiling multiply.cu with nvcc"
+    VERBATIM)
 ```
-Defines a build **target** named `vecadd`:
-- `DEPENDS ${VECADD_OUT}`: when you build `vecadd`, CMake will make sure `${VECADD_OUT}`
-  is created using the custom command above.
-- `ALL`: include this target in the default build, so a simple
-  `cmake --build build --config Release` will build it.
+Identical to the `vec_add.cu` command above, but for `multiply.cu`:
+- Compiles `src/multiply.cu` → `multiply_nvcc.exe`.
+- Same compiler flags and dependency tracking.
+
+```cmake
+  add_custom_target(vecadd   ALL DEPENDS ${VECADD_OUT})
+  add_custom_target(multiply ALL DEPENDS ${MULTIPLY_OUT})
+```
+Defines build **targets** named `vecadd` and `multiply`:
+- `DEPENDS ${VECADD_OUT}` / `${MULTIPLY_OUT}`: when you build these targets, CMake will invoke the custom commands above to create the executables.
+- `ALL`: include these targets in the default build, so `cmake --build build_vs --config Release` will build both automatically.
 
 ```cmake
 else()
@@ -139,8 +180,28 @@ on the CPU instead of on the GPU.
 - `CMakeLists.txt` is the script that tells CMake **what to build and how**.
 - This particular file:
   - Looks for the CUDA compiler `nvcc`.
-  - If `nvcc` is available, it uses a custom command to compile `src/vec_add.cu`
-    into a CUDA executable (`vecadd_nvcc`).
-  - If `nvcc` is not available, it builds a CPU‑only executable (`vecadd`) from
-    `src/vec_add_cpu.cpp`.
+  - If `nvcc` is available, it uses custom commands to compile:
+    - `src/vec_add.cu` → `vecadd_nvcc.exe`
+    - `src/multiply.cu` → `multiply_nvcc.exe`
+  - Uses the full path to MSVC compiler for better compatibility with Ninja generator.
+  - Tracks source file dependencies so changes trigger automatic rebuilds.
+  - If `nvcc` is not available, it builds a CPU‑only executable (`vecadd`) from `src/vec_add_cpu.cpp`.
 - This design lets the same project work on machines **with** and **without** CUDA.
+- Executables are placed **directly** in the build folder (`build_vs/` or `build_ninja/`), not in a `Release/` subfolder, because of the custom command approach.
+
+## Why Custom Commands Instead of `enable_language(CUDA)`?
+
+This CMakeLists.txt uses **custom `nvcc` commands** rather than CMake's built-in CUDA support (`enable_language(CUDA)`). Here's why:
+
+**Advantages:**
+- **More reliable on Windows** when CMake can't auto-detect the CUDA toolset
+- **Works with any generator** (Visual Studio, Ninja, etc.)
+- **Explicit control** over nvcc flags and MSVC compiler path
+- **Fallback to CPU** when CUDA is unavailable
+
+**Trade-offs:**
+- **Hardcoded MSVC path** - needs updating if Visual Studio version changes
+- **Manual dependency tracking** - must add `DEPENDS` for each source file
+- **Non-standard executable paths** - outputs to `build_vs/` instead of `build_vs/Release/`
+
+For simple projects or when CMake's CUDA detection is problematic, this approach is very effective.
