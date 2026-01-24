@@ -5,9 +5,6 @@
  * - Defining a __global__ kernel function
  * - Launching a kernel with <<<blocks, threads>>>
  * - Synchronizing with cudaDeviceSynchronize()
- * 
- * Compile: nvcc -o hello_cuda hello_cuda.cu
- * Run:     ./hello_cuda
  */
 
 #include <cstdio>

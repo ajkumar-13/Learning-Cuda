@@ -5,9 +5,6 @@
  * - Detect available CUDA devices
  * - Query device properties (SMs, memory, compute capability, etc.)
  * - Understand your GPU's capabilities
- * 
- * Compile: nvcc -o device_query device_query.cu
- * Run:     ./device_query
  */
 
 #include <cstdio>
