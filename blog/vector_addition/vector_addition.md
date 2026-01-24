@@ -56,6 +56,15 @@ __global__ void vectorAddGPU(const float *A, const float *B, float *C, int N)
 
 **Why the boundary check?** We launch threads in blocks of fixed size (e.g., 256). If N isn't divisible by 256, we'll have extra threads. The `if` prevents out-of-bounds memory access.
 
+> **Clarification:** Why launch more threads than needed?
+>
+> Because threads are organized in fixed-size blocks. If N = 1000 and blockSize = 256:
+> - Ideally we need 1000 threads
+> - But we launch in blocks of 256 → 4 blocks = 1024 threads
+> - The extra 24 threads check `if (i < N)` and return early
+>
+> This wastes a tiny bit of computation but simplifies scheduling and improves occupancy. The overhead is negligible compared to the 1000 useful threads.
+
 ---
 
 ## Step 2: Launch Configuration
@@ -77,7 +86,16 @@ This is integer ceiling division. For N = 1000 and threadsPerBlock = 256:
 
 ![Grid-Block-Thread Hierarchy](images/Grid-Block-Thread%20Hierarchy.png)
 
-> **Note:** You can launch millions of threads even though the GPU has "thousands of cores." The GPU schedules threads in batches called **warps** (typically 32 threads). You're describing parallel work, not manually creating OS threads. The hardware scheduler handles the details.
+> **Clarification:** How can we launch 10 million threads on a GPU with only ~4,000 cores?
+>
+> The GPU **doesn't run all 10 million threads simultaneously**. Instead:
+> 1. You describe the work (launch a kernel with 10 million threads)
+> 2. The hardware splits this into warps (groups of 32 threads)
+> 3. Warps are scheduled on SMs, some run now, others wait in queue
+> 4. When a warp stalls on memory, another warp switches in
+> 5. This **hiding latency** keeps the GPU busy
+>
+> Think of it like a theater with 4,00 seats but a waiting list of 10,000 people. Not everyone fits at once, but the theater keeps scheduling people in and out so seats are always occupied.
 
 ---
 
@@ -116,6 +134,10 @@ cudaFree(d_C);
 ```
 
 > **Important:** Kernel launches are **asynchronous**. The CPU continues immediately after `<<<...>>>`. Use `cudaDeviceSynchronize()` before timing or reading results.
+>
+> **Why?** The CPU just **queues** the kernel to run on the GPU. It doesn't wait for completion.
+> - Without `cudaDeviceSynchronize()`: You copy results before the kernel finishes → garbage data
+> - Without it in timing code: You measure CPU time (microseconds) instead of GPU execution (milliseconds)
 
 ---
 
@@ -235,7 +257,7 @@ Most "GPU vs CPU" benchmarks are **wrong** for at least one of these reasons:
 | **Verification** | Checksums prevent dead-code elimination |
 | **Correctness** | Results validated against CPU reference |
 
-*Note: The "Complete Program" above uses normal host memory (`new[]`) for simplicity. The benchmark code uses pinned memory for accurate transfer measurements.
+>**Note**: The "Complete Program" above uses normal host memory (`new[]`) for simplicity. The benchmark code uses pinned memory for accurate transfer measurements.
 
 ### Two Numbers You Should Always Report
 
@@ -309,6 +331,18 @@ Each element requires:
 
 The ratio of memory to compute is huge. The GPU wins on large N because it has higher memory bandwidth (~192 GB/s for GTX 1650 vs ~40 GB/s for DDR4).
 
+> **Clarification:** Why doesn't a more powerful CPU beat the GPU?
+>
+> You might think: "A modern CPU does 4 GHz × 8 cores = 32 billion operations/sec. Why can't it just add 10 million numbers faster?"
+>
+> The answer: **Memory is the bottleneck, not the CPU.**
+>
+> - 10M elements × 12 bytes/element = 120 MB to transfer from RAM
+> - At 40 GB/s: 120 MB ÷ 40 GB/s = 3 ms minimum just to read memory
+> - The actual addition is negligible (~1 µs)
+>
+> The CPU could do the math in 10 microseconds, but it spends 3 milliseconds waiting for memory. The GPU, with 192 GB/s bandwidth, completes in 0.8 ms because it can fetch 5× faster. **Both are memory-bound, but GPU's bandwidth is higher.**
+
 ---
 
 ## When to Use GPU
@@ -322,6 +356,21 @@ The ratio of memory to compute is huge. The GPU wins on large N because it has h
 | N > 10M, one-off | GPU | Bandwidth wins |
 | Multi-kernel pipeline | GPU | Pay transfer once, run many kernels |
 | Data already on GPU | GPU | Always (no transfer cost) |
+
+> **Why "one-off" matters:**
+>
+> Notice a PCIe transfer takes ~100 µs overhead + N-dependent time. For one-off operations:
+> - **10K elements:** Transfer (140 µs) >> Kernel (3 µs). GPU loses.
+> - **10M elements:** Kernel (0.8 ms) >> Transfer (11 ms). GPU wins despite transfer.
+>
+> But in a **pipeline** (many kernels in sequence):
+> - Transfer once: 11 ms
+> - Kernel 1: 0.8 ms
+> - Kernel 2: 0.8 ms
+> - Kernel 3: 0.8 ms
+> - ... (no more transfers)
+>
+> You pay the transfer penalty once, then run at GPU speed. **This is why GPUs dominate deep learning:** hundreds of matrix ops on data that stays on the GPU.
 
 > **The real GPU advantage:** In deep learning and simulations, data stays on the GPU across hundreds of operations. You pay the transfer cost once, then run at GPU speed.
 

@@ -10,7 +10,7 @@ Your first hands-on CUDA programming experience. We write a complete vector addi
 
 | File | Description |
 |------|-------------|
-| `02_vector_addition.md` | Main blog post |
+| `vector_addition.md` | Main blog post |
 | `vector_add.cu` | Basic vector addition kernel |
 | `vector_add_benchmark.cu` | Full benchmark with timing |
 | `Makefile` | Build automation |
