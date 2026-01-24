@@ -28,6 +28,34 @@ The CPU is designed for **latency**, it excels at executing a serial sequence of
 
 A typical CPU might have 8-16 powerful cores, each optimized to complete individual tasks quickly.
 
+> ### What “out-of-order execution” means
+>
+>**Out-of-order execution (OoO)** is when a CPU core **doesn’t strictly run instructions in the exact order they appear in the program**, *internally*, as long as the **final results are the same as if it did**.
+>
+>Why? Because programs often have stalls, like:
+>
+>* waiting for data to come from memory (slow),
+>* waiting for a previous instruction to finish.
+>
+>If the CPU ran strictly in order, it would often sit idle. With OoO, the CPU looks ahead, finds other independent instructions, and executes them while it’s waiting.
+>
+> #### Simple example
+>
+>Program order:
+>
+>1. `A = load X`  (might be slow: memory)
+>2. `B = load Y`  (also memory)
+>3. `C = D + E`   (pure arithmetic, ready now)
+>4. `F = A + 1`   (depends on A)
+>
+>If `load X` is slow, an in-order CPU might stall at step 1.
+An out-of-order CPU can do step **3** (`C = D + E`) *while* waiting for step 1, because step 3 doesn’t depend on A or B.
+>
+> #### How it stays “correct”
+>
+>Internally, the CPU uses hardware structures (like a **reorder buffer**) to make sure that although instructions may execute out of order, they **“retire” (commit) in order**, so the architectural state matches the program order.
+>
+
 ### The GPU: Optimized for Throughput
 
 The GPU is designed for **throughput**, it excels at executing thousands of threads in parallel. It trades off single-thread performance to achieve massive total work done per second by devoting more transistors to:
@@ -35,6 +63,45 @@ The GPU is designed for **throughput**, it excels at executing thousands of thre
 - **Arithmetic Logic Units (ALUs)** for computation
 - **Simple control logic** (no branch prediction, in-order execution)
 - **Hardware thread management** to hide memory latency
+
+
+>## What “in-order execution” means
+>
+>**In-order execution** means a core processes instructions **strictly in the order they appear** in the program. It won’t skip ahead to run later instructions early, even if those later instructions are independent.
+>
+>So if an instruction gets stuck (often because it’s waiting for memory), the pipeline for that thread typically **stalls**, and the thread can’t make progress until the stalled instruction finishes.
+>
+>## Simple example (why it stalls)
+>
+>Program order:
+>
+>1. `A = load X`  *(slow: memory fetch)*
+>2. `B = load Y`  *(slow: memory fetch)*
+>3. `C = D + E`   *(ready now: just math)*
+>4. `F = A + 1`   *(depends on A)*
+>
+>### On an **in-order** core
+>
+>* It starts #1 (`load X`)
+>* If `load X` takes long, the thread **waits**
+>* Even though #3 (`C = D + E`) could run immediately, it **can’t jump ahead** to do it
+>* So the core/thread wastes cycles doing nothing until #1 completes
+>
+>### On an **out-of-order** core (CPU-style, recap)
+>
+>* It can run #3 while waiting for #1, because #3 doesn’t depend on A
+>* That keeps the core busy and improves single-thread performance
+>
+>## How GPUs deal with in-order behavior
+>
+>Many GPU execution units don’t try to make *one thread* smart and fast (like OoO CPUs). Instead they do:
+>
+>* Run **tons of threads**
+>* If one warp(will discuss below) is stalled on memory, the GPU switches to another warp that’s ready
+>
+>So the GPU “stays busy” by swapping work, not by reordering instructions within a single thread.
+>
+
 
 A modern GPU might have thousands of simpler cores, each weaker than a CPU core, but together capable of vastly more parallel computation.
 
@@ -74,7 +141,7 @@ A typical CUDA application:
 
 ### What is a Kernel?
 
-A **kernel** is a function executed on the GPU. When you launch a kernel, you aren't just running a function once—you are launching **millions of threads** that all execute that same function code in parallel.
+A **kernel** is a function executed on the GPU. When you launch a kernel, you aren't just running a function once, you are launching **millions of threads** that all execute that same function code in parallel.
 
 ```cuda
 // Kernel definition - runs on the GPU
@@ -96,7 +163,7 @@ int main() {
 }
 ```
 
-The `<<<numBlocks, threadsPerBlock>>>` syntax is the **execution configuration**—it tells CUDA how many threads to launch.
+The `<<<numBlocks, threadsPerBlock>>>` syntax is the **execution configuration**, it tells CUDA how many threads to launch.
 
 ---
 
@@ -206,6 +273,73 @@ This is called **warp divergence**, and it can significantly reduce performance.
 ![Warp Divergence](images/warp_divergence.png)
 
 > **Best Practice**: Structure your code so threads within a warp follow the same execution path whenever possible.
+
+---
+
+### GPU vs CPU: How They Handle Conditional Branches
+
+To understand why warp divergence matters on GPUs, let's contrast how CPUs and GPUs handle conditional branches.
+
+#### Code Example: Conditional Logic
+
+Consider this simple code that processes an array based on a condition:
+
+```cuda
+__global__ void processData(int* data, int N) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < N) {
+        // Conditional: different branches based on data value
+        if (data[idx] > 50) {
+            data[idx] = data[idx] * 2;  // Path A: Multiply
+        } else {
+            data[idx] = data[idx] + 10;  // Path B: Add
+        }
+    }
+}
+```
+
+#### GPU vs CPU Execution
+
+| Aspect | CPU | GPU |
+|--------|-----|-----|
+| **Branch Prediction** | Has sophisticated branch predictors; predicts the likely path | No branch prediction; must execute both paths for divergent warps |
+| **Speculative Execution** | Speculatively executes predicted path; rolls back if wrong | Cannot speculate; 32 threads must stay in sync (warp divergence) |
+| **Execution Model** | Can follow different paths per thread with negligible penalty if prediction is correct | All 32 threads in a warp take same instruction; divergent paths serialize |
+| **Cost of Branch** | ~1-2 cycles if predicted correctly; ~10-15 cycles if mispredicted | **~2× slowdown if warp diverges**: each path executes serially while other threads stall |
+| **Example: 32-thread warp with data > 50** | CPU doesn't even see the 32 branches; single core takes its own path | **Warp serializes**: 16 threads execute Path A (others blocked), then 16 threads execute Path B (others blocked) |
+| **Optimization Strategy** | Optimize for common case (branch prediction) | **Minimize divergence** within a warp; keep execution uniform |
+
+#### Why the Difference?
+
+**CPU Philosophy:**
+- Invest transistors in **predicting** the branch and executing ahead
+- Pay a cost only on misprediction
+
+**GPU Philosophy:**
+- Save transistors (use them for computation instead)
+- All threads in warp must execute as a group
+- Divergence forces serialization: wasted instruction slots
+
+#### Real-World Impact
+
+```cuda
+// BAD: Maximum divergence (50% of warp stalls at any time)
+if (threadIdx.x % 2 == 0) {
+    fastPath();  // Even threads
+} else {
+    slowPath();  // Odd threads
+}
+// Result: ~2× slowdown
+
+// GOOD: No divergence (all threads follow same path)
+int value = data[idx];
+if (value > 50) {  // All threads in warp hit same condition
+    data[idx] = value * 2;
+}
+// Result: Full performance
+```
+
+The key difference: **CPU branches per thread**, **GPU branches per warp**.
 
 ---
 
@@ -511,3 +645,12 @@ The journey to GPU mastery starts with understanding these fundamentals. Master 
 ---
 
 *Welcome to the world of GPU computing!*
+
+---
+
+## Check Your Understanding
+
+- Can a warp ever contain threads from different blocks, or are warps always formed within a single block?
+- When launching a kernel, who chooses the grid and block dimensions (grid size, block size, threads per block), and how are they specified?
+- If a launched grid has more threads than the data requires, what happens to the extra threads once the bounds check fails?
+- Can multiple programs or kernel launches share the same grid, or is each kernel launch given its own grid?
