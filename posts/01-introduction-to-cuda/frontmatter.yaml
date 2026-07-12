@@ -1,0 +1,7 @@
+slug: 01-introduction-to-cuda
+title: "01 · Why GPUs exist — the CUDA execution model from the ground up"
+date: 2026-06-28
+tags: [first-kernels, cuda, gpu-architecture]
+hero: diagrams/01-cpu-vs-gpu.svg
+reading_time: 15
+part: "Part I — First Kernels"

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Threads in a warp run in lockstep, so when they take different branches the hardware runs both paths in series</title>
+  <desc id="d">A warp is a group of threads that execute the same instruction in lockstep; 8 lanes are shown for clarity, 32 in real hardware. Top scenario: the whole warp takes the same path, all 8 lanes active, which is one pass at full speed. Bottom scenario: the threads diverge on a branch like if i mod 2 equals 0. Pass 1 runs path A with the even lanes active and the odd lanes idle, shown in the alert colour. Pass 2 runs path B with the odd lanes active and the even lanes idle. The two passes run one after another, roughly doubling the time.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .lane{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .idle{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:4 3;}
+    .idletxt{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:11px;fill:var(--ts-alert);}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">A warp runs in lockstep, so divergence runs both paths in series</text>
+  <text class="small" x="40" y="62">A warp is 32 threads executing the same instruction together; 8 lanes shown here for clarity.</text>
+
+  <!-- A: no divergence -->
+  <text class="label" x="40" y="100">Whole warp takes the same path</text>
+  <g>
+    <rect class="lane" x="120" y="114" width="80" height="40" rx="4"/><text class="mono" x="160" y="139" text-anchor="middle">0</text>
+    <rect class="lane" x="210" y="114" width="80" height="40" rx="4"/><text class="mono" x="250" y="139" text-anchor="middle">1</text>
+    <rect class="lane" x="300" y="114" width="80" height="40" rx="4"/><text class="mono" x="340" y="139" text-anchor="middle">2</text>
+    <rect class="lane" x="390" y="114" width="80" height="40" rx="4"/><text class="mono" x="430" y="139" text-anchor="middle">3</text>
+    <rect class="lane" x="480" y="114" width="80" height="40" rx="4"/><text class="mono" x="520" y="139" text-anchor="middle">4</text>
+    <rect class="lane" x="570" y="114" width="80" height="40" rx="4"/><text class="mono" x="610" y="139" text-anchor="middle">5</text>
+    <rect class="lane" x="660" y="114" width="80" height="40" rx="4"/><text class="mono" x="700" y="139" text-anchor="middle">6</text>
+    <rect class="lane" x="750" y="114" width="80" height="40" rx="4"/><text class="mono" x="790" y="139" text-anchor="middle">7</text>
+  </g>
+  <text class="small" x="120" y="176">all 8 lanes active  →  1 pass, full speed</text>
+
+  <line class="divider" x1="40" y1="206" x2="920" y2="206"/>
+
+  <!-- B: divergence -->
+  <text class="label" x="40" y="240">Threads diverge on  if (i % 2 == 0)</text>
+
+  <text class="small" x="120" y="266">pass 1 — path A (even lanes)</text>
+  <g>
+    <rect class="lane" x="120" y="276" width="80" height="40" rx="4"/><text class="mono" x="160" y="301" text-anchor="middle">0</text>
+    <rect class="idle" x="210" y="276" width="80" height="40" rx="4"/><text class="idletxt" x="250" y="300" text-anchor="middle">idle</text>
+    <rect class="lane" x="300" y="276" width="80" height="40" rx="4"/><text class="mono" x="340" y="301" text-anchor="middle">2</text>
+    <rect class="idle" x="390" y="276" width="80" height="40" rx="4"/><text class="idletxt" x="430" y="300" text-anchor="middle">idle</text>
+    <rect class="lane" x="480" y="276" width="80" height="40" rx="4"/><text class="mono" x="520" y="301" text-anchor="middle">4</text>
+    <rect class="idle" x="570" y="276" width="80" height="40" rx="4"/><text class="idletxt" x="610" y="300" text-anchor="middle">idle</text>
+    <rect class="lane" x="660" y="276" width="80" height="40" rx="4"/><text class="mono" x="700" y="301" text-anchor="middle">6</text>
+    <rect class="idle" x="750" y="276" width="80" height="40" rx="4"/><text class="idletxt" x="790" y="300" text-anchor="middle">idle</text>
+  </g>
+
+  <text class="small" x="120" y="346">pass 2 — path B (odd lanes)</text>
+  <g>
+    <rect class="idle" x="120" y="356" width="80" height="40" rx="4"/><text class="idletxt" x="160" y="380" text-anchor="middle">idle</text>
+    <rect class="lane" x="210" y="356" width="80" height="40" rx="4"/><text class="mono" x="250" y="381" text-anchor="middle">1</text>
+    <rect class="idle" x="300" y="356" width="80" height="40" rx="4"/><text class="idletxt" x="340" y="380" text-anchor="middle">idle</text>
+    <rect class="lane" x="390" y="356" width="80" height="40" rx="4"/><text class="mono" x="430" y="381" text-anchor="middle">3</text>
+    <rect class="idle" x="480" y="356" width="80" height="40" rx="4"/><text class="idletxt" x="520" y="380" text-anchor="middle">idle</text>
+    <rect class="lane" x="570" y="356" width="80" height="40" rx="4"/><text class="mono" x="610" y="381" text-anchor="middle">5</text>
+    <rect class="idle" x="660" y="356" width="80" height="40" rx="4"/><text class="idletxt" x="700" y="380" text-anchor="middle">idle</text>
+    <rect class="lane" x="750" y="356" width="80" height="40" rx="4"/><text class="mono" x="790" y="381" text-anchor="middle">7</text>
+  </g>
+
+  <text class="small" x="120" y="418">the two passes run one after another  →  about 2x the time</text>
+</svg>

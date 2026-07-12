@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A launch is a grid of blocks, each block a group of threads, and each thread computes its own global index</title>
+  <desc id="d">At the top, the grid: four blocks in a row, block 0 to block 3, with block 1 highlighted in green. Dashed leader lines zoom from block 1 down to its threads. In the middle, block 1 opened up: eight threads t0 to t7, with thread t5 highlighted in green. At the bottom, the global-index formula: i equals blockIdx.x times blockDim.x plus threadIdx.x, which for block 1, blockDim 8, thread 5 is 1 times 8 plus 5 equals 13. The takeaway is that every thread computes its own global index from its block and its lane, so a single launch covers the whole array.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-success);}
+    .blk{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .blkhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .thhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .lead{stroke:var(--ts-success);stroke-width:1;fill:none;stroke-dasharray:4 3;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Grid, block, thread: how a launch is organized</text>
+  <text class="small" x="40" y="66">A launch is one grid of blocks; each block is a group of threads; each thread finds its own index.</text>
+
+  <!-- grid -->
+  <text class="label" x="40" y="120">Grid</text>
+  <text class="small" x="40" y="138">gridDim.x = 4</text>
+  <rect class="blk"   x="160" y="116" width="150" height="64" rx="6"/><text class="mono" x="235" y="153" text-anchor="middle">block 0</text>
+  <rect class="blkhi" x="330" y="116" width="150" height="64" rx="6"/><text class="mono" x="405" y="153" text-anchor="middle">block 1</text>
+  <rect class="blk"   x="500" y="116" width="150" height="64" rx="6"/><text class="mono" x="575" y="153" text-anchor="middle">block 2</text>
+  <rect class="blk"   x="670" y="116" width="150" height="64" rx="6"/><text class="mono" x="745" y="153" text-anchor="middle">block 3</text>
+
+  <!-- zoom leaders -->
+  <path class="lead" d="M330,180 L150,290"/>
+  <path class="lead" d="M480,180 L840,290"/>
+
+  <!-- block 1 expanded into threads -->
+  <text class="label" x="40" y="312">Block 1</text>
+  <text class="small" x="40" y="330">blockDim.x = 8</text>
+  <g>
+    <rect class="th"   x="150" y="296" width="80" height="50" rx="5"/><text class="mono" x="190" y="326" text-anchor="middle">t0</text>
+    <rect class="th"   x="236" y="296" width="80" height="50" rx="5"/><text class="mono" x="276" y="326" text-anchor="middle">t1</text>
+    <rect class="th"   x="322" y="296" width="80" height="50" rx="5"/><text class="mono" x="362" y="326" text-anchor="middle">t2</text>
+    <rect class="th"   x="408" y="296" width="80" height="50" rx="5"/><text class="mono" x="448" y="326" text-anchor="middle">t3</text>
+    <rect class="th"   x="494" y="296" width="80" height="50" rx="5"/><text class="mono" x="534" y="326" text-anchor="middle">t4</text>
+    <rect class="thhi" x="580" y="296" width="80" height="50" rx="5"/><text class="mono" x="620" y="326" text-anchor="middle">t5</text>
+    <rect class="th"   x="666" y="296" width="80" height="50" rx="5"/><text class="mono" x="706" y="326" text-anchor="middle">t6</text>
+    <rect class="th"   x="752" y="296" width="80" height="50" rx="5"/><text class="mono" x="792" y="326" text-anchor="middle">t7</text>
+  </g>
+
+  <!-- formula -->
+  <rect class="box" x="290" y="396" width="380" height="80" rx="8"/>
+  <text class="small" x="310" y="424">thread t5 in block 1 computes its global index:</text>
+  <text class="mono" x="310" y="448" font-size="12">i = blockIdx.x * blockDim.x + threadIdx.x</text>
+  <text class="monohi" x="310" y="470">= 1 * 8 + 5 = 13</text>
+
+  <text class="small" x="40" y="510">Every thread runs the same kernel but lands on its own index, so one launch covers the whole array.</text>
+</svg>

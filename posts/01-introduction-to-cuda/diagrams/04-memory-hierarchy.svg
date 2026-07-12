@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The GPU memory hierarchy, from tiny fast registers down to huge slow global memory</title>
+  <desc id="d">Four memory tiers drawn as a pyramid, narrow at the top and widening downward. From the top: registers, per thread, about 1 cycle, kilobytes per streaming multiprocessor. Shared memory or L1, highlighted in green, per block, about 30 cycles, around 100 kilobytes, the tier you manage by hand. L2 cache, shared by all streaming multiprocessors, about 200 cycles, tens of megabytes. Global memory or DRAM, visible to everyone, about 400 cycles, gigabytes, the only off-chip tier. An arrow on the left points up, labelled faster, smaller, and closer to the cores at the top, and slower, bigger, and farther away at the bottom. The takeaway is that fast kernels keep data in registers and shared memory and touch global memory as little as possible.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .tier{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .tierhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .axis{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Smaller and faster as you climb: the memory hierarchy</text>
+  <text class="small" x="40" y="66">Every byte starts in global memory and climbs toward the cores. The fewer trips down, the faster the kernel.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- axis -->
+  <line class="axis" x1="72" y1="440" x2="72" y2="116" marker-end="url(#a)"/>
+  <text class="small" x="92" y="128">faster, smaller, closer to the cores</text>
+  <text class="small" x="92" y="432">slower, bigger, farther away</text>
+
+  <!-- tiers -->
+  <rect class="tier"   x="380" y="112" width="220" height="58" rx="6"/>
+  <text class="mono" x="490" y="138" text-anchor="middle">Registers</text>
+  <text class="small" x="490" y="156" text-anchor="middle">per thread · ~1 cycle · KBs per SM</text>
+
+  <rect class="tierhi" x="330" y="182" width="320" height="64" rx="6"/>
+  <text class="mono" x="490" y="210" text-anchor="middle">Shared memory / L1</text>
+  <text class="small" x="490" y="228" text-anchor="middle">per block · ~30 cycles · ~100 KB · you manage this</text>
+
+  <rect class="tier"   x="270" y="258" width="440" height="64" rx="6"/>
+  <text class="mono" x="490" y="286" text-anchor="middle">L2 cache</text>
+  <text class="small" x="490" y="304" text-anchor="middle">shared by all SMs · ~200 cycles · tens of MB</text>
+
+  <rect class="tier"   x="200" y="334" width="580" height="72" rx="6"/>
+  <text class="mono" x="490" y="364" text-anchor="middle">Global memory (DRAM)</text>
+  <text class="small" x="490" y="384" text-anchor="middle">visible to everyone · ~400 cycles · GBs · the only off-chip tier</text>
+
+  <text class="small" x="40" y="466">Cycle counts are order-of-magnitude, illustrative; the ratio between tiers is the point, not the exact numbers.</text>
+</svg>
