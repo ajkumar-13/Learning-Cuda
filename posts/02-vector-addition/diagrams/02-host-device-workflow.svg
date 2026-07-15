@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Host and device are separate memories; you copy inputs across PCIe, run the kernel, and copy the result back</title>
+  <desc id="d">On the left, the host holds the input arrays h_A and h_B and a slot for the result h_C in system RAM. On the right, the device holds the GPU copies d_A and d_B, the vectorAdd kernel that computes d_C at i equals d_A at i plus d_B at i with one thread per element, and the result d_C. A dashed line down the middle marks the slow PCIe bus. One arrow copies the inputs from host to device, the kernel runs and writes d_C, and a second arrow copies the result back from device to host. The six labelled steps are cudaMalloc, copy inputs in, launch, synchronize, copy the result back, and cudaFree. The takeaway is that the inputs cross once and the result crosses back, and that round trip is the cost the kernel must beat.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .kernel{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;stroke-dasharray:5 5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Copy in, run the kernel, copy out</text>
+  <text class="small" x="40" y="66">The host and the device have separate memory. Data must cross the PCIe bus before and after the kernel.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- HOST -->
+  <rect class="panel" x="56" y="104" width="300" height="320" rx="10"/>
+  <text class="label" x="80" y="134">HOST — system RAM</text>
+  <rect class="box" x="84" y="152" width="244" height="64" rx="6"/><text class="mono" x="100" y="180">h_A, h_B</text><text class="small" x="100" y="200">the two input arrays</text>
+  <rect class="box" x="84" y="332" width="244" height="60" rx="6"/><text class="mono" x="100" y="360">h_C</text><text class="small" x="100" y="378">result lands here</text>
+
+  <!-- PCIe divider -->
+  <line class="divider" x1="480" y1="116" x2="480" y2="412"/>
+  <text class="small" x="480" y="134" text-anchor="middle">PCIe bus</text>
+  <text class="small" x="480" y="270" text-anchor="middle">the slow link</text>
+
+  <!-- DEVICE -->
+  <rect class="panel" x="604" y="104" width="300" height="320" rx="10"/>
+  <text class="label" x="628" y="134">DEVICE — GPU memory</text>
+  <rect class="box" x="632" y="152" width="244" height="48" rx="6"/><text class="mono" x="648" y="181">d_A, d_B</text>
+  <rect class="kernel" x="632" y="232" width="244" height="72" rx="8"/>
+  <text class="mono" x="754" y="262" text-anchor="middle">vectorAdd kernel</text>
+  <text class="small" x="754" y="282" text-anchor="middle">d_C[i] = d_A[i] + d_B[i]</text>
+  <text class="small" x="754" y="298" text-anchor="middle">one thread per element</text>
+  <rect class="box" x="632" y="336" width="244" height="48" rx="6"/><text class="mono" x="648" y="365">d_C</text>
+
+  <!-- internal device flow -->
+  <path class="flow" d="M754,200 L754,230" marker-end="url(#a)"/>
+  <path class="flow" d="M754,304 L754,334" marker-end="url(#a)"/>
+
+  <!-- transfers -->
+  <path class="flow" d="M328,180 L632,176" marker-end="url(#a)"/>
+  <text class="small" x="480" y="166" text-anchor="middle">copy inputs (host to device)</text>
+  <path class="flowhi" d="M632,360 L328,362" marker-end="url(#aS)"/>
+  <text class="small" x="480" y="352" text-anchor="middle">copy result back (device to host)</text>
+
+  <!-- steps + takeaway -->
+  <text class="small" x="40" y="466">1 cudaMalloc  ·  2 copy inputs in  ·  3 launch kernel  ·  4 cudaDeviceSynchronize  ·  5 copy result back  ·  6 cudaFree</text>
+</svg>

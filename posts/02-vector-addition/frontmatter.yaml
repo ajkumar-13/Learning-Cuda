@@ -1,0 +1,7 @@
+slug: 02-vector-addition
+title: "02 · Your first CUDA kernel — vector addition and the memory wall"
+date: 2026-06-30
+tags: [first-kernels, cuda, memory-bound]
+hero: diagrams/01-grid-is-the-loop.svg
+reading_time: 14
+part: "Part I — First Kernels"

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Launching whole blocks creates more threads than elements, and the boundary check stops the surplus writing out of bounds</title>
+  <desc id="d">With N equal to 6 elements and a block size of 4, ceiling division gives 2 blocks, which is 8 threads. Block 0 holds threads with global index 0 to 3 and block 1 holds 4 to 7, drawn as a row of eight neutral cells. Below them is the output array C with six cells holding values 1.5 to 6.5, and two extra slots for indices 6 and 7 drawn dashed in the alert colour as out of range, because C has only six cells. Threads 0 to 5 each write their cell. Threads 6 and 7 are the surplus: they are shown in the alert colour, and the guard if i is less than N is false for them, so they write nothing. The takeaway is that you launch whole blocks so the grid overshoots, and the single line if i less than N before the write stops the extra threads from corrupting memory past the end of the array.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:17px;fill:var(--ts-ink);}
+    .badtxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:17px;fill:var(--ts-alert);}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .thbad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:4 3;}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .cellbad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:4 3;}
+    .brk{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .flowbad{stroke:var(--ts-alert);stroke-width:1.5;fill:none;stroke-dasharray:4 3;}
+    .guard{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">More threads than elements, so guard with if (i &lt; N)</text>
+  <text class="small" x="40" y="66">N = 6, blockSize = 4  →  blocksPerGrid = ceil(6 / 4) = 2 blocks = 8 threads.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+  </defs>
+
+  <!-- block brackets -->
+  <text class="small" x="300" y="112" text-anchor="middle">block 0  (threads 0–3)</text>
+  <path class="brk" d="M132,122 L132,130 L468,130 L468,122"/>
+  <text class="small" x="660" y="112" text-anchor="middle">block 1  (threads 4–7)</text>
+  <path class="brk" d="M492,122 L492,130 L828,130 L828,122"/>
+
+  <!-- threads -->
+  <g>
+    <rect class="th" x="132" y="148" width="84" height="52" rx="5"/><text class="monohi" x="174" y="180" text-anchor="middle">0</text>
+    <rect class="th" x="216" y="148" width="84" height="52" rx="5"/><text class="monohi" x="258" y="180" text-anchor="middle">1</text>
+    <rect class="th" x="300" y="148" width="84" height="52" rx="5"/><text class="monohi" x="342" y="180" text-anchor="middle">2</text>
+    <rect class="th" x="384" y="148" width="84" height="52" rx="5"/><text class="monohi" x="426" y="180" text-anchor="middle">3</text>
+    <rect class="th" x="492" y="148" width="84" height="52" rx="5"/><text class="monohi" x="534" y="180" text-anchor="middle">4</text>
+    <rect class="th" x="576" y="148" width="84" height="52" rx="5"/><text class="monohi" x="618" y="180" text-anchor="middle">5</text>
+    <rect class="thbad" x="660" y="148" width="84" height="52" rx="5"/><text class="badtxt" x="702" y="180" text-anchor="middle">6</text>
+    <rect class="thbad" x="744" y="148" width="84" height="52" rx="5"/><text class="badtxt" x="786" y="180" text-anchor="middle">7</text>
+  </g>
+  <text class="small" x="132" y="222">global index   i = blockIdx.x * blockDim.x + threadIdx.x</text>
+
+  <!-- arrows -->
+  <g>
+    <path class="flow" d="M174,250 L174,300" marker-end="url(#a)"/>
+    <path class="flow" d="M258,250 L258,300" marker-end="url(#a)"/>
+    <path class="flow" d="M342,250 L342,300" marker-end="url(#a)"/>
+    <path class="flow" d="M426,250 L426,300" marker-end="url(#a)"/>
+    <path class="flow" d="M534,250 L534,300" marker-end="url(#a)"/>
+    <path class="flow" d="M618,250 L618,300" marker-end="url(#a)"/>
+    <path class="flowbad" d="M702,250 L702,300" marker-end="url(#ab)"/>
+    <path class="flowbad" d="M786,250 L786,300" marker-end="url(#ab)"/>
+  </g>
+
+  <!-- array C + out-of-range slots -->
+  <text class="small" x="132" y="324">array C</text>
+  <g>
+    <rect class="cell" x="132" y="302" width="84" height="50"/><text class="mono" x="174" y="332" text-anchor="middle">1.5</text>
+    <rect class="cell" x="216" y="302" width="84" height="50"/><text class="mono" x="258" y="332" text-anchor="middle">2.5</text>
+    <rect class="cell" x="300" y="302" width="84" height="50"/><text class="mono" x="342" y="332" text-anchor="middle">3.5</text>
+    <rect class="cell" x="384" y="302" width="84" height="50"/><text class="mono" x="426" y="332" text-anchor="middle">4.5</text>
+    <rect class="cell" x="492" y="302" width="84" height="50"/><text class="mono" x="534" y="332" text-anchor="middle">5.5</text>
+    <rect class="cell" x="576" y="302" width="84" height="50"/><text class="mono" x="618" y="332" text-anchor="middle">6.5</text>
+    <rect class="cellbad" x="660" y="302" width="84" height="50"/><text class="small" x="702" y="326" text-anchor="middle">C[6]</text><text class="small" x="702" y="342" text-anchor="middle">out of range</text>
+    <rect class="cellbad" x="744" y="302" width="84" height="50"/><text class="small" x="786" y="326" text-anchor="middle">C[7]</text><text class="small" x="786" y="342" text-anchor="middle">out of range</text>
+  </g>
+
+  <!-- guard -->
+  <rect class="guard" x="300" y="408" width="360" height="68" rx="8"/>
+  <text class="mono" x="480" y="436" text-anchor="middle">if (i &lt; N) C[i] = A[i] + B[i];</text>
+  <text class="small" x="480" y="458" text-anchor="middle">threads 6, 7: i &lt; N is false, so they write nothing.</text>
+</svg>

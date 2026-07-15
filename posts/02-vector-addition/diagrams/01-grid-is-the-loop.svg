@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The CPU walks the array one index per step; the GPU runs one thread per index, all logically in parallel</title>
+  <desc id="d">A single output array C of six values 1.5 through 6.5 sits in the middle. Above it, the CPU view: numbered badges 1 through 6 over the cells and a left-to-right arrow show that one core fills the elements strictly in order, one step at a time. Below it, the GPU view: six threads t0 through t5, split by a dashed divider into block 0 (threads 0 to 3) and block 1 (threads 4 and 5) because blockDim.x is 4, one under each cell, each with an arrow to its own cell, all running logically in parallel in a single launch. One thread, t5, is highlighted in green to show how a thread finds its element: its global index is blockIdx.x times blockDim.x plus threadIdx.x, which for block 1, thread 1 is 1 times 4 plus 1 equals 5, so it owns cell 5. The takeaway is that the loop the CPU runs over the indices becomes, on the GPU, a grid of threads that each own one index.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-success);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .cellhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .node{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .nodehi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .badge{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .badgetxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink-muted);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">The grid is the loop: one thread per element</text>
+  <text class="small" x="40" y="66">Computing C[i] = A[i] + B[i] over a six-element array.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- CPU: sequential, above -->
+  <text class="label" x="288" y="120">CPU — one core, in sequence</text>
+  <g>
+    <circle class="badge" cx="320" cy="150" r="11"/><text class="badgetxt" x="320" y="154" text-anchor="middle">1</text>
+    <circle class="badge" cx="384" cy="150" r="11"/><text class="badgetxt" x="384" y="154" text-anchor="middle">2</text>
+    <circle class="badge" cx="448" cy="150" r="11"/><text class="badgetxt" x="448" y="154" text-anchor="middle">3</text>
+    <circle class="badge" cx="512" cy="150" r="11"/><text class="badgetxt" x="512" y="154" text-anchor="middle">4</text>
+    <circle class="badge" cx="576" cy="150" r="11"/><text class="badgetxt" x="576" y="154" text-anchor="middle">5</text>
+    <circle class="badge" cx="640" cy="150" r="11"/><text class="badgetxt" x="640" y="154" text-anchor="middle">6</text>
+  </g>
+  <path class="flow" d="M320,176 L640,176" marker-end="url(#a)"/>
+  <text class="small" x="40" y="180">six steps,</text>
+  <text class="small" x="40" y="198">one after another</text>
+
+  <!-- the array (neutral) -->
+  <text class="label" x="232" y="244" text-anchor="end">array C</text>
+  <g>
+    <rect class="cell"   x="288" y="222" width="64" height="44"/><text class="mono" x="320" y="249" text-anchor="middle">1.5</text>
+    <rect class="cell"   x="352" y="222" width="64" height="44"/><text class="mono" x="384" y="249" text-anchor="middle">2.5</text>
+    <rect class="cell"   x="416" y="222" width="64" height="44"/><text class="mono" x="448" y="249" text-anchor="middle">3.5</text>
+    <rect class="cell"   x="480" y="222" width="64" height="44"/><text class="mono" x="512" y="249" text-anchor="middle">4.5</text>
+    <rect class="cell"   x="544" y="222" width="64" height="44"/><text class="mono" x="576" y="249" text-anchor="middle">5.5</text>
+    <rect class="cellhi" x="608" y="222" width="64" height="44"/><text class="mono" x="640" y="249" text-anchor="middle">6.5</text>
+  </g>
+  <text class="small" x="320" y="286" text-anchor="middle">0</text>
+  <text class="small" x="384" y="286" text-anchor="middle">1</text>
+  <text class="small" x="448" y="286" text-anchor="middle">2</text>
+  <text class="small" x="512" y="286" text-anchor="middle">3</text>
+  <text class="small" x="576" y="286" text-anchor="middle">4</text>
+  <text class="small" x="640" y="286" text-anchor="middle">5</text>
+
+  <!-- GPU: parallel, below -->
+  <g>
+    <path class="flow" d="M320,360 L320,300" marker-end="url(#a)"/>
+    <path class="flow" d="M384,360 L384,300" marker-end="url(#a)"/>
+    <path class="flow" d="M448,360 L448,300" marker-end="url(#a)"/>
+    <path class="flow" d="M512,360 L512,300" marker-end="url(#a)"/>
+    <path class="flow" d="M576,360 L576,300" marker-end="url(#a)"/>
+    <path class="flowhi" d="M640,360 L640,300" marker-end="url(#aS)"/>
+  </g>
+  <g>
+    <rect class="node"   x="288" y="362" width="64" height="38" rx="5"/><text class="mono" x="320" y="386" text-anchor="middle">t0</text>
+    <rect class="node"   x="352" y="362" width="64" height="38" rx="5"/><text class="mono" x="384" y="386" text-anchor="middle">t1</text>
+    <rect class="node"   x="416" y="362" width="64" height="38" rx="5"/><text class="mono" x="448" y="386" text-anchor="middle">t2</text>
+    <rect class="node"   x="480" y="362" width="64" height="38" rx="5"/><text class="mono" x="512" y="386" text-anchor="middle">t3</text>
+    <rect class="node"   x="544" y="362" width="64" height="38" rx="5"/><text class="mono" x="576" y="386" text-anchor="middle">t4</text>
+    <rect class="nodehi" x="608" y="362" width="64" height="38" rx="5"/><text class="mono" x="640" y="386" text-anchor="middle">t5</text>
+  </g>
+
+  <!-- block boundary: with blockDim.x = 4 the threads fall into block 0 (0-3) and block 1 (4-...) -->
+  <line x1="544" y1="300" x2="544" y2="402" stroke="var(--ts-ink-muted)" stroke-width="1" stroke-dasharray="4 4"/>
+  <text class="small" x="416" y="418" text-anchor="middle">block 0</text>
+  <text class="small" x="608" y="418" text-anchor="middle">block 1</text>
+
+  <text class="label" x="288" y="444">GPU — six threads, one launch, all in parallel</text>
+
+  <!-- single green-traced explanation -->
+  <text class="small" x="288" y="470">thread t5 finds its own index:</text>
+  <text class="monohi" x="288" y="492">i = blockIdx.x * blockDim.x + threadIdx.x = 1 * 4 + 1 = 5</text>
+</svg>

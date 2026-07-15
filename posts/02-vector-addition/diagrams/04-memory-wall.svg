@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Log-log runtime of vector addition versus array size for the CPU and two GPU measurements, showing the crossover and the bandwidth floor</title>
+  <desc id="d">A log-log chart. The horizontal axis is array size N from one thousand to one hundred million in decade steps. The vertical axis is runtime from one microsecond up to one hundred milliseconds, larger times higher up so lower curves are faster. Three measured curves from a GTX 1650 laptop. The single-threaded CPU curve starts fastest for tiny arrays, under one microsecond at one thousand elements, then climbs steeply to about 146 milliseconds at one hundred million elements, ending as the slowest. The GPU kernel-only curve is a flat low band, the fastest at large sizes, about 0.82 milliseconds at ten million and 8.3 milliseconds at one hundred million. The GPU with host-to-device and device-to-host transfer is a roughly flat 140 microsecond floor for small arrays, dominated by launch and PCIe cost, and only overtakes the CPU near one to ten million elements. The annotations mark the small-N transfer floor and the crossover region, and note that at large N every curve is limited by memory bandwidth, not arithmetic.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-accent:#D98E5F;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-accent:#E8B088;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .cpu{stroke:var(--ts-accent);stroke-width:1.5;fill:none;}
+    .gpuk{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .gput{stroke:var(--ts-primary);stroke-width:1.5;fill:none;}
+    .mcpu{fill:var(--ts-accent);}
+    .mgpuk{fill:var(--ts-success);}
+    .mgput{fill:var(--ts-primary);}
+    .cross{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Same kernel, different verdict: runtime vs array size (GTX 1650, log-log)</text>
+
+  <!-- y gridlines + labels -->
+  <g>
+    <line class="grid" x1="120" y1="430" x2="880" y2="430"/><text class="small" x="112" y="434" text-anchor="end">1 us</text>
+    <line class="grid" x1="120" y1="365" x2="880" y2="365"/><text class="small" x="112" y="369" text-anchor="end">10 us</text>
+    <line class="grid" x1="120" y1="300" x2="880" y2="300"/><text class="small" x="112" y="304" text-anchor="end">100 us</text>
+    <line class="grid" x1="120" y1="235" x2="880" y2="235"/><text class="small" x="112" y="239" text-anchor="end">1 ms</text>
+    <line class="grid" x1="120" y1="170" x2="880" y2="170"/><text class="small" x="112" y="174" text-anchor="end">10 ms</text>
+    <line class="grid" x1="120" y1="106" x2="880" y2="106"/><text class="small" x="112" y="110" text-anchor="end">100 ms</text>
+  </g>
+
+  <!-- axes -->
+  <line class="axis" x1="120" y1="90" x2="120" y2="446"/>
+  <line class="axis" x1="120" y1="446" x2="880" y2="446"/>
+  <g>
+    <text class="small" x="120" y="466" text-anchor="middle">1K</text>
+    <text class="small" x="272" y="466" text-anchor="middle">10K</text>
+    <text class="small" x="424" y="466" text-anchor="middle">100K</text>
+    <text class="small" x="576" y="466" text-anchor="middle">1M</text>
+    <text class="small" x="728" y="466" text-anchor="middle">10M</text>
+    <text class="small" x="880" y="466" text-anchor="middle">100M</text>
+  </g>
+  <text class="small" x="500" y="492" text-anchor="middle">array size  N  (log scale)</text>
+
+  <!-- crossover region -->
+  <line class="cross" x1="576" y1="90" x2="576" y2="446"/>
+  <line class="cross" x1="728" y1="90" x2="728" y2="446"/>
+  <text class="small" x="652" y="84" text-anchor="middle">crossover: GPU (with transfer) overtakes the CPU</text>
+
+  <!-- CPU single thread -->
+  <polyline class="cpu" points="120,430 272,399 424,332 576,235 728,162 880,95"/>
+  <g class="mcpu">
+    <circle cx="120" cy="430" r="3.5"/><circle cx="272" cy="399" r="3.5"/><circle cx="424" cy="332" r="3.5"/>
+    <circle cx="576" cy="235" r="3.5"/><circle cx="728" cy="162" r="3.5"/><circle cx="880" cy="95" r="3.5"/>
+  </g>
+
+  <!-- GPU with transfer -->
+  <polyline class="gput" points="120,289 272,290 424,291 576,230 728,167 880,100"/>
+  <g class="mgput">
+    <circle cx="120" cy="289" r="3.5"/><circle cx="272" cy="290" r="3.5"/><circle cx="424" cy="291" r="3.5"/>
+    <circle cx="576" cy="230" r="3.5"/><circle cx="728" cy="167" r="3.5"/><circle cx="880" cy="100" r="3.5"/>
+  </g>
+
+  <!-- GPU kernel only -->
+  <polyline class="gpuk" points="120,399 272,399 424,362 576,307 728,241 880,176"/>
+  <g class="mgpuk">
+    <circle cx="120" cy="399" r="3.5"/><circle cx="272" cy="399" r="3.5"/><circle cx="424" cy="362" r="3.5"/>
+    <circle cx="576" cy="307" r="3.5"/><circle cx="728" cy="241" r="3.5"/><circle cx="880" cy="176" r="3.5"/>
+  </g>
+
+  <!-- annotations -->
+  <text class="small" x="132" y="278">GPU + transfer: a ~140 us floor for small N (launch + PCIe), so the GPU loses on tiny work.</text>
+  <text class="small" x="600" y="330">kernel-only is the</text>
+  <text class="small" x="600" y="346">fastest path once</text>
+  <text class="small" x="600" y="362">data is on device</text>
+
+  <!-- legend -->
+  <rect x="132" y="104" width="250" height="74" rx="8" fill="var(--ts-surface)" stroke="var(--ts-border)" stroke-width="1"/>
+  <line class="cpu"  x1="146" y1="124" x2="178" y2="124"/><text class="small" x="186" y="128">CPU (1 thread)</text>
+  <line class="gput" x1="146" y1="146" x2="178" y2="146"/><text class="small" x="186" y="150">GPU (with transfer)</text>
+  <line class="gpuk" x1="146" y1="168" x2="178" y2="168"/><text class="small" x="186" y="172">GPU (kernel only)</text>
+</svg>
