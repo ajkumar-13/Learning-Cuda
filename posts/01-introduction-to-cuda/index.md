@@ -59,7 +59,7 @@ int row = blockIdx.y * blockDim.y + threadIdx.y;
 int col = blockIdx.x * blockDim.x + threadIdx.x;
 ```
 
-Because you launch whole blocks, a grid almost always has more threads than elements. Those surplus threads still launch — you cannot un-launch them — but an `if (i < N)` guard makes them return without reading or writing anything, the subject of the next post.
+Because you launch whole blocks, a grid almost always has more threads than elements. Those surplus threads still launch (you cannot un-launch them), but an `if (i < N)` guard makes them return without reading or writing anything, the subject of the next post.
 
 Those are all the pieces of a real kernel, so here is one: everything from the last two sections, in five lines.
 
@@ -73,6 +73,10 @@ __global__ void addOne(float *data, int N)
 ```
 
 Do not worry yet about how `data` gets onto the GPU — that is [Post 02](../02-vector-addition/index.md). For now notice the shape: there is no loop over the array. Each thread computes its own index and touches a single element. That *is* the kernel mindset from section 1, made concrete.
+
+> **Check your understanding.** Suppose `N = 1000` with 256 threads per block. How many blocks must launch, how many threads is that in total, and how many fail the `i < N` guard? Work it out before reading on.
+
+The launch needs `ceil(1000 / 256) = 4` blocks, which start `4 * 256 = 1024` threads, so the last `1024 - 1000 = 24` threads compute an index of 1000 or more and the guard makes them return without touching memory. That ceiling division and boundary guard are the exact pattern [Post 02](../02-vector-addition/index.md) turns into a real kernel.
 
 ## 4. The hardware: streaming multiprocessors and warps
 
@@ -117,7 +121,7 @@ The lesson: branch on conditions that are uniform across a warp, not on a thread
 A GPU has several kinds of memory, and the gap between fastest and slowest is enormous: registers answer in about one cycle, global memory (off-chip DRAM) in hundreds. The tiers form a pyramid, fast and tiny at the top, slow and huge at the bottom. The per-tier cycle counts in the diagram below are order-of-magnitude, illustrative figures (the exact latencies vary by architecture); what matters is the *ratio* between tiers, not the precise numbers.
 
 ![A pyramid of memory tiers: registers, then shared memory and L1, then L2, then global DRAM, getting bigger and slower toward the bottom.](diagrams/04-memory-hierarchy.svg)
-*Every byte starts in global memory and climbs toward the cores. Fast kernels minimize the trips down.*
+*Most large inputs and outputs live in global memory and must climb toward the cores before use. Fast kernels minimize those trips.*
 
 The tiers, and who can see each one:
 
@@ -134,7 +138,7 @@ The one tier you control by hand is **shared memory**: a small, per-block scratc
 
 ## 6. From code to the GPU: nvcc, PTX, and compute capability
 
-The CUDA compiler `nvcc` can emit a kernel in two forms: **PTX** (Parallel Thread Execution), a portable virtual assembly that the driver just-in-time compiles for *future* GPUs, and **cubin** (CUDA binary), native machine code for a *specific* architecture (`sm_75` for Turing, `sm_86` for Ampere). Which of the two end up in your program depends on the build flags, and a binary can carry both — so it runs today and still runs on hardware that did not exist when it was built. A GPU's **compute capability** (7.5, 8.6, ...) names its feature set and limits.
+The CUDA compiler `nvcc` can emit a kernel in two forms. **PTX** (Parallel Thread Execution) is a portable virtual assembly that the driver just-in-time compiles for *future* GPUs. **cubin** (CUDA binary) is native machine code for one *specific* architecture (`sm_75` for Turing, `sm_86` for Ampere). Which of the two end up in your program depends on the build flags, and a binary can carry both — so it runs today and still runs on hardware that did not exist when it was built. A GPU's **compute capability** (7.5, 8.6, ...) names its feature set and limits.
 
 Before writing a kernel it is worth asking the device what it is. [snippets/device_query.cu](snippets/device_query.cu) prints the numbers the rest of the series reasons about. Build and run it with:
 
@@ -158,6 +162,12 @@ Device 0: NVIDIA GeForce GTX 1650
 ```
 
 Those seven numbers (and especially the warp size of 32, the 1024-thread block limit, and the bandwidth) are the constraints every later kernel is tuned against.
+
+---
+
+## The model in three sentences
+
+A CUDA kernel describes the work of *one* thread. A launch creates a grid of blocks, and each thread computes which element it owns with `blockIdx.x * blockDim.x + threadIdx.x`. The GPU schedules whole blocks onto SMs and runs their threads in warps of 32, so fast CUDA programs expose many independent threads, keep warp control flow uniform, and minimize trips through global memory.
 
 ---
 
