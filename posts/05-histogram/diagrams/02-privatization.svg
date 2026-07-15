@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Privatization gives each block its own histogram in shared memory, counted locally then merged once into global memory</title>
+  <desc id="d">Three blocks across the top, each holding a private histogram in shared memory, drawn green. Each block's threads count their elements into that private histogram using fast shared-memory atomics, so contention stays inside the block. Then each block merges its private histogram into the single global bins array at the bottom with one atomic per bin, shown as green arrows converging downward. The note explains that for the solid-colour worst case the contention on the hottest global bin drops from 16,777,216 down to just 256, one increment per block, while the heavy counting happens in fast shared memory.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .block{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .priv{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .gbin{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .merge{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Privatization: a private histogram per block, merged once</text>
+  <text class="small" x="40" y="66">Each block counts into fast shared memory, so contention stays local; only the merge touches global memory.</text>
+
+  <defs>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- three blocks with private shared histograms -->
+  <g>
+    <rect class="block" x="56"  y="100" width="270" height="150" rx="10"/>
+    <text class="label" x="76" y="126">Block 0</text><text class="small" x="76" y="144">counts into its own shared histogram</text>
+    <rect class="priv" x="76" y="156" width="34" height="74" rx="3"/><rect class="priv" x="116" y="186" width="34" height="44" rx="3"/><rect class="priv" x="156" y="170" width="34" height="60" rx="3"/><rect class="priv" x="196" y="196" width="34" height="34" rx="3"/><rect class="priv" x="236" y="178" width="34" height="52" rx="3"/><rect class="priv" x="276" y="200" width="34" height="30" rx="3"/>
+  </g>
+  <g>
+    <rect class="block" x="346" y="100" width="270" height="150" rx="10"/>
+    <text class="label" x="366" y="126">Block 1</text><text class="small" x="366" y="144">counts into its own shared histogram</text>
+    <rect class="priv" x="366" y="170" width="34" height="60" rx="3"/><rect class="priv" x="406" y="194" width="34" height="36" rx="3"/><rect class="priv" x="446" y="160" width="34" height="70" rx="3"/><rect class="priv" x="486" y="188" width="34" height="42" rx="3"/><rect class="priv" x="526" y="200" width="34" height="30" rx="3"/><rect class="priv" x="566" y="180" width="34" height="50" rx="3"/>
+  </g>
+  <g>
+    <rect class="block" x="636" y="100" width="270" height="150" rx="10"/>
+    <text class="label" x="656" y="126">Block 2</text><text class="small" x="656" y="144">counts into its own shared histogram</text>
+    <rect class="priv" x="656" y="192" width="34" height="38" rx="3"/><rect class="priv" x="696" y="166" width="34" height="64" rx="3"/><rect class="priv" x="736" y="184" width="34" height="46" rx="3"/><rect class="priv" x="776" y="200" width="34" height="30" rx="3"/><rect class="priv" x="816" y="172" width="34" height="58" rx="3"/><rect class="priv" x="856" y="190" width="34" height="40" rx="3"/>
+  </g>
+  <text class="small" x="56" y="276">phase 1 — count locally with fast shared-memory atomics (contention bounded by one block)</text>
+
+  <!-- merge to global -->
+  <g class="merge">
+    <path d="M191,308 L450,396" marker-end="url(#aS)"/>
+    <path d="M481,308 L480,396" marker-end="url(#aS)"/>
+    <path d="M771,308 L510,396" marker-end="url(#aS)"/>
+  </g>
+  <text class="small" x="600" y="350">phase 2 — merge: one atomic per bin per block</text>
+
+  <!-- global bins -->
+  <rect class="gbin" x="300" y="398" width="360" height="50" rx="8"/>
+  <text class="mono" x="480" y="428" text-anchor="middle">global bins[256]</text>
+</svg>

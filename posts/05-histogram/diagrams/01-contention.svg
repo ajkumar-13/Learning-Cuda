@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">When many threads atomically increment the same histogram bin, the atomics serialize into a single-lane queue</title>
+  <desc id="d">Eight threads across the top all read the same value, 128, as happens for a flat white-wall image. Every one of them issues an atomicAdd to the same global bin, bins at 128, drawn in red, so eight red arrows converge on that one address. Because an atomic is a read-modify-write that cannot be interrupted, the increments happen one at a time, shown as a serialized queue. The other bins sit idle. The note explains that for 16 million identical elements that is 16,777,216 atomics serializing on one address, dropping throughput to about 0.8 gigabytes per second, slower than a CPU. Atomics fix the lost-update race but turn the parallel kernel into a single-lane checkout under contention.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .bin{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .hot{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .contend{stroke:var(--ts-alert);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Atomics fix the race, but contention serializes them</text>
+  <text class="small" x="40" y="66">On a flat image every pixel is the same value, so every thread targets the same bin.</text>
+
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+  </defs>
+
+  <text class="small" x="40" y="104">8 threads, all reading value 128</text>
+  <g>
+    <rect class="th" x="80"  y="116" width="80" height="40" rx="5"/><text class="mono" x="120" y="141" text-anchor="middle">t0</text>
+    <rect class="th" x="180" y="116" width="80" height="40" rx="5"/><text class="mono" x="220" y="141" text-anchor="middle">t1</text>
+    <rect class="th" x="280" y="116" width="80" height="40" rx="5"/><text class="mono" x="320" y="141" text-anchor="middle">t2</text>
+    <rect class="th" x="380" y="116" width="80" height="40" rx="5"/><text class="mono" x="420" y="141" text-anchor="middle">t3</text>
+    <rect class="th" x="480" y="116" width="80" height="40" rx="5"/><text class="mono" x="520" y="141" text-anchor="middle">t4</text>
+    <rect class="th" x="580" y="116" width="80" height="40" rx="5"/><text class="mono" x="620" y="141" text-anchor="middle">t5</text>
+    <rect class="th" x="680" y="116" width="80" height="40" rx="5"/><text class="mono" x="720" y="141" text-anchor="middle">t6</text>
+    <rect class="th" x="780" y="116" width="80" height="40" rx="5"/><text class="mono" x="820" y="141" text-anchor="middle">t7</text>
+  </g>
+
+  <!-- all converge on one bin -->
+  <g class="contend">
+    <path d="M120,158 L470,300" marker-end="url(#ab)"/>
+    <path d="M220,158 L478,300" marker-end="url(#ab)"/>
+    <path d="M320,158 L486,300" marker-end="url(#ab)"/>
+    <path d="M420,158 L490,300" marker-end="url(#ab)"/>
+    <path d="M520,158 L494,300" marker-end="url(#ab)"/>
+    <path d="M620,158 L498,300" marker-end="url(#ab)"/>
+    <path d="M720,158 L506,300" marker-end="url(#ab)"/>
+    <path d="M820,158 L514,300" marker-end="url(#ab)"/>
+  </g>
+  <text class="small" x="600" y="250" fill="var(--ts-alert)">one address, one at a time</text>
+
+  <!-- bins -->
+  <text class="small" x="300" y="318">global bins[256]</text>
+  <g>
+    <rect class="bin" x="300" y="302" width="56" height="40"/><text class="small" x="328" y="327" text-anchor="middle">126</text>
+    <rect class="bin" x="356" y="302" width="56" height="40"/><text class="small" x="384" y="327" text-anchor="middle">127</text>
+    <rect class="hot" x="412" y="302" width="56" height="40"/><text class="mono" x="440" y="327" text-anchor="middle">128</text>
+    <rect class="bin" x="468" y="302" width="56" height="40"/><text class="small" x="496" y="327" text-anchor="middle">129</text>
+    <rect class="bin" x="524" y="302" width="56" height="40"/><text class="small" x="552" y="327" text-anchor="middle">130</text>
+  </g>
+  <text class="small" x="440" y="364" text-anchor="middle" fill="var(--ts-alert)">the one hot bin</text>
+</svg>

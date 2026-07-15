@@ -1,0 +1,7 @@
+slug: 05-histogram
+title: "05 · Histogram — beating atomic contention with privatization"
+date: 2026-07-06
+tags: [parallel-patterns, cuda, atomics]
+hero: diagrams/01-contention.svg
+reading_time: 14
+part: "Part II — Parallel Patterns"

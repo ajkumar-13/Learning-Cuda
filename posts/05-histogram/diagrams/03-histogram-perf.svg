@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Bandwidth of global versus shared-memory histogram atomics on random data and on a solid-colour worst case</title>
+  <desc id="d">A grouped bar chart of bandwidth in gigabytes per second on a GTX 1650. For random data, global atomics reach 45 and shared-memory privatization reaches 180, four times faster. For solid-colour data where every element hits one bin, global atomics collapse to 0.8 gigabytes per second, drawn as a near-zero bar, while shared-memory privatization stays robust at 120, roughly 150 times faster. Global atomics are drawn neutral grey and shared atomics green. The takeaway is that privatization is not just faster on average but robust: its performance barely changes between the easy and the worst case, while global atomics fall apart under contention.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .glob{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .shar{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .bottleneck{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Privatization is robust; global atomics collapse under contention</text>
+
+  <!-- gridlines -->
+  <g>
+    <line class="grid" x1="150" y1="440" x2="900" y2="440"/><text class="small" x="142" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="150" y1="360" x2="900" y2="360"/><text class="small" x="142" y="364" text-anchor="end">50</text>
+    <line class="grid" x1="150" y1="280" x2="900" y2="280"/><text class="small" x="142" y="284" text-anchor="end">100</text>
+    <line class="grid" x1="150" y1="200" x2="900" y2="200"/><text class="small" x="142" y="204" text-anchor="end">150</text>
+    <line class="grid" x1="150" y1="120" x2="900" y2="120"/><text class="small" x="142" y="124" text-anchor="end">200</text>
+  </g>
+  <line class="axis" x1="150" y1="110" x2="150" y2="440"/>
+  <text class="small" x="66" y="280" transform="rotate(-90 66 280)" text-anchor="middle">bandwidth (GB/s)</text>
+
+  <!-- Random group -->
+  <rect class="glob" x="240" y="368" width="90" height="72"/>
+  <text class="val" x="285" y="360" text-anchor="middle">45</text>
+  <rect class="shar" x="340" y="152" width="90" height="288"/>
+  <text class="val" x="385" y="144" text-anchor="middle" fill="var(--ts-success)">180</text>
+  <text class="label" x="335" y="462" text-anchor="middle">Random data</text>
+  <text class="small" x="335" y="480" text-anchor="middle">low contention</text>
+
+  <!-- Solid group -->
+  <rect class="bottleneck" x="580" y="438" width="90" height="2"/>
+  <text class="val" x="625" y="430" text-anchor="middle" fill="var(--ts-alert)">0.8</text>
+  <rect class="shar" x="680" y="248" width="90" height="192"/>
+  <text class="val" x="725" y="240" text-anchor="middle" fill="var(--ts-success)">120</text>
+  <text class="label" x="675" y="462" text-anchor="middle">Solid colour</text>
+  <text class="small" x="675" y="480" text-anchor="middle">maximum contention</text>
+
+  <!-- legend -->
+  <rect class="glob" x="600" y="120" width="22" height="14"/><text class="small" x="630" y="132">global atomics</text>
+  <rect class="shar" x="740" y="120" width="22" height="14"/><text class="small" x="770" y="132">shared (privatized)</text>
+</svg>
