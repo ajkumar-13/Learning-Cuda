@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Tree-based parallel reduction sums eight values in three halving steps instead of seven sequential adds</title>
+  <desc id="d">A binary reduction tree. Step 0 has eight values 1 through 8. Step 1 sums adjacent pairs into four values 3, 7, 11, 15. Step 2 sums those into two values 10 and 26. Step 3 sums those into one value, 36, the total, highlighted in green along with the two arrows that feed it. The point is that the number of parallel steps is log base 2 of N, here 3 for 8 values, rather than N minus 1 sequential adds; for 16 million values that is about 24 steps instead of 16 million. The work is still order N, but the depth is order log N.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-success);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .cellhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Tree reduction: log N steps, not N</text>
+  <text class="small" x="40" y="66">Sum pairs in parallel and fold the array in half each step, instead of adding one at a time.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <text class="small" x="40" y="135">step 0</text>
+  <text class="small" x="40" y="235">step 1</text>
+  <text class="small" x="40" y="335">step 2</text>
+  <text class="small" x="40" y="435">step 3</text>
+
+  <!-- arrows step0->1 -->
+  <g class="flow">
+    <path d="M206,156 L244,206" marker-end="url(#a)"/><path d="M282,156 L244,206" marker-end="url(#a)"/>
+    <path d="M358,156 L396,206" marker-end="url(#a)"/><path d="M434,156 L396,206" marker-end="url(#a)"/>
+    <path d="M510,156 L548,206" marker-end="url(#a)"/><path d="M586,156 L548,206" marker-end="url(#a)"/>
+    <path d="M662,156 L700,206" marker-end="url(#a)"/><path d="M738,156 L700,206" marker-end="url(#a)"/>
+  </g>
+  <!-- arrows step1->2 -->
+  <g class="flow">
+    <path d="M244,256 L320,306" marker-end="url(#a)"/><path d="M396,256 L320,306" marker-end="url(#a)"/>
+    <path d="M548,256 L624,306" marker-end="url(#a)"/><path d="M700,256 L624,306" marker-end="url(#a)"/>
+  </g>
+  <!-- arrows step2->3 (green, into the final sum) -->
+  <g class="flowhi">
+    <path d="M320,356 L472,406" marker-end="url(#aS)"/><path d="M624,356 L472,406" marker-end="url(#aS)"/>
+  </g>
+
+  <!-- row 0 -->
+  <g>
+    <rect class="cell" x="176" y="110" width="60" height="46"/><text class="mono" x="206" y="139" text-anchor="middle">1</text>
+    <rect class="cell" x="252" y="110" width="60" height="46"/><text class="mono" x="282" y="139" text-anchor="middle">2</text>
+    <rect class="cell" x="328" y="110" width="60" height="46"/><text class="mono" x="358" y="139" text-anchor="middle">3</text>
+    <rect class="cell" x="404" y="110" width="60" height="46"/><text class="mono" x="434" y="139" text-anchor="middle">4</text>
+    <rect class="cell" x="480" y="110" width="60" height="46"/><text class="mono" x="510" y="139" text-anchor="middle">5</text>
+    <rect class="cell" x="556" y="110" width="60" height="46"/><text class="mono" x="586" y="139" text-anchor="middle">6</text>
+    <rect class="cell" x="632" y="110" width="60" height="46"/><text class="mono" x="662" y="139" text-anchor="middle">7</text>
+    <rect class="cell" x="708" y="110" width="60" height="46"/><text class="mono" x="738" y="139" text-anchor="middle">8</text>
+  </g>
+  <!-- row 1 -->
+  <g>
+    <rect class="cell" x="214" y="210" width="60" height="46"/><text class="mono" x="244" y="239" text-anchor="middle">3</text>
+    <rect class="cell" x="366" y="210" width="60" height="46"/><text class="mono" x="396" y="239" text-anchor="middle">7</text>
+    <rect class="cell" x="518" y="210" width="60" height="46"/><text class="mono" x="548" y="239" text-anchor="middle">11</text>
+    <rect class="cell" x="670" y="210" width="60" height="46"/><text class="mono" x="700" y="239" text-anchor="middle">15</text>
+  </g>
+  <!-- row 2 -->
+  <g>
+    <rect class="cell" x="290" y="310" width="60" height="46"/><text class="mono" x="320" y="339" text-anchor="middle">10</text>
+    <rect class="cell" x="594" y="310" width="60" height="46"/><text class="mono" x="624" y="339" text-anchor="middle">26</text>
+  </g>
+  <!-- row 3 (final) -->
+  <rect class="cellhi" x="442" y="410" width="60" height="46"/><text class="monohi" x="472" y="439" text-anchor="middle">36</text>
+
+  <text class="small" x="560" y="430">the whole array reduced to one value</text>
+  <text class="small" x="40" y="500">Work is still O(N) additions, but the depth is O(log N): 16M values reduce in about 24 parallel steps, not 16M.</text>
+</svg>

@@ -1,0 +1,7 @@
+slug: 04-reduction
+title: "04 · Reduction — summing millions of numbers without a serial bottleneck"
+date: 2026-07-04
+tags: [parallel-patterns, cuda, reduction]
+hero: diagrams/01-tree-reduction.svg
+reading_time: 15
+part: "Part II — Parallel Patterns"

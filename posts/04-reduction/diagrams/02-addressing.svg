@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Interleaved addressing scatters the active threads so every warp is half idle, while sequential addressing keeps whole warps active</title>
+  <desc id="d">Two panels, each showing 16 lanes of a reduction step. On the left, interleaved addressing with stride 1: the active lanes are every other one (0, 2, 4 and so on) drawn neutral, and the odd lanes are idle, drawn red and dashed. The active lanes are scattered, so every 32-lane warp is half idle at every step. On the right, sequential addressing with stride 8: lanes 0 to 7 are active and contiguous, lanes 8 to 15 are idle and red. Whole warps stay active until the very end. The CPU model counts 47 divergent warp-steps for interleaved versus only 5 for sequential over a 256-thread block. Both do the same adds and get the same result; sequential addressing simply avoids serializing idle lanes.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .tiny{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:10px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .on{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .off{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:3 2;}
+    .offtxt{font-family:Inter,system-ui,sans-serif;font-size:9px;fill:var(--ts-alert);}
+    .pair{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Sequential addressing keeps whole warps active</text>
+
+  <!-- LEFT: interleaved -->
+  <rect class="panel" x="40" y="92" width="430" height="300" rx="10"/>
+  <text class="label" x="60" y="120">Interleaved  (stride 1)</text>
+  <text class="small" x="60" y="140">active = every other lane (tid % 2 == 0)</text>
+  <g id="L">
+    <rect class="on"  x="60"  y="160" width="22" height="40"/><text class="tiny" x="71"  y="185" text-anchor="middle">0</text>
+    <rect class="off" x="84"  y="160" width="22" height="40"/>
+    <rect class="on"  x="108" y="160" width="22" height="40"/><text class="tiny" x="119" y="185" text-anchor="middle">2</text>
+    <rect class="off" x="132" y="160" width="22" height="40"/>
+    <rect class="on"  x="156" y="160" width="22" height="40"/><text class="tiny" x="167" y="185" text-anchor="middle">4</text>
+    <rect class="off" x="180" y="160" width="22" height="40"/>
+    <rect class="on"  x="204" y="160" width="22" height="40"/><text class="tiny" x="215" y="185" text-anchor="middle">6</text>
+    <rect class="off" x="228" y="160" width="22" height="40"/>
+    <rect class="on"  x="252" y="160" width="22" height="40"/><text class="tiny" x="263" y="185" text-anchor="middle">8</text>
+    <rect class="off" x="276" y="160" width="22" height="40"/>
+    <rect class="on"  x="300" y="160" width="22" height="40"/><text class="tiny" x="311" y="185" text-anchor="middle">10</text>
+    <rect class="off" x="324" y="160" width="22" height="40"/>
+    <rect class="on"  x="348" y="160" width="22" height="40"/><text class="tiny" x="359" y="185" text-anchor="middle">12</text>
+    <rect class="off" x="372" y="160" width="22" height="40"/>
+    <rect class="on"  x="396" y="160" width="22" height="40"/><text class="tiny" x="407" y="185" text-anchor="middle">14</text>
+    <rect class="off" x="420" y="160" width="22" height="40"/>
+  </g>
+  <path class="pair" d="M71,210 Q83,228 95,210"/><path class="pair" d="M167,210 Q179,228 191,210"/>
+  <text class="label" x="60" y="360" fill="var(--ts-alert)">47 divergent warp-steps</text>
+
+  <!-- RIGHT: sequential -->
+  <rect class="panel" x="500" y="92" width="430" height="300" rx="10"/>
+  <text class="label" x="520" y="120">Sequential  (stride 8)</text>
+  <text class="small" x="520" y="140">active = first half (tid &lt; stride)</text>
+  <g id="R">
+    <rect class="on"  x="520" y="160" width="22" height="40"/><text class="tiny" x="531" y="185" text-anchor="middle">0</text>
+    <rect class="on"  x="544" y="160" width="22" height="40"/><text class="tiny" x="555" y="185" text-anchor="middle">1</text>
+    <rect class="on"  x="568" y="160" width="22" height="40"/><text class="tiny" x="579" y="185" text-anchor="middle">2</text>
+    <rect class="on"  x="592" y="160" width="22" height="40"/><text class="tiny" x="603" y="185" text-anchor="middle">3</text>
+    <rect class="on"  x="616" y="160" width="22" height="40"/><text class="tiny" x="627" y="185" text-anchor="middle">4</text>
+    <rect class="on"  x="640" y="160" width="22" height="40"/><text class="tiny" x="651" y="185" text-anchor="middle">5</text>
+    <rect class="on"  x="664" y="160" width="22" height="40"/><text class="tiny" x="675" y="185" text-anchor="middle">6</text>
+    <rect class="on"  x="688" y="160" width="22" height="40"/><text class="tiny" x="699" y="185" text-anchor="middle">7</text>
+    <rect class="off" x="712" y="160" width="22" height="40"/>
+    <rect class="off" x="736" y="160" width="22" height="40"/>
+    <rect class="off" x="760" y="160" width="22" height="40"/>
+    <rect class="off" x="784" y="160" width="22" height="40"/>
+    <rect class="off" x="808" y="160" width="22" height="40"/>
+    <rect class="off" x="832" y="160" width="22" height="40"/>
+    <rect class="off" x="856" y="160" width="22" height="40"/>
+    <rect class="off" x="880" y="160" width="22" height="40"/>
+  </g>
+  <path class="pair" d="M531,210 Q645,250 771,210"/>
+  <text class="small" x="520" y="252">each lane i adds lane i+8: active block is contiguous</text>
+  <text class="label" x="520" y="360" fill="var(--ts-success)">5 divergent warp-steps</text>
+</svg>

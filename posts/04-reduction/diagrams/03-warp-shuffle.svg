@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Warp shuffle reduces values across a warp by reading other lanes' registers directly, with no shared memory</title>
+  <desc id="d">A row of eight lanes, each holding a value in a register; a real warp has 32 lanes. In the first step, with offset 4, each of lanes 0 to 3 reads the register of the lane 4 positions higher and adds it, shown as four green arrows from lanes 4 to 7 down into lanes 0 to 3, so lanes 0 to 3 now hold partial sums. The step repeats with offset 2 and then offset 1, after which lane 0 holds the total. For a full 32-lane warp it takes 5 steps with offsets 16, 8, 4, 2, 1. The code is val plus equals shfl_down_sync of mask 0xffffffff, val, and the offset. The takeaway is that this uses registers only, with no shared memory and no syncthreads inside the warp, because the lanes are implicitly in lockstep, making it the fastest reduction primitive.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .lane{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .lanehi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .shfl{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .codebox{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Warp shuffle: lanes read each other's registers directly</text>
+  <text class="small" x="40" y="66">No shared memory and no __syncthreads inside the warp — the 32 lanes are implicitly in lockstep.</text>
+
+  <defs>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <text class="label" x="40" y="150">lanes (one register each)  —  32 in a real warp, 8 shown</text>
+  <g>
+    <rect class="lane" x="192" y="166" width="64" height="46"/><text class="mono" x="224" y="195" text-anchor="middle">a0</text>
+    <rect class="lane" x="264" y="166" width="64" height="46"/><text class="mono" x="296" y="195" text-anchor="middle">a1</text>
+    <rect class="lane" x="336" y="166" width="64" height="46"/><text class="mono" x="368" y="195" text-anchor="middle">a2</text>
+    <rect class="lane" x="408" y="166" width="64" height="46"/><text class="mono" x="440" y="195" text-anchor="middle">a3</text>
+    <rect class="lane" x="480" y="166" width="64" height="46"/><text class="mono" x="512" y="195" text-anchor="middle">a4</text>
+    <rect class="lane" x="552" y="166" width="64" height="46"/><text class="mono" x="584" y="195" text-anchor="middle">a5</text>
+    <rect class="lane" x="624" y="166" width="64" height="46"/><text class="mono" x="656" y="195" text-anchor="middle">a6</text>
+    <rect class="lane" x="696" y="166" width="64" height="46"/><text class="mono" x="728" y="195" text-anchor="middle">a7</text>
+  </g>
+  <!-- delta=4 shuffles: lane i reads lane i+4 -->
+  <g class="shfl">
+    <path d="M512,212 C512,260 224,260 224,214" marker-end="url(#aS)"/>
+    <path d="M584,212 C584,272 296,272 296,214" marker-end="url(#aS)"/>
+    <path d="M656,212 C656,284 368,284 368,214" marker-end="url(#aS)"/>
+    <path d="M728,212 C728,296 440,296 440,214" marker-end="url(#aS)"/>
+  </g>
+  <text class="small" x="224" y="320">step 1, offset 4: lanes 0–3 read lanes 4–7 and add  →  lanes 0–3 now hold partial sums</text>
+  <text class="small" x="224" y="346">step 2, offset 2: lanes 0–1 read lanes 2–3.   step 3, offset 1: lane 0 reads lane 1.</text>
+
+  <rect class="lanehi" x="192" y="372" width="64" height="46"/><text class="mono" x="224" y="401" text-anchor="middle">sum</text>
+  <text class="small" x="270" y="400">lane 0 holds the total after 3 steps (5 steps for a full 32-lane warp).</text>
+
+  <rect class="codebox" x="40" y="446" width="520" height="44" rx="6"/>
+  <text class="mono" x="56" y="473" font-size="12">val += __shfl_down_sync(0xffffffff, val, offset);  // offset = 16,8,4,2,1</text>
+  <text class="small" x="588" y="473">Registers only: the fastest reduction primitive.</text>
+</svg>

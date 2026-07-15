@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Memory bandwidth achieved by three reduction strategies against the GPU's theoretical peak</title>
+  <desc id="d">A bar chart of achieved memory bandwidth in gigabytes per second for summing 16 million floats on a GTX 1650 with a theoretical peak of 192 gigabytes per second, marked by a dashed line. The naive atomic kernel reaches only 0.08 gigabytes per second and takes 847 milliseconds, drawn red and barely visible, because every thread serializes on one address. The shared-memory tree reaches 108 gigabytes per second at 0.62 milliseconds, about 56 percent of peak, drawn neutral. The warp-shuffle kernel reaches 132 gigabytes per second at 0.51 milliseconds, about 69 percent of peak, drawn green. The takeaway is that a good reduction becomes memory bound: the algorithm stops being the bottleneck and the only limit is how fast memory can be read.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .peak{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
+    .naive{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .shared{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .warp{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A good reduction is memory bound: 69% of peak bandwidth</text>
+
+  <!-- gridlines -->
+  <g>
+    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="160" y1="361" x2="900" y2="361"/><text class="small" x="152" y="365" text-anchor="end">48</text>
+    <line class="grid" x1="160" y1="282" x2="900" y2="282"/><text class="small" x="152" y="286" text-anchor="end">96</text>
+    <line class="grid" x1="160" y1="204" x2="900" y2="204"/><text class="small" x="152" y="208" text-anchor="end">144</text>
+  </g>
+  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
+  <text class="small" x="70" y="280" transform="rotate(-90 70 280)" text-anchor="middle">bandwidth (GB/s)</text>
+
+  <!-- peak line at 128 -->
+  <line class="peak" x1="160" y1="125" x2="900" y2="125"/>
+  <text class="small" x="900" y="120" text-anchor="end">theoretical peak 192 GB/s</text>
+
+  <!-- bars -->
+  <rect class="naive"  x="220" y="438" width="140" height="2"/>
+  <text class="val" x="290" y="430" text-anchor="middle" fill="var(--ts-alert)">0.08</text>
+  <text class="label" x="290" y="462" text-anchor="middle">naive atomic</text>
+  <text class="small" x="290" y="480" text-anchor="middle">847 ms · serializes</text>
+
+  <rect class="shared" x="440" y="263" width="140" height="177"/>
+  <text class="val" x="510" y="255" text-anchor="middle">108</text>
+  <text class="label" x="510" y="462" text-anchor="middle">shared memory</text>
+  <text class="small" x="510" y="480" text-anchor="middle">0.62 ms · 56%</text>
+
+  <rect class="warp"   x="680" y="223" width="140" height="217"/>
+  <text class="val" x="750" y="215" text-anchor="middle" fill="var(--ts-success)">132</text>
+  <text class="label" x="750" y="462" text-anchor="middle">warp shuffle</text>
+  <text class="small" x="750" y="480" text-anchor="middle">0.51 ms · 69%</text>
+</svg>
