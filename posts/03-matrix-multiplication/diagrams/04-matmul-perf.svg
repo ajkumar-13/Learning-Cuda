@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Throughput of the naive kernel, the tiled kernel, and cuBLAS on a 1024 cubed matrix multiply</title>
+  <desc id="d">A bar chart of throughput in GFLOPS for a 1024 by 1024 by 1024 multiply on a GTX 1650. The naive kernel reaches 135 GFLOPS at 15.9 milliseconds, the baseline, drawn neutral. The tiled shared-memory kernel reaches 258 GFLOPS at 8.3 milliseconds, about 1.9 times the naive, drawn green as the kernel we built. The cuBLAS library reaches 2616 GFLOPS at 0.82 milliseconds, about 19 times the naive, drawn blue and towering over the others. The note explains that cuBLAS is so far ahead because of register tiling, vectorized float4 loads, double buffering, and warp-level primitives that this post has not used.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .naive{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .tiled{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .cublas{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">The tiled kernel is 1.9x naive; cuBLAS is 19x (1024 cubed, GTX 1650)</text>
+
+  <!-- y gridlines + labels (GFLOPS) -->
+  <g>
+    <line class="grid" x1="150" y1="440" x2="900" y2="440"/><text class="small" x="142" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="150" y1="381" x2="900" y2="381"/><text class="small" x="142" y="385" text-anchor="end">500</text>
+    <line class="grid" x1="150" y1="322" x2="900" y2="322"/><text class="small" x="142" y="326" text-anchor="end">1000</text>
+    <line class="grid" x1="150" y1="262" x2="900" y2="262"/><text class="small" x="142" y="266" text-anchor="end">1500</text>
+    <line class="grid" x1="150" y1="203" x2="900" y2="203"/><text class="small" x="142" y="207" text-anchor="end">2000</text>
+    <line class="grid" x1="150" y1="144" x2="900" y2="144"/><text class="small" x="142" y="148" text-anchor="end">2500</text>
+  </g>
+  <line class="axis" x1="150" y1="110" x2="150" y2="440"/>
+  <text class="small" x="60" y="280" transform="rotate(-90 60 280)" text-anchor="middle">throughput (GFLOPS)</text>
+
+  <!-- bars -->
+  <rect class="naive"  x="220" y="424" width="140" height="16"/>
+  <text class="val" x="290" y="416" text-anchor="middle">135</text>
+  <text class="label" x="290" y="462" text-anchor="middle">GPU naive</text>
+  <text class="small" x="290" y="480" text-anchor="middle">15.9 ms · baseline</text>
+
+  <rect class="tiled"  x="460" y="409" width="140" height="31"/>
+  <text class="val" x="530" y="401" text-anchor="middle">258</text>
+  <text class="label" x="530" y="462" text-anchor="middle">GPU tiled (TILE=16)</text>
+  <text class="small" x="530" y="480" text-anchor="middle">8.3 ms · 1.9x</text>
+
+  <rect class="cublas" x="700" y="130" width="140" height="310"/>
+  <text class="val" x="770" y="122" text-anchor="middle">2616</text>
+  <text class="label" x="770" y="462" text-anchor="middle">cuBLAS</text>
+  <text class="small" x="770" y="480" text-anchor="middle">0.82 ms · 19.4x</text>
+</svg>

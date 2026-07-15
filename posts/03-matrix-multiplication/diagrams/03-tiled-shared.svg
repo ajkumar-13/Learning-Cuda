@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Tiling loads a tile of A and B from global memory into shared memory once, then every thread in the block reuses it</title>
+  <desc id="d">A left-to-right flow. On the left, global memory holds an A tile and a B tile, drawn neutral. One coalesced load moves them into shared memory in the centre, drawn green: sA and sB. On the right, each thread does TILE multiply-adds reading only from fast shared memory, accumulating into a register sum with the line sum plus equals sA at ty,k times sB at k,tx. A loop arrow underneath returns to global memory, labelled repeat for each tile along K, t equals 0, 1, 2 and so on, while the partial sum stays in the register across tiles. The takeaway is that each value is loaded from global memory once and reused about TILE times: the CPU model cuts global loads from 524,288 to 32,768 for a 64 cubed problem, a 16 times reduction.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .stage{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .tile{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .shared{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .loop{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;stroke-dasharray:5 4;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Tiling: load once into shared memory, reuse across the block</text>
+  <text class="small" x="40" y="66">The block stages a TILE x TILE tile of A and B in shared memory, then every thread reads it many times.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- global -->
+  <rect class="stage" x="50" y="130" width="210" height="170" rx="10"/>
+  <text class="label" x="155" y="158" text-anchor="middle">Global memory</text>
+  <text class="small" x="155" y="176" text-anchor="middle">slow, off-chip</text>
+  <rect class="tile" x="78" y="194" width="74" height="80" rx="6"/><text class="mono" x="115" y="238" text-anchor="middle">A tile</text>
+  <rect class="tile" x="160" y="194" width="74" height="80" rx="6"/><text class="mono" x="197" y="238" text-anchor="middle">B tile</text>
+
+  <path class="flow" d="M268,215 L352,215" marker-end="url(#a)"/>
+  <text class="small" x="310" y="204" text-anchor="middle">load once</text>
+  <text class="small" x="310" y="232" text-anchor="middle">(coalesced)</text>
+
+  <!-- shared -->
+  <rect class="stage" x="360" y="130" width="210" height="170" rx="10"/>
+  <text class="label" x="465" y="158" text-anchor="middle">Shared memory</text>
+  <text class="small" x="465" y="176" text-anchor="middle">fast, on-chip, per block</text>
+  <rect class="shared" x="388" y="194" width="74" height="80" rx="6"/><text class="mono" x="425" y="238" text-anchor="middle">sA</text>
+  <rect class="shared" x="470" y="194" width="74" height="80" rx="6"/><text class="mono" x="507" y="238" text-anchor="middle">sB</text>
+
+  <path class="flow" d="M578,215 L662,215" marker-end="url(#a)"/>
+  <text class="small" x="620" y="204" text-anchor="middle">reuse</text>
+
+  <!-- compute -->
+  <rect class="stage" x="670" y="130" width="240" height="170" rx="10"/>
+  <text class="label" x="790" y="158" text-anchor="middle">Each thread computes</text>
+  <text class="small" x="790" y="178" text-anchor="middle">TILE multiply-adds, all from shared</text>
+  <text class="mono" x="790" y="220" text-anchor="middle" font-size="13">sum += sA[ty][k] * sB[k][tx]</text>
+  <text class="small" x="790" y="256" text-anchor="middle">the partial sum stays in a</text>
+  <text class="small" x="790" y="272" text-anchor="middle">register across all tiles</text>
+
+  <!-- loop back -->
+  <path class="loop" d="M790,300 L790,360 L155,360 L155,300" marker-end="url(#a)"/>
+  <text class="small" x="472" y="382" text-anchor="middle">repeat for each tile along K   (t = 0, 1, 2, ...)</text>
+
+  <text class="small" x="40" y="446">Each value is loaded from global memory once and reused about TILE times across the block.</text>
+  <text class="small" x="40" y="510">Tiling trades many slow global reads for one global read plus many fast shared-memory reads.</text>
+</svg>

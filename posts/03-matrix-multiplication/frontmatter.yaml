@@ -1,0 +1,7 @@
+slug: 03-matrix-multiplication
+title: "03 · Matrix multiplication — from a memory-bound dot product to shared-memory tiling"
+date: 2026-07-02
+tags: [first-kernels, cuda, shared-memory]
+hero: diagrams/01-dot-product.svg
+reading_time: 16
+part: "Part I — First Kernels"

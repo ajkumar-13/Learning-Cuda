@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Each element of the output matrix is the dot product of a row of A and a column of B</title>
+  <desc id="d">Three matrices laid out in the standard multiply arrangement: A on the left sized M by K, B above sized K by N, and C at the lower right sized M by N. To compute one element of C, here C at row 1 column 2 highlighted in green, you take the green highlighted row 1 of A and the green highlighted column 2 of B and sum their elementwise products over k. Dashed green guides run from A's highlighted row rightward and from B's highlighted column downward; they meet exactly at the highlighted cell of C. The formula reads C at i,j equals the sum over k of A at i,k times B at k,j. One GPU thread computes one element of C.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-success);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .hot{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .guide{stroke:var(--ts-success);stroke-width:1;fill:none;stroke-dasharray:4 3;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">One output element is a row of A dotted with a column of B</text>
+  <text class="small" x="40" y="66">A is [M, K], B is [K, N], C is [M, N]. One thread computes one element of C.</text>
+
+  <!-- B (top) -->
+  <text class="label" x="560" y="102">B  [K, N]</text>
+  <g>
+    <rect class="cell" x="560" y="110" width="44" height="44"/><rect class="cell" x="604" y="110" width="44" height="44"/><rect class="hot" x="648" y="110" width="44" height="44"/><rect class="cell" x="692" y="110" width="44" height="44"/>
+    <rect class="cell" x="560" y="154" width="44" height="44"/><rect class="cell" x="604" y="154" width="44" height="44"/><rect class="hot" x="648" y="154" width="44" height="44"/><rect class="cell" x="692" y="154" width="44" height="44"/>
+    <rect class="cell" x="560" y="198" width="44" height="44"/><rect class="cell" x="604" y="198" width="44" height="44"/><rect class="hot" x="648" y="198" width="44" height="44"/><rect class="cell" x="692" y="198" width="44" height="44"/>
+    <rect class="cell" x="560" y="242" width="44" height="44"/><rect class="cell" x="604" y="242" width="44" height="44"/><rect class="hot" x="648" y="242" width="44" height="44"/><rect class="cell" x="692" y="242" width="44" height="44"/>
+  </g>
+  <text class="small" x="670" y="304" text-anchor="middle">column 2</text>
+
+  <!-- A (left) -->
+  <text class="label" x="300" y="292">A  [M, K]</text>
+  <g>
+    <rect class="cell" x="300" y="300" width="44" height="44"/><rect class="cell" x="344" y="300" width="44" height="44"/><rect class="cell" x="388" y="300" width="44" height="44"/><rect class="cell" x="432" y="300" width="44" height="44"/>
+    <rect class="hot" x="300" y="344" width="44" height="44"/><rect class="hot" x="344" y="344" width="44" height="44"/><rect class="hot" x="388" y="344" width="44" height="44"/><rect class="hot" x="432" y="344" width="44" height="44"/>
+    <rect class="cell" x="300" y="388" width="44" height="44"/><rect class="cell" x="344" y="388" width="44" height="44"/><rect class="cell" x="388" y="388" width="44" height="44"/><rect class="cell" x="432" y="388" width="44" height="44"/>
+    <rect class="cell" x="300" y="432" width="44" height="44"/><rect class="cell" x="344" y="432" width="44" height="44"/><rect class="cell" x="388" y="432" width="44" height="44"/><rect class="cell" x="432" y="432" width="44" height="44"/>
+  </g>
+  <text class="small" x="256" y="370" text-anchor="end">row 1</text>
+
+  <!-- C (lower right) -->
+  <text class="label" x="560" y="292">C  [M, N]</text>
+  <g>
+    <rect class="cell" x="560" y="300" width="44" height="44"/><rect class="cell" x="604" y="300" width="44" height="44"/><rect class="cell" x="648" y="300" width="44" height="44"/><rect class="cell" x="692" y="300" width="44" height="44"/>
+    <rect class="cell" x="560" y="344" width="44" height="44"/><rect class="cell" x="604" y="344" width="44" height="44"/><rect class="hot" x="648" y="344" width="44" height="44"/><rect class="cell" x="692" y="344" width="44" height="44"/>
+    <rect class="cell" x="560" y="388" width="44" height="44"/><rect class="cell" x="604" y="388" width="44" height="44"/><rect class="cell" x="648" y="388" width="44" height="44"/><rect class="cell" x="692" y="388" width="44" height="44"/>
+    <rect class="cell" x="560" y="432" width="44" height="44"/><rect class="cell" x="604" y="432" width="44" height="44"/><rect class="cell" x="648" y="432" width="44" height="44"/><rect class="cell" x="692" y="432" width="44" height="44"/>
+  </g>
+  <text class="monohi" x="752" y="370">C[1][2]</text>
+
+  <!-- guides meeting at C[1][2] -->
+  <path class="guide" d="M480,366 L560,366"/>
+  <path class="guide" d="M670,288 L670,300"/>
+
+  <!-- formula -->
+  <text class="mono" x="40" y="512">C[i][j] = </text>
+  <text class="monohi" x="118" y="512">sum over k of  A[i][k] * B[k][j]</text>
+  <text class="small" x="430" y="512">— a dot product of A's row and B's column.</text>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The naive kernel re-reads the same row of A from slow global memory once for every output element in that row</title>
+  <desc id="d">A box at the top represents global memory holding row 1 of A, eight cells. Below it, four threads each compute one element of C in row 1: C at 1,0 through C at 1,3. Every one of those threads must read the whole of row 1 of A, so four red arrows point from the threads up to the same row in global memory: the same data is read four times. The note explains that neighbours in a column likewise re-read the same column of B, so for a 1024 cubed multiply the kernel moves about 8 gigabytes of reads even though A and B together are only 8 megabytes, and the CPU model counts 524,288 global loads for a 64 cubed problem. The takeaway is that naive matrix multiply is memory bound: the arithmetic is cheap, the redundant global traffic is not.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .gmem{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .reread{stroke:var(--ts-alert);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Naive matmul re-reads the same data from global memory</text>
+  <text class="small" x="40" y="66">Every output element reads a whole row of A and column of B. Neighbours re-read the same ones.</text>
+
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+  </defs>
+
+  <!-- global memory holding row 1 of A -->
+  <rect class="gmem" x="200" y="96" width="560" height="74" rx="8"/>
+  <text class="small" x="216" y="116">Global memory (slow)  —  row 1 of A</text>
+  <g>
+    <rect class="cell" x="216" y="124" width="64" height="34"/><rect class="cell" x="280" y="124" width="64" height="34"/><rect class="cell" x="344" y="124" width="64" height="34"/><rect class="cell" x="408" y="124" width="64" height="34"/><rect class="cell" x="472" y="124" width="64" height="34"/><rect class="cell" x="536" y="124" width="64" height="34"/><rect class="cell" x="600" y="124" width="64" height="34"/><rect class="cell" x="664" y="124" width="64" height="34"/>
+  </g>
+
+  <!-- four threads each re-reading that whole row -->
+  <g class="reread">
+    <path d="M300,300 L420,172" marker-end="url(#ab)"/>
+    <path d="M440,300 L470,172" marker-end="url(#ab)"/>
+    <path d="M560,300 L520,172" marker-end="url(#ab)"/>
+    <path d="M680,300 L580,172" marker-end="url(#ab)"/>
+  </g>
+  <text class="small" x="760" y="240" fill="var(--ts-alert)">row 1 read 4 times</text>
+
+  <g>
+    <rect class="th" x="250" y="302" width="100" height="46" rx="5"/><text class="mono" x="300" y="330" text-anchor="middle">C[1][0]</text>
+    <rect class="th" x="390" y="302" width="100" height="46" rx="5"/><text class="mono" x="440" y="330" text-anchor="middle">C[1][1]</text>
+    <rect class="th" x="510" y="302" width="100" height="46" rx="5"/><text class="mono" x="560" y="330" text-anchor="middle">C[1][2]</text>
+    <rect class="th" x="630" y="302" width="100" height="46" rx="5"/><text class="mono" x="680" y="330" text-anchor="middle">C[1][3]</text>
+  </g>
+  <text class="small" x="490" y="372" text-anchor="middle">four threads in row 1 of C, each re-reading the same row of A (and their own column of B)</text>
+
+  <text class="small" x="40" y="426">For a 1024 x 1024 x 1024 multiply that is ~8 GB of reads, although A and B together are only ~8 MB:</text>
+  <text class="small" x="40" y="446">each value is fetched from global memory roughly a thousand times.</text>
+  <text class="small" x="40" y="510">Naive matmul is memory bound: the multiply-adds are cheap; the redundant global traffic is the whole cost.</text>
+</svg>
