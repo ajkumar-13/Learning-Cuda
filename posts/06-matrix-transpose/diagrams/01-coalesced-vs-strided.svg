@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Coalesced access reads consecutive addresses as one memory transaction; strided access reads one transaction per thread</title>
+  <desc id="d">Two panels comparing how a warp accesses global memory. On the left, coalesced access reading a row: eight threads read eight consecutive addresses, which the GPU services as a single 128-byte transaction, drawn green, with all fetched data used. On the right, strided access reading a column: the matrix is row-major, so a column's elements are a full row width apart; each of the eight threads lands in a different cache line, shown as eight separate red lines, and only 4 of the 128 bytes in each line are used. The takeaway is that the same number of elements costs one transaction when coalesced and up to 32 when strided, which is why a naive transpose that writes columns runs at a fraction of peak bandwidth.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .used{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .line1{fill:none;stroke:var(--ts-success);stroke-width:1.5;}
+    .lineN{fill:none;stroke:var(--ts-alert);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Coalesced is one transaction; strided is 32</text>
+  <text class="small" x="40" y="66">The GPU fetches global memory in 128-byte lines. Whether a warp's reads share a line decides the bandwidth.</text>
+
+  <!-- LEFT: coalesced -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">Coalesced — reading a row</text>
+  <g>
+    <rect class="th" x="60"  y="138" width="44" height="34"/><text class="mono" x="82"  y="160" text-anchor="middle">t0</text>
+    <rect class="th" x="106" y="138" width="44" height="34"/><text class="mono" x="128" y="160" text-anchor="middle">t1</text>
+    <rect class="th" x="152" y="138" width="44" height="34"/><text class="mono" x="174" y="160" text-anchor="middle">t2</text>
+    <rect class="th" x="198" y="138" width="44" height="34"/><text class="mono" x="220" y="160" text-anchor="middle">t3</text>
+    <rect class="th" x="244" y="138" width="44" height="34"/><text class="mono" x="266" y="160" text-anchor="middle">t4</text>
+    <rect class="th" x="290" y="138" width="44" height="34"/><text class="mono" x="312" y="160" text-anchor="middle">t5</text>
+    <rect class="th" x="336" y="138" width="44" height="34"/><text class="mono" x="358" y="160" text-anchor="middle">t6</text>
+    <rect class="th" x="382" y="138" width="44" height="34"/><text class="mono" x="404" y="160" text-anchor="middle">t7</text>
+  </g>
+  <g class="flow">
+    <path d="M82,172 L82,238"/><path d="M128,172 L128,238"/><path d="M174,172 L174,238"/><path d="M220,172 L220,238"/>
+    <path d="M266,172 L266,238"/><path d="M312,172 L312,238"/><path d="M358,172 L358,238"/><path d="M404,172 L404,238"/>
+  </g>
+  <g>
+    <rect class="cell" x="60"  y="240" width="44" height="34"/><rect class="cell" x="106" y="240" width="44" height="34"/><rect class="cell" x="152" y="240" width="44" height="34"/><rect class="cell" x="198" y="240" width="44" height="34"/><rect class="cell" x="244" y="240" width="44" height="34"/><rect class="cell" x="290" y="240" width="44" height="34"/><rect class="cell" x="336" y="240" width="44" height="34"/><rect class="cell" x="382" y="240" width="44" height="34"/>
+  </g>
+  <rect class="line1" x="54" y="234" width="378" height="46" rx="6"/>
+  <text class="small" x="60" y="318" fill="var(--ts-success)">1 transaction (128 bytes), 100% used</text>
+  <text class="small" x="60" y="350">All 8 threads (32 in a warp) share one cache line.</text>
+
+  <!-- RIGHT: strided -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120">Strided — reading a column</text>
+  <g>
+    <rect class="th" x="520" y="138" width="44" height="34"/><text class="mono" x="542" y="160" text-anchor="middle">t0</text>
+    <rect class="th" x="566" y="138" width="44" height="34"/><text class="mono" x="588" y="160" text-anchor="middle">t1</text>
+    <rect class="th" x="612" y="138" width="44" height="34"/><text class="mono" x="634" y="160" text-anchor="middle">t2</text>
+    <rect class="th" x="658" y="138" width="44" height="34"/><text class="mono" x="680" y="160" text-anchor="middle">t3</text>
+  </g>
+  <text class="small" x="712" y="160">... (stride = width apart)</text>
+  <!-- 4 separate cache lines, each with one used cell -->
+  <g>
+    <rect class="lineN" x="560" y="206" width="350" height="26" rx="4"/><rect class="used" x="564" y="210" width="34" height="18"/><text class="small" x="700" y="223">line 0 — 4 B used of 128</text>
+    <rect class="lineN" x="560" y="244" width="350" height="26" rx="4"/><rect class="used" x="564" y="248" width="34" height="18"/><text class="small" x="700" y="261">line 1 — 4 B used of 128</text>
+    <rect class="lineN" x="560" y="282" width="350" height="26" rx="4"/><rect class="used" x="564" y="286" width="34" height="18"/><text class="small" x="700" y="299">line 2 — 4 B used of 128</text>
+    <rect class="lineN" x="560" y="320" width="350" height="26" rx="4"/><rect class="used" x="564" y="324" width="34" height="18"/><text class="small" x="700" y="337">line 3 — 4 B used of 128</text>
+  </g>
+  <g class="flow">
+    <path d="M542,172 L580,206"/><path d="M588,172 L584,244"/><path d="M634,172 L586,282"/><path d="M680,172 L588,320"/>
+  </g>
+  <text class="small" x="520" y="372" fill="var(--ts-alert)">up to 32 transactions, ~3% used</text>
+  <text class="small" x="520" y="396">Each thread lands in its own line; the rest of each line is wasted.</text>
+</svg>

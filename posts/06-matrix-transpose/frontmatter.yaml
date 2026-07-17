@@ -1,0 +1,7 @@
+slug: 06-matrix-transpose
+title: "06 · Matrix transpose — coalescing, shared memory, and bank conflicts"
+date: 2026-07-08
+tags: [parallel-patterns, cuda, coalescing]
+hero: diagrams/01-coalesced-vs-strided.svg
+reading_time: 15
+part: "Part II — Parallel Patterns"

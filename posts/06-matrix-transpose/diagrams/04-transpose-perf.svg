@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Transpose bandwidth for the naive, shared-memory, and padded kernels against a plain copy</title>
+  <desc id="d">A bar chart of bandwidth in gigabytes per second for transposing a 4096 by 4096 matrix on an RTX 3080, with a plain memory copy at 350 gigabytes per second marked as a dashed reference line, the practical ceiling. The naive transpose reaches only 60, about 17 percent of the copy, drawn red, because its column writes are strided. The shared-memory tiled transpose reaches 220, about 63 percent, drawn neutral, with both global accesses coalesced but shared-memory bank conflicts remaining. The padded shared-memory transpose reaches 310, about 88 percent, drawn green and nearly touching the copy line. The note records the speedups: tiling 3.7 times, padding 1.4 times, combined 5.2 times.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .ref{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
+    .naive{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .shared{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .padded{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Coalescing then padding recover 88% of copy bandwidth (4096², RTX 3080)</text>
+
+  <g>
+    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="160" y1="351" x2="900" y2="351"/><text class="small" x="152" y="355" text-anchor="end">100</text>
+    <line class="grid" x1="160" y1="262" x2="900" y2="262"/><text class="small" x="152" y="266" text-anchor="end">200</text>
+    <line class="grid" x1="160" y1="173" x2="900" y2="173"/><text class="small" x="152" y="177" text-anchor="end">300</text>
+  </g>
+  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
+  <text class="small" x="76" y="280" transform="rotate(-90 76 280)" text-anchor="middle">bandwidth (GB/s)</text>
+
+  <!-- copy reference line at 350 -->
+  <line class="ref" x1="160" y1="129" x2="900" y2="129"/>
+  <text class="small" x="900" y="124" text-anchor="end">plain copy 350 GB/s (practical ceiling)</text>
+
+  <rect class="naive"  x="240" y="387" width="130" height="53"/>
+  <text class="val" x="305" y="379" text-anchor="middle" fill="var(--ts-alert)">60</text>
+  <text class="label" x="305" y="462" text-anchor="middle">naive transpose</text>
+  <text class="small" x="305" y="480" text-anchor="middle">17% · strided writes</text>
+
+  <rect class="shared" x="450" y="244" width="130" height="196"/>
+  <text class="val" x="515" y="236" text-anchor="middle">220</text>
+  <text class="label" x="515" y="462" text-anchor="middle">shared memory</text>
+  <text class="small" x="515" y="480" text-anchor="middle">63% · bank conflicts</text>
+
+  <rect class="padded" x="660" y="164" width="130" height="276"/>
+  <text class="val" x="725" y="156" text-anchor="middle" fill="var(--ts-success)">310</text>
+  <text class="label" x="725" y="462" text-anchor="middle">shared + padding</text>
+  <text class="small" x="725" y="480" text-anchor="middle">88% · conflict-free</text>
+
+  <text class="small" x="40" y="512">Tiling fixes global coalescing (3.7x); padding fixes the shared-memory bank conflict (1.4x); together 5.2x over naive.</text>
+</svg>

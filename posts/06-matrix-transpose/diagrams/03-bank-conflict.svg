@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Reading a column of an unpadded shared tile makes every lane hit one bank; padding the tile spreads the column across all banks</title>
+  <desc id="d">Two panels about shared-memory bank conflicts when 32 lanes read one column of the tile. Shared memory has 32 banks, and a 4-byte word at address A is in bank A mod 32. On the left, an unpadded tile sized 32 by 32: column element in row r is at address r times 32, which is bank 0 for every row, so all lanes hit bank 0, a 32-way conflict drawn red, and the hardware serializes the access. On the right, the tile is padded to 32 by 33: the column element in row r is at address r times 33, which is bank r mod 32, so the lanes hit banks 0, 1, 2 and so on, all different, drawn green and conflict-free. The cost is one extra column, about 3 percent more shared memory, for up to a 32 times speedup on the column read.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .bad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .good{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Padding the tile turns a 32-way bank conflict into none</text>
+  <text class="small" x="40" y="66">Shared memory has 32 banks; a word at address A is in bank A mod 32. A column read of the tile decides the banks.</text>
+
+  <!-- LEFT: unpadded -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">Unpadded  tile[32][32]   (stride 32)</text>
+  <text class="small" x="60" y="140">column element of row r is at address r x 32</text>
+  <g>
+    <rect class="bad" x="80" y="156" width="300" height="30"/><text class="mono" x="92" y="176">row 0  ->  addr 0     ->  bank 0</text>
+    <rect class="bad" x="80" y="192" width="300" height="30"/><text class="mono" x="92" y="212">row 1  ->  addr 32    ->  bank 0</text>
+    <rect class="bad" x="80" y="228" width="300" height="30"/><text class="mono" x="92" y="248">row 2  ->  addr 64    ->  bank 0</text>
+    <rect class="bad" x="80" y="264" width="300" height="30"/><text class="mono" x="92" y="284">row 3  ->  addr 96    ->  bank 0</text>
+    <rect class="bad" x="80" y="300" width="300" height="30"/><text class="mono" x="92" y="320">...    ->  ...        ->  bank 0</text>
+  </g>
+  <text class="small" x="60" y="368" fill="var(--ts-alert)">all 32 lanes hit bank 0: a 32-way conflict</text>
+  <text class="small" x="60" y="392">The hardware serializes them: 32x slower reads.</text>
+
+  <!-- RIGHT: padded -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120">Padded  tile[32][33]   (stride 33)</text>
+  <text class="small" x="520" y="140">column element of row r is at address r x 33</text>
+  <g>
+    <rect class="good" x="540" y="156" width="300" height="30"/><text class="mono" x="552" y="176">row 0  ->  addr 0     ->  bank 0</text>
+    <rect class="good" x="540" y="192" width="300" height="30"/><text class="mono" x="552" y="212">row 1  ->  addr 33    ->  bank 1</text>
+    <rect class="good" x="540" y="228" width="300" height="30"/><text class="mono" x="552" y="248">row 2  ->  addr 66    ->  bank 2</text>
+    <rect class="good" x="540" y="264" width="300" height="30"/><text class="mono" x="552" y="284">row 3  ->  addr 99    ->  bank 3</text>
+    <rect class="good" x="540" y="300" width="300" height="30"/><text class="mono" x="552" y="320">...    ->  ...        ->  bank r</text>
+  </g>
+  <text class="small" x="520" y="368" fill="var(--ts-success)">32 lanes hit 32 different banks: conflict-free</text>
+  <text class="small" x="520" y="392">The column read is now fully parallel.</text>
+</svg>
