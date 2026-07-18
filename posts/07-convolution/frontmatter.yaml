@@ -1,0 +1,7 @@
+slug: 07-convolution
+title: "07 · Convolution — constant memory, shared-memory halos, and separable filters"
+date: 2026-07-10
+tags: [parallel-patterns, cuda, shared-memory]
+hero: diagrams/01-stencil.svg
+reading_time: 15
+part: "Part II — Parallel Patterns"

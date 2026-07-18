@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Each output pixel of a convolution is a weighted sum of a small neighbourhood of the input under the filter</title>
+  <desc id="d">On the left, a 5 by 5 input image; the central 3 by 3 neighbourhood is highlighted in green. In the middle, a 3 by 3 filter. The output pixel equals the sum over the neighbourhood of each input value times the matching filter weight, shown on the right as one output cell. The note explains that adjacent output pixels read overlapping neighbourhoods, so a naive kernel re-reads most pixels: the CPU model counts 2,304 global reads for a 16 by 16 output tile with a 3 by 3 filter versus only 324 if the input tile is loaded once, a 7.1 times reuse factor.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .win{fill:none;stroke:var(--ts-success);stroke-width:1.5;}
+    .out{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .op{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:24px;fill:var(--ts-ink-muted);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A convolution is a weighted sum of a neighbourhood</text>
+  <text class="small" x="40" y="66">Every output pixel reads a small window of the input and multiplies it by the filter.</text>
+
+  <!-- input image 5x5 -->
+  <text class="label" x="100" y="116">input image</text>
+  <g>
+    <rect class="cell" x="100" y="130" width="52" height="52"/><text class="mono" x="126" y="161" text-anchor="middle">1</text>
+    <rect class="cell" x="152" y="130" width="52" height="52"/><text class="mono" x="178" y="161" text-anchor="middle">2</text>
+    <rect class="cell" x="204" y="130" width="52" height="52"/><text class="mono" x="230" y="161" text-anchor="middle">3</text>
+    <rect class="cell" x="256" y="130" width="52" height="52"/><text class="mono" x="282" y="161" text-anchor="middle">4</text>
+    <rect class="cell" x="308" y="130" width="52" height="52"/><text class="mono" x="334" y="161" text-anchor="middle">5</text>
+    <rect class="cell" x="100" y="182" width="52" height="52"/><text class="mono" x="126" y="213" text-anchor="middle">6</text>
+    <rect class="cell" x="152" y="182" width="52" height="52"/><text class="mono" x="178" y="213" text-anchor="middle">7</text>
+    <rect class="cell" x="204" y="182" width="52" height="52"/><text class="mono" x="230" y="213" text-anchor="middle">8</text>
+    <rect class="cell" x="256" y="182" width="52" height="52"/><text class="mono" x="282" y="213" text-anchor="middle">9</text>
+    <rect class="cell" x="308" y="182" width="52" height="52"/><text class="mono" x="334" y="213" text-anchor="middle">10</text>
+    <rect class="cell" x="100" y="234" width="52" height="52"/><text class="mono" x="126" y="265" text-anchor="middle">11</text>
+    <rect class="cell" x="152" y="234" width="52" height="52"/><text class="mono" x="178" y="265" text-anchor="middle">12</text>
+    <rect class="cell" x="204" y="234" width="52" height="52"/><text class="mono" x="230" y="265" text-anchor="middle">13</text>
+    <rect class="cell" x="256" y="234" width="52" height="52"/><text class="mono" x="282" y="265" text-anchor="middle">14</text>
+    <rect class="cell" x="308" y="234" width="52" height="52"/><text class="mono" x="334" y="265" text-anchor="middle">15</text>
+    <rect class="cell" x="100" y="286" width="52" height="52"/><text class="mono" x="126" y="317" text-anchor="middle">16</text>
+    <rect class="cell" x="152" y="286" width="52" height="52"/><text class="mono" x="178" y="317" text-anchor="middle">17</text>
+    <rect class="cell" x="204" y="286" width="52" height="52"/><text class="mono" x="230" y="317" text-anchor="middle">18</text>
+    <rect class="cell" x="256" y="286" width="52" height="52"/><text class="mono" x="282" y="317" text-anchor="middle">19</text>
+    <rect class="cell" x="308" y="286" width="52" height="52"/><text class="mono" x="334" y="317" text-anchor="middle">20</text>
+    <rect class="cell" x="100" y="338" width="52" height="52"/><text class="mono" x="126" y="369" text-anchor="middle">21</text>
+    <rect class="cell" x="152" y="338" width="52" height="52"/><text class="mono" x="178" y="369" text-anchor="middle">22</text>
+    <rect class="cell" x="204" y="338" width="52" height="52"/><text class="mono" x="230" y="369" text-anchor="middle">23</text>
+    <rect class="cell" x="256" y="338" width="52" height="52"/><text class="mono" x="282" y="369" text-anchor="middle">24</text>
+    <rect class="cell" x="308" y="338" width="52" height="52"/><text class="mono" x="334" y="369" text-anchor="middle">25</text>
+  </g>
+  <rect class="win" x="148" y="178" width="160" height="160" rx="4"/>
+  <text class="small" x="228" y="410" text-anchor="middle" fill="var(--ts-success)">3x3 neighbourhood</text>
+
+  <text class="op" x="408" y="270" text-anchor="middle">x</text>
+
+  <!-- filter -->
+  <text class="label" x="450" y="186">filter</text>
+  <g>
+    <rect class="cell" x="450" y="200" width="46" height="46"/><text class="mono" x="473" y="228" text-anchor="middle">1</text>
+    <rect class="cell" x="496" y="200" width="46" height="46"/><text class="mono" x="519" y="228" text-anchor="middle">1</text>
+    <rect class="cell" x="542" y="200" width="46" height="46"/><text class="mono" x="565" y="228" text-anchor="middle">1</text>
+    <rect class="cell" x="450" y="246" width="46" height="46"/><text class="mono" x="473" y="274" text-anchor="middle">1</text>
+    <rect class="cell" x="496" y="246" width="46" height="46"/><text class="mono" x="519" y="274" text-anchor="middle">1</text>
+    <rect class="cell" x="542" y="246" width="46" height="46"/><text class="mono" x="565" y="274" text-anchor="middle">1</text>
+    <rect class="cell" x="450" y="292" width="46" height="46"/><text class="mono" x="473" y="320" text-anchor="middle">1</text>
+    <rect class="cell" x="496" y="292" width="46" height="46"/><text class="mono" x="519" y="320" text-anchor="middle">1</text>
+    <rect class="cell" x="542" y="292" width="46" height="46"/><text class="mono" x="565" y="320" text-anchor="middle">1</text>
+  </g>
+  <text class="small" x="496" y="358" text-anchor="middle">x 1/9 (box blur)</text>
+
+  <text class="op" x="628" y="270" text-anchor="middle">=</text>
+
+  <!-- output -->
+  <text class="label" x="700" y="240">output</text>
+  <rect class="out" x="680" y="246" width="60" height="46"/><text class="mono" x="710" y="274" text-anchor="middle">sum</text>
+  <text class="small" x="760" y="274">one pixel</text>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A tiled convolution loads an input tile larger than its output tile by a halo of the filter radius</title>
+  <desc id="d">A square input tile loaded into shared memory, sized 18 by 18 for a 16 by 16 output tile and a 3 by 3 filter. The inner 16 by 16 region, drawn green, is the output that the block computes. Around it is a one-cell halo ring, the extra border the edge threads need from neighbouring tiles, which is loaded but not computed. The formula is input tile equals output tile plus 2 times the radius, here 18 equals 16 plus 2 times 1. The block launches 18 by 18 threads that each load one element; only the inner 16 by 16 threads compute. The CPU model shows this loads 324 input values once instead of 2,304 redundant global reads, a 7.1 times reuse factor.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .tile{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .halo{fill:var(--ts-grid);stroke:none;}
+    .out{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .gl{stroke:var(--ts-border);stroke-width:0.75;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">The halo: load output plus a border, compute the inside</text>
+  <text class="small" x="40" y="66">Edge threads need neighbours from the next tile, so the loaded input tile is larger than the output tile.</text>
+
+  <!-- input tile (18x18) with halo ring and inner output (16x16) -->
+  <rect class="tile" x="110" y="110" width="324" height="324"/>
+  <!-- halo ring = area between outer and inner; drawn as 4 bands -->
+  <rect class="halo" x="110" y="110" width="324" height="18"/>
+  <rect class="halo" x="110" y="416" width="324" height="18"/>
+  <rect class="halo" x="110" y="128" width="18" height="288"/>
+  <rect class="halo" x="416" y="128" width="18" height="288"/>
+  <rect class="out" x="128" y="128" width="288" height="288"/>
+  <!-- grid hint -->
+  <g class="gl">
+    <line x1="110" y1="128" x2="434" y2="128"/><line x1="110" y1="416" x2="434" y2="416"/>
+    <line x1="128" y1="110" x2="128" y2="434"/><line x1="416" y1="110" x2="416" y2="434"/>
+  </g>
+  <text class="mono" x="272" y="278" text-anchor="middle" fill="var(--ts-success)">16 x 16</text>
+  <text class="small" x="272" y="300" text-anchor="middle" fill="var(--ts-success)">output (computed)</text>
+  <text class="small" x="272" y="100" text-anchor="middle">18 x 18 input tile (loaded to shared)</text>
+  <text class="small" x="448" y="124">halo</text>
+  <text class="small" x="448" y="140">(radius 1)</text>
+
+  <!-- right: formula + numbers -->
+  <rect class="box" x="560" y="130" width="360" height="120" rx="10"/>
+  <text class="small" x="580" y="158">input tile = output tile + 2 x radius</text>
+  <text class="mono" x="580" y="186">18 = 16 + 2 x 1</text>
+  <text class="small" x="580" y="216">18 x 18 threads load one element each;</text>
+  <text class="small" x="580" y="234">only the inner 16 x 16 threads compute.</text>
+
+  <text class="small" x="560" y="300">Filter weights: constant memory.</text>
+  <text class="small" x="560" y="318">Pixels: this shared-memory tile.</text>
+</svg>

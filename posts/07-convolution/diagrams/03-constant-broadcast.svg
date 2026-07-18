@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Reading the filter from global memory costs one request per thread; constant memory broadcasts one value to the whole warp</title>
+  <desc id="d">Two panels comparing how a warp reads a filter weight that every thread needs. On the left, without constant memory: eight threads, standing in for 32, each issue a separate request in red to global DRAM for the same value mask 0, so 32 separate transactions. On the right, with constant memory: the value sits in the constant cache and is broadcast in green to all eight threads from a single request. Because every thread in the convolution reads the same filter weight at the same time, the broadcast turns 32 transactions into one. The filter is small and read-only, which is exactly what constant memory is for.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .gmem{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .cmem{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .req{stroke:var(--ts-alert);stroke-width:1;fill:none;}
+    .bc{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Constant memory broadcasts the filter to the whole warp</text>
+  <text class="small" x="40" y="66">Every thread reads the same filter weight at the same time: the ideal case for a read-only broadcast.</text>
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- LEFT: without -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">Global memory — one request per thread</text>
+  <g>
+    <rect class="th" x="60" y="148" width="80" height="26" rx="4"/><text class="mono" x="100" y="166" text-anchor="middle">t0</text>
+    <rect class="th" x="60" y="184" width="80" height="26" rx="4"/><text class="mono" x="100" y="202" text-anchor="middle">t1</text>
+    <rect class="th" x="60" y="220" width="80" height="26" rx="4"/><text class="mono" x="100" y="238" text-anchor="middle">t2</text>
+    <rect class="th" x="60" y="256" width="80" height="26" rx="4"/><text class="mono" x="100" y="274" text-anchor="middle">t3</text>
+    <rect class="th" x="60" y="292" width="80" height="26" rx="4"/><text class="mono" x="100" y="310" text-anchor="middle">...</text>
+    <rect class="th" x="60" y="328" width="80" height="26" rx="4"/><text class="mono" x="100" y="346" text-anchor="middle">t31</text>
+  </g>
+  <rect class="gmem" x="300" y="220" width="140" height="60" rx="8"/>
+  <text class="mono" x="370" y="246" text-anchor="middle">global</text>
+  <text class="mono" x="370" y="266" text-anchor="middle">mask[0]</text>
+  <g class="req">
+    <path d="M140,161 L300,238" marker-end="url(#ar)"/>
+    <path d="M140,197 L300,244" marker-end="url(#ar)"/>
+    <path d="M140,233 L300,250" marker-end="url(#ar)"/>
+    <path d="M140,269 L300,256" marker-end="url(#ar)"/>
+    <path d="M140,341 L300,270" marker-end="url(#ar)"/>
+  </g>
+  <text class="small" x="60" y="388" fill="var(--ts-alert)">32 separate DRAM transactions for one value</text>
+
+  <!-- RIGHT: with -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120">Constant memory — one broadcast</text>
+  <rect class="cmem" x="520" y="220" width="150" height="60" rx="8"/>
+  <text class="mono" x="595" y="246" text-anchor="middle">constant</text>
+  <text class="mono" x="595" y="266" text-anchor="middle">mask[0]</text>
+  <g>
+    <rect class="th" x="820" y="148" width="80" height="26" rx="4"/><text class="mono" x="860" y="166" text-anchor="middle">t0</text>
+    <rect class="th" x="820" y="184" width="80" height="26" rx="4"/><text class="mono" x="860" y="202" text-anchor="middle">t1</text>
+    <rect class="th" x="820" y="220" width="80" height="26" rx="4"/><text class="mono" x="860" y="238" text-anchor="middle">t2</text>
+    <rect class="th" x="820" y="256" width="80" height="26" rx="4"/><text class="mono" x="860" y="274" text-anchor="middle">t3</text>
+    <rect class="th" x="820" y="292" width="80" height="26" rx="4"/><text class="mono" x="860" y="310" text-anchor="middle">...</text>
+    <rect class="th" x="820" y="328" width="80" height="26" rx="4"/><text class="mono" x="860" y="346" text-anchor="middle">t31</text>
+  </g>
+  <g class="bc">
+    <path d="M670,244 L820,161" marker-end="url(#ab)"/>
+    <path d="M670,248 L820,197" marker-end="url(#ab)"/>
+    <path d="M670,252 L820,233" marker-end="url(#ab)"/>
+    <path d="M670,256 L820,269" marker-end="url(#ab)"/>
+    <path d="M670,262 L820,341" marker-end="url(#ab)"/>
+  </g>
+  <text class="small" x="520" y="388" fill="var(--ts-success)">1 request, broadcast to all 32 lanes at once</text>
+</svg>
