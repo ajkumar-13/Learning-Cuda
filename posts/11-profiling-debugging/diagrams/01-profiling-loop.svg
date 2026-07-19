@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The profile-don't-guess loop: write, measure, read the bottleneck, fix, repeat</title>
+  <desc id="d">A four-stage cycle drawn as boxes joined by arrows running clockwise. Stage one, write the kernel. Stage two, measure with a profiler, highlighted in green because it is the step beginners skip. Stage three, read the bottleneck, which asks whether the kernel is memory bound or compute bound. Stage four, fix the one thing the measurement pointed at. An arrow loops from fix back to measure, because every fix must be re-measured. The point is that you cannot tune what you cannot see, so measurement is the hinge of the whole loop.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:16px;fill:var(--ts-ink);}
+    .labelhi{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:16px;fill:var(--ts-success);}
+    .sub{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .node{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1.5;}
+    .nodehi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Profile, don't guess</text>
+  <text class="small" x="40" y="66">You cannot tune what you cannot see. Every fix is re-measured before you trust it.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- node: write (top-left) -->
+  <rect class="node" x="120" y="150" width="240" height="90" rx="6"/>
+  <text class="label" x="240" y="190" text-anchor="middle">1 · Write</text>
+  <text class="sub" x="240" y="214" text-anchor="middle">the kernel</text>
+
+  <!-- node: measure (top-right, highlighted) -->
+  <rect class="nodehi" x="600" y="150" width="240" height="90" rx="6"/>
+  <text class="labelhi" x="720" y="190" text-anchor="middle">2 · Measure</text>
+  <text class="sub" x="720" y="214" text-anchor="middle">nsys / ncu / sanitizer</text>
+
+  <!-- node: read bottleneck (bottom-right) -->
+  <rect class="node" x="600" y="350" width="240" height="90" rx="6"/>
+  <text class="label" x="720" y="390" text-anchor="middle">3 · Read the bottleneck</text>
+  <text class="sub" x="720" y="414" text-anchor="middle">memory- or compute-bound?</text>
+
+  <!-- node: fix (bottom-left) -->
+  <rect class="node" x="120" y="350" width="240" height="90" rx="6"/>
+  <text class="label" x="240" y="390" text-anchor="middle">4 · Fix one thing</text>
+  <text class="sub" x="240" y="414" text-anchor="middle">the limiter it named</text>
+
+  <!-- arrows clockwise -->
+  <path class="flow" d="M360,195 L596,195" marker-end="url(#a)"/>
+  <path class="flow" d="M720,240 L720,346" marker-end="url(#a)"/>
+  <path class="flow" d="M600,395 L364,395" marker-end="url(#a)"/>
+  <!-- fix -> measure (re-measure), drawn green to stress the loop closes on measure -->
+  <path class="flowhi" d="M240,350 C240,300 380,270 596,210" marker-end="url(#aS)"/>
+  <text class="small" x="395" y="300" fill="var(--ts-success)">re-measure every fix</text>
+</svg>

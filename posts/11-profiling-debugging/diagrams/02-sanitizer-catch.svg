@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">An out-of-bounds write: the surplus thread scribbles past the end of the array</title>
+  <desc id="d">A row of eight threads, numbered 0 through 7, each drawn above one cell of a six-cell array sized N equals 6. Threads 0 through 5 write into valid cells 0 through 5; their arrows are neutral grey. Threads 6 and 7 are surplus because the grid was launched in whole blocks larger than N. Thread 6's arrow, drawn in red, points past the last cell into empty space beyond the array boundary, an out-of-bounds write. This is exactly the bug a missing if i less than N guard leaves in, and it is what compute-sanitizer's memcheck tool reports as an invalid global write.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1.5;}
+    .thread{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1.5;}
+    .threadbad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .flowbad{stroke:var(--ts-alert);stroke-width:1.5;fill:none;}
+    .oob{fill:none;stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:5 4;}
+    .alert{fill:var(--ts-alert);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">The bug a missing guard leaves: a write past the end</text>
+  <text class="small" x="40" y="66">Launched in whole blocks, the grid exceeds N. Without if (i &lt; N), the surplus threads scribble past the array.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+  </defs>
+
+  <text class="label" x="60" y="150">threads</text>
+  <!-- 8 threads -->
+  <g>
+    <rect class="thread" x="180" y="120" width="60" height="48" rx="4"/><text class="mono" x="210" y="151" text-anchor="middle">t0</text>
+    <rect class="thread" x="260" y="120" width="60" height="48" rx="4"/><text class="mono" x="290" y="151" text-anchor="middle">t1</text>
+    <rect class="thread" x="340" y="120" width="60" height="48" rx="4"/><text class="mono" x="370" y="151" text-anchor="middle">t2</text>
+    <rect class="thread" x="420" y="120" width="60" height="48" rx="4"/><text class="mono" x="450" y="151" text-anchor="middle">t3</text>
+    <rect class="thread" x="500" y="120" width="60" height="48" rx="4"/><text class="mono" x="530" y="151" text-anchor="middle">t4</text>
+    <rect class="thread" x="580" y="120" width="60" height="48" rx="4"/><text class="mono" x="610" y="151" text-anchor="middle">t5</text>
+    <rect class="thread" x="660" y="120" width="60" height="48" rx="4"/><text class="mono" x="690" y="151" text-anchor="middle">t6</text>
+    <rect class="threadbad" x="740" y="120" width="60" height="48" rx="4"/><text class="mono" x="770" y="151" text-anchor="middle" fill="var(--ts-alert)">t7</text>
+  </g>
+
+  <!-- valid writes -->
+  <g class="flow">
+    <path d="M210,168 L210,316" marker-end="url(#a)"/>
+    <path d="M290,168 L290,316" marker-end="url(#a)"/>
+    <path d="M370,168 L370,316" marker-end="url(#a)"/>
+    <path d="M450,168 L450,316" marker-end="url(#a)"/>
+    <path d="M530,168 L530,316" marker-end="url(#a)"/>
+    <path d="M610,168 L610,316" marker-end="url(#a)"/>
+  </g>
+  <!-- out-of-bounds writes from t6, t7 into the void beyond the array -->
+  <path class="flowbad" d="M690,168 L850,316" marker-end="url(#aB)"/>
+  <path class="flowbad" d="M770,168 L850,316" marker-end="url(#aB)"/>
+
+  <text class="label" x="60" y="345">array (N = 6)</text>
+  <!-- 6 valid cells -->
+  <g>
+    <rect class="cell" x="180" y="320" width="60" height="48"/><text class="mono" x="210" y="350" text-anchor="middle">0</text>
+    <rect class="cell" x="260" y="320" width="60" height="48"/><text class="mono" x="290" y="350" text-anchor="middle">1</text>
+    <rect class="cell" x="340" y="320" width="60" height="48"/><text class="mono" x="370" y="350" text-anchor="middle">2</text>
+    <rect class="cell" x="420" y="320" width="60" height="48"/><text class="mono" x="450" y="350" text-anchor="middle">3</text>
+    <rect class="cell" x="500" y="320" width="60" height="48"/><text class="mono" x="530" y="350" text-anchor="middle">4</text>
+    <rect class="cell" x="580" y="320" width="60" height="48"/><text class="mono" x="610" y="350" text-anchor="middle">5</text>
+  </g>
+  <!-- the void beyond the boundary -->
+  <line class="oob" x1="644" y1="312" x2="644" y2="376"/>
+  <rect class="oob" x="660" y="320" width="190" height="48"/>
+  <text class="small" x="755" y="350" text-anchor="middle" fill="var(--ts-alert)">out of bounds</text>
+
+  <text class="small" x="480" y="432" text-anchor="middle" fill="var(--ts-alert)">compute-sanitizer --tool memcheck flags this as an invalid global write</text>
+</svg>

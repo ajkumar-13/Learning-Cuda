@@ -1,0 +1,7 @@
+slug: 11-profiling-debugging
+title: "11 · Profiling and debugging — Nsight, compute-sanitizer, and the occupancy you can measure"
+date: 2026-07-20
+tags: [systems-performance, cuda, profiling, occupancy]
+hero: diagrams/01-profiling-loop.svg
+reading_time: 13
+part: "Part III — Understanding Performance"
