@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Occupancy is set by the shortest of three budgets: registers, shared memory, warp slots</title>
+  <desc id="d">Three vertical bars stand for how many of one block fit on a streaming multiprocessor under each of three resource limits. The first bar, registers, allows two blocks and is the shortest, so it is highlighted in red as the binding limit. The second bar, shared memory, allows sixteen blocks. The third bar, warp slots, allows four blocks. Because the SM can hold only the minimum across all three, occupancy is capped at two blocks, set entirely by the register limit. The lesson is that a kernel fits as many blocks as its scarcest resource permits, and the profiler tells you which one binds.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .labelhi{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-alert);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-alert);}
+    .bar{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    .barhi{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .axis{stroke:var(--ts-ink-muted);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .capline{stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:6 4;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">The shortest budget caps occupancy</text>
+  <text class="small" x="40" y="66">Each bar: how many of one block fit per SM under that one limit. The SM holds the minimum of the three.</text>
+
+  <!-- baseline and a few grid lines (blocks per SM) -->
+  <line class="axis" x1="180" y1="420" x2="820" y2="420"/>
+  <g class="grid">
+    <line x1="180" y1="380" x2="820" y2="380"/>
+    <line x1="180" y1="340" x2="820" y2="340"/>
+    <line x1="180" y1="300" x2="820" y2="300"/>
+    <line x1="180" y1="260" x2="820" y2="260"/>
+    <line x1="180" y1="220" x2="820" y2="220"/>
+    <line x1="180" y1="180" x2="820" y2="180"/>
+    <line x1="180" y1="140" x2="820" y2="140"/>
+    <line x1="180" y1="100" x2="820" y2="100"/>
+  </g>
+  <text class="small" x="170" y="424" text-anchor="end">0</text>
+  <text class="small" x="170" y="384" text-anchor="end">2</text>
+  <text class="small" x="170" y="304" text-anchor="end">6</text>
+  <text class="small" x="170" y="224" text-anchor="end">10</text>
+  <text class="small" x="170" y="104" text-anchor="end">16  blocks / SM</text>
+
+  <!-- registers bar: 2 blocks (binding, red) -->
+  <rect class="barhi" x="230" y="380" width="120" height="40"/>
+  <text class="monohi" x="290" y="406" text-anchor="middle">2</text>
+  <text class="labelhi" x="290" y="452" text-anchor="middle">registers</text>
+  <text class="small" x="290" y="472" text-anchor="middle">64K / SM</text>
+
+  <!-- shared memory bar: 16 blocks -->
+  <rect class="bar" x="430" y="100" width="120" height="320"/>
+  <text class="mono" x="490" y="126" text-anchor="middle">16</text>
+  <text class="label" x="490" y="452" text-anchor="middle">shared mem</text>
+  <text class="small" x="490" y="472" text-anchor="middle">64 KiB / SM</text>
+
+  <!-- warp slots bar: 4 blocks -->
+  <rect class="bar" x="630" y="300" width="120" height="120"/>
+  <text class="mono" x="690" y="326" text-anchor="middle">4</text>
+  <text class="label" x="690" y="452" text-anchor="middle">warp slots</text>
+  <text class="small" x="690" y="472" text-anchor="middle">32 warps / SM</text>
+
+  <!-- the binding cap line drawn across at the shortest bar -->
+  <line class="capline" x1="180" y1="380" x2="820" y2="380"/>
+  <text class="small" x="828" y="384" fill="var(--ts-alert)">cap = 2</text>
+
+  <text class="small" x="40" y="512">Here registers bind: occupancy is 2 of the 16-block cap. Cut registers (or add warps) and the next-shortest bar takes over.</text>
+</svg>

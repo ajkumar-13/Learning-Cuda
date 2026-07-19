@@ -1,0 +1,7 @@
+slug: 10-roofline
+title: "10 · How fast can a kernel be? — roofline, arithmetic intensity, and occupancy"
+date: 2026-07-18
+tags: [understanding-performance, cuda, roofline, occupancy]
+hero: diagrams/01-roofline.svg
+reading_time: 15
+part: "Part III — Understanding Performance"
