@@ -1,0 +1,7 @@
+slug: 08-parallel-scan
+title: "08 · Parallel scan — breaking the dependency chain of a prefix sum"
+date: 2026-07-12
+tags: [parallel-patterns, cuda, scan]
+hero: diagrams/01-scan-dependency.svg
+reading_time: 16
+part: "Part II — Parallel Patterns"

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Stream compaction uses an exclusive scan of a keep-or-drop predicate to compute each surviving element's output position in parallel</title>
+  <desc id="d">Four rows showing stream compaction, the killer application of scan. The input is 3, minus 1, 7, 0, minus 2, 4, 1, minus 5, 6. A predicate marks which to keep, here the positive values, as 1, 0, 1, 0, 0, 1, 1, 0, 1. An exclusive scan of the predicate, drawn green, gives 0, 1, 1, 2, 2, 2, 3, 4, 4: for each kept element this is exactly its destination index in the output. Finally a scatter writes each kept input to the output at its scanned position, producing the dense result 3, 7, 4, 1, 6. Every step is parallel and order N work with order log N depth, so a filter that looks inherently sequential runs fully in parallel.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .keep{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
+    .scanc{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .scat{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Stream compaction: a scan computes where each element goes</text>
+  <text class="small" x="40" y="66">Keep the positives. The exclusive scan of the keep/drop predicate IS each survivor's output index.</text>
+
+  <defs>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <text class="label" x="92" y="108" text-anchor="end">input</text>
+  <g>
+    <rect class="keep" x="100" y="88" width="64" height="40"/><text class="mono" x="132" y="114" text-anchor="middle">3</text>
+    <rect class="cell" x="172" y="88" width="64" height="40"/><text class="mono" x="204" y="114" text-anchor="middle">-1</text>
+    <rect class="keep" x="244" y="88" width="64" height="40"/><text class="mono" x="276" y="114" text-anchor="middle">7</text>
+    <rect class="cell" x="316" y="88" width="64" height="40"/><text class="mono" x="348" y="114" text-anchor="middle">0</text>
+    <rect class="cell" x="388" y="88" width="64" height="40"/><text class="mono" x="420" y="114" text-anchor="middle">-2</text>
+    <rect class="keep" x="460" y="88" width="64" height="40"/><text class="mono" x="492" y="114" text-anchor="middle">4</text>
+    <rect class="keep" x="532" y="88" width="64" height="40"/><text class="mono" x="564" y="114" text-anchor="middle">1</text>
+    <rect class="cell" x="604" y="88" width="64" height="40"/><text class="mono" x="636" y="114" text-anchor="middle">-5</text>
+    <rect class="keep" x="676" y="88" width="64" height="40"/><text class="mono" x="708" y="114" text-anchor="middle">6</text>
+  </g>
+
+  <text class="label" x="92" y="174" text-anchor="end">predicate</text>
+  <g>
+    <rect class="cell" x="100" y="154" width="64" height="40"/><text class="mono" x="132" y="180" text-anchor="middle">1</text>
+    <rect class="cell" x="172" y="154" width="64" height="40"/><text class="mono" x="204" y="180" text-anchor="middle">0</text>
+    <rect class="cell" x="244" y="154" width="64" height="40"/><text class="mono" x="276" y="180" text-anchor="middle">1</text>
+    <rect class="cell" x="316" y="154" width="64" height="40"/><text class="mono" x="348" y="180" text-anchor="middle">0</text>
+    <rect class="cell" x="388" y="154" width="64" height="40"/><text class="mono" x="420" y="180" text-anchor="middle">0</text>
+    <rect class="cell" x="460" y="154" width="64" height="40"/><text class="mono" x="492" y="180" text-anchor="middle">1</text>
+    <rect class="cell" x="532" y="154" width="64" height="40"/><text class="mono" x="564" y="180" text-anchor="middle">1</text>
+    <rect class="cell" x="604" y="154" width="64" height="40"/><text class="mono" x="636" y="180" text-anchor="middle">0</text>
+    <rect class="cell" x="676" y="154" width="64" height="40"/><text class="mono" x="708" y="180" text-anchor="middle">1</text>
+  </g>
+
+  <text class="label" x="92" y="240" text-anchor="end" fill="var(--ts-success)">scan</text>
+  <g>
+    <rect class="scanc" x="100" y="220" width="64" height="40"/><text class="mono" x="132" y="246" text-anchor="middle">0</text>
+    <rect class="scanc" x="172" y="220" width="64" height="40"/><text class="mono" x="204" y="246" text-anchor="middle">1</text>
+    <rect class="scanc" x="244" y="220" width="64" height="40"/><text class="mono" x="276" y="246" text-anchor="middle">1</text>
+    <rect class="scanc" x="316" y="220" width="64" height="40"/><text class="mono" x="348" y="246" text-anchor="middle">2</text>
+    <rect class="scanc" x="388" y="220" width="64" height="40"/><text class="mono" x="420" y="246" text-anchor="middle">2</text>
+    <rect class="scanc" x="460" y="220" width="64" height="40"/><text class="mono" x="492" y="246" text-anchor="middle">2</text>
+    <rect class="scanc" x="532" y="220" width="64" height="40"/><text class="mono" x="564" y="246" text-anchor="middle">3</text>
+    <rect class="scanc" x="604" y="220" width="64" height="40"/><text class="mono" x="636" y="246" text-anchor="middle">4</text>
+    <rect class="scanc" x="676" y="220" width="64" height="40"/><text class="mono" x="708" y="246" text-anchor="middle">4</text>
+  </g>
+  <text class="small" x="752" y="246">= each survivor's output index</text>
+
+  <!-- scatter arrows from kept inputs to output positions -->
+  <g class="scat">
+    <path d="M132,128 C132,300 332,300 332,400" marker-end="url(#aS)"/>
+    <path d="M276,260 C276,330 404,330 404,400" marker-end="url(#aS)"/>
+    <path d="M492,260 C492,340 476,340 476,400" marker-end="url(#aS)"/>
+    <path d="M564,260 C564,350 548,350 548,400" marker-end="url(#aS)"/>
+    <path d="M708,260 C708,360 620,360 620,400" marker-end="url(#aS)"/>
+  </g>
+
+  <text class="label" x="248" y="426" text-anchor="end" fill="var(--ts-success)">output</text>
+  <g>
+    <rect class="scanc" x="300" y="402" width="64" height="40"/><text class="mono" x="332" y="428" text-anchor="middle">3</text>
+    <rect class="scanc" x="372" y="402" width="64" height="40"/><text class="mono" x="404" y="428" text-anchor="middle">7</text>
+    <rect class="scanc" x="444" y="402" width="64" height="40"/><text class="mono" x="476" y="428" text-anchor="middle">4</text>
+    <rect class="scanc" x="516" y="402" width="64" height="40"/><text class="mono" x="548" y="428" text-anchor="middle">1</text>
+    <rect class="scanc" x="588" y="402" width="64" height="40"/><text class="mono" x="620" y="428" text-anchor="middle">6</text>
+  </g>
+
+  <text class="small" x="40" y="492">scatter: if kept, write input[i] to output[scan[i]].</text>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">An inclusive scan produces a running total where each output depends on the previous one, which looks serial</title>
+  <desc id="d">An input array of eight values 3, 1, 7, 0, 4, 1, 6, 3 across the top. Below it, the inclusive scan, a running total, 3, 4, 11, 11, 15, 16, 22, 25, drawn green. Each output element is formed as the previous output plus the current input, shown by a chain of arrows linking each output cell to the next, plus a faint arrow from each input down to its output. The point is that out at i depends on out at i minus 1, so the computation looks inherently serial. The note explains that tree algorithms break the chain by trading depth for work: a log-depth scan does about 2N additions (Blelloch) or N log N (Hillis-Steele) instead of running N steps in sequence.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .outc{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .down{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+    .chain{stroke:var(--ts-ink);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A scan is a running total: each output needs the one before it</text>
+  <text class="small" x="40" y="66">out[i] = out[i-1] + in[i]. The dependency chain makes it look impossible to parallelize.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink)"/></marker>
+  </defs>
+
+  <text class="label" x="120" y="130">input</text>
+  <g>
+    <rect class="cell" x="120" y="140" width="80" height="50"/><text class="mono" x="160" y="171" text-anchor="middle">3</text>
+    <rect class="cell" x="208" y="140" width="80" height="50"/><text class="mono" x="248" y="171" text-anchor="middle">1</text>
+    <rect class="cell" x="296" y="140" width="80" height="50"/><text class="mono" x="336" y="171" text-anchor="middle">7</text>
+    <rect class="cell" x="384" y="140" width="80" height="50"/><text class="mono" x="424" y="171" text-anchor="middle">0</text>
+    <rect class="cell" x="472" y="140" width="80" height="50"/><text class="mono" x="512" y="171" text-anchor="middle">4</text>
+    <rect class="cell" x="560" y="140" width="80" height="50"/><text class="mono" x="600" y="171" text-anchor="middle">1</text>
+    <rect class="cell" x="648" y="140" width="80" height="50"/><text class="mono" x="688" y="171" text-anchor="middle">6</text>
+    <rect class="cell" x="736" y="140" width="80" height="50"/><text class="mono" x="776" y="171" text-anchor="middle">3</text>
+  </g>
+
+  <g class="down">
+    <path d="M160,190 L160,278" marker-end="url(#a)"/><path d="M248,190 L248,278" marker-end="url(#a)"/><path d="M336,190 L336,278" marker-end="url(#a)"/><path d="M424,190 L424,278" marker-end="url(#a)"/>
+    <path d="M512,190 L512,278" marker-end="url(#a)"/><path d="M600,190 L600,278" marker-end="url(#a)"/><path d="M688,190 L688,278" marker-end="url(#a)"/><path d="M776,190 L776,278" marker-end="url(#a)"/>
+  </g>
+
+  <text class="label" x="120" y="270" fill="var(--ts-success)">inclusive scan (running total)</text>
+  <g>
+    <rect class="outc" x="120" y="280" width="80" height="50"/><text class="mono" x="160" y="311" text-anchor="middle">3</text>
+    <rect class="outc" x="208" y="280" width="80" height="50"/><text class="mono" x="248" y="311" text-anchor="middle">4</text>
+    <rect class="outc" x="296" y="280" width="80" height="50"/><text class="mono" x="336" y="311" text-anchor="middle">11</text>
+    <rect class="outc" x="384" y="280" width="80" height="50"/><text class="mono" x="424" y="311" text-anchor="middle">11</text>
+    <rect class="outc" x="472" y="280" width="80" height="50"/><text class="mono" x="512" y="311" text-anchor="middle">15</text>
+    <rect class="outc" x="560" y="280" width="80" height="50"/><text class="mono" x="600" y="311" text-anchor="middle">16</text>
+    <rect class="outc" x="648" y="280" width="80" height="50"/><text class="mono" x="688" y="311" text-anchor="middle">22</text>
+    <rect class="outc" x="736" y="280" width="80" height="50"/><text class="mono" x="776" y="311" text-anchor="middle">25</text>
+  </g>
+  <!-- serial dependency chain -->
+  <g class="chain">
+    <path d="M200,355 L208,355" marker-end="url(#ak)"/>
+    <path d="M160,340 L160,355 L248,355" marker-end="url(#ak)"/>
+    <path d="M248,340 L248,372 L336,372" marker-end="url(#ak)"/>
+    <path d="M336,340 L336,389 L424,389" marker-end="url(#ak)"/>
+    <path d="M424,340 L424,372 L512,372" marker-end="url(#ak)"/>
+    <path d="M512,340 L512,355 L600,355" marker-end="url(#ak)"/>
+    <path d="M600,340 L600,372 L688,372" marker-end="url(#ak)"/>
+    <path d="M688,340 L688,389 L776,389" marker-end="url(#ak)"/>
+  </g>
+  <text class="small" x="120" y="420">each output waits for the previous: a chain of length N</text>
+
+  <text class="small" x="40" y="470">It only looks serial. Tree algorithms break the chain by trading depth for work:</text>
+  <text class="small" x="40" y="494">a log-depth scan does about 2N additions (Blelloch) instead of N sequential steps.</text>
+</svg>

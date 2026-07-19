@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Scan time for Hillis-Steele, naive and conflict-free Blelloch, and the CUB library</title>
+  <desc id="d">A bar chart of time in milliseconds, shorter is faster, for scanning 16 million floats on an RTX 3080. Hillis-Steele takes 3.2 milliseconds; it is simple but work-inefficient at N log N additions. Naive Blelloch takes 1.8, order N work but with shared-memory bank conflicts. Blelloch with bank-conflict avoidance takes 0.9, drawn green, about twice as fast as the naive version; it adds the index >> 5 offset to the naive Blelloch shown in the snippet. The CUB library reaches 0.6, drawn blue. The progression shows the two levers: a work-efficient algorithm, then removing bank conflicts.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .p{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Work-efficient, then conflict-free: 0.9 ms, near CUB (16M floats, RTX 3080)</text>
+  <text class="small" x="40" y="66">Time for an exclusive scan — shorter is faster.</text>
+
+  <g>
+    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="160" y1="349" x2="900" y2="349"/><text class="small" x="152" y="353" text-anchor="end">1</text>
+    <line class="grid" x1="160" y1="257" x2="900" y2="257"/><text class="small" x="152" y="261" text-anchor="end">2</text>
+    <line class="grid" x1="160" y1="166" x2="900" y2="166"/><text class="small" x="152" y="170" text-anchor="end">3</text>
+  </g>
+  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
+  <text class="small" x="76" y="280" transform="rotate(-90 76 280)" text-anchor="middle">time (ms)</text>
+
+  <rect class="n" x="220" y="147" width="120" height="293"/>
+  <text class="val" x="280" y="139" text-anchor="middle">3.2</text>
+  <text class="label" x="280" y="462" text-anchor="middle">Hillis-Steele</text>
+  <text class="small" x="280" y="480" text-anchor="middle">N log N work</text>
+
+  <rect class="n" x="400" y="275" width="120" height="165"/>
+  <text class="val" x="460" y="267" text-anchor="middle">1.8</text>
+  <text class="label" x="460" y="462" text-anchor="middle">Blelloch naive</text>
+  <text class="small" x="460" y="480" text-anchor="middle">bank conflicts</text>
+
+  <rect class="g" x="580" y="358" width="120" height="82"/>
+  <text class="val" x="640" y="350" text-anchor="middle" fill="var(--ts-success)">0.9</text>
+  <text class="label" x="640" y="462" text-anchor="middle">Blelloch (BCAO)</text>
+  <text class="small" x="640" y="480" text-anchor="middle">conflict-free</text>
+
+  <rect class="p" x="760" y="385" width="120" height="55"/>
+  <text class="val" x="820" y="377" text-anchor="middle" fill="var(--ts-primary)">0.6</text>
+  <text class="label" x="820" y="462" text-anchor="middle">CUB</text>
+  <text class="small" x="820" y="480" text-anchor="middle">library</text>
+
+  <text class="small" x="40" y="512">Two levers: a work-efficient algorithm (O(N) not O(N log N)), then bank-conflict avoidance, which alone is worth about 2x.</text>
+</svg>

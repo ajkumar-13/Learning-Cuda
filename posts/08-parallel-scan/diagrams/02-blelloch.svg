@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The Blelloch scan builds partial sums in an up-sweep, then distributes them in a down-sweep to produce an exclusive scan</title>
+  <desc id="d">Three rows showing the work-efficient Blelloch scan in place on the array 3, 1, 7, 0, 4, 1, 6, 3. The first row is the input. The up-sweep phase builds partial sums like a reduction tree, giving the second row 3, 4, 7, 11, 4, 5, 6, 25, where the last element 25 is the total sum, highlighted. Then the last element is set to zero and the down-sweep phase distributes values back down, giving the third row, the exclusive scan 0, 3, 4, 11, 11, 15, 16, 22, drawn green. The whole thing does about 2N additions, order N work, instead of the N log N of the simpler Hillis-Steele scan.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
+    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .tot{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
+    .outc{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Blelloch scan: up-sweep builds sums, down-sweep distributes them</text>
+  <text class="small" x="40" y="66">Work-efficient: about 2N additions (O(N) work) instead of Hillis-Steele's N log N.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <text class="label" x="120" y="104">input</text>
+  <g>
+    <rect class="cell" x="120" y="114" width="80" height="46"/><text class="mono" x="160" y="143" text-anchor="middle">3</text>
+    <rect class="cell" x="208" y="114" width="80" height="46"/><text class="mono" x="248" y="143" text-anchor="middle">1</text>
+    <rect class="cell" x="296" y="114" width="80" height="46"/><text class="mono" x="336" y="143" text-anchor="middle">7</text>
+    <rect class="cell" x="384" y="114" width="80" height="46"/><text class="mono" x="424" y="143" text-anchor="middle">0</text>
+    <rect class="cell" x="472" y="114" width="80" height="46"/><text class="mono" x="512" y="143" text-anchor="middle">4</text>
+    <rect class="cell" x="560" y="114" width="80" height="46"/><text class="mono" x="600" y="143" text-anchor="middle">1</text>
+    <rect class="cell" x="648" y="114" width="80" height="46"/><text class="mono" x="688" y="143" text-anchor="middle">6</text>
+    <rect class="cell" x="736" y="114" width="80" height="46"/><text class="mono" x="776" y="143" text-anchor="middle">3</text>
+  </g>
+
+  <path class="flow" d="M480,164 L480,196" marker-end="url(#a)"/>
+  <text class="small" x="500" y="186">up-sweep: build partial sums (a reduction tree)</text>
+
+  <text class="label" x="120" y="246">after up-sweep</text>
+  <g>
+    <rect class="cell" x="120" y="256" width="80" height="46"/><text class="mono" x="160" y="285" text-anchor="middle">3</text>
+    <rect class="cell" x="208" y="256" width="80" height="46"/><text class="mono" x="248" y="285" text-anchor="middle">4</text>
+    <rect class="cell" x="296" y="256" width="80" height="46"/><text class="mono" x="336" y="285" text-anchor="middle">7</text>
+    <rect class="cell" x="384" y="256" width="80" height="46"/><text class="mono" x="424" y="285" text-anchor="middle">11</text>
+    <rect class="cell" x="472" y="256" width="80" height="46"/><text class="mono" x="512" y="285" text-anchor="middle">4</text>
+    <rect class="cell" x="560" y="256" width="80" height="46"/><text class="mono" x="600" y="285" text-anchor="middle">5</text>
+    <rect class="cell" x="648" y="256" width="80" height="46"/><text class="mono" x="688" y="285" text-anchor="middle">6</text>
+    <rect class="tot"  x="736" y="256" width="80" height="46"/><text class="mono" x="776" y="285" text-anchor="middle">25</text>
+  </g>
+  <text class="small" x="824" y="285">total sum</text>
+
+  <path class="flow" d="M480,306 L480,338" marker-end="url(#a)"/>
+  <text class="small" x="500" y="328">set last = 0, then down-sweep: distribute back down</text>
+
+  <text class="label" x="120" y="388" fill="var(--ts-success)">exclusive scan</text>
+  <g>
+    <rect class="outc" x="120" y="398" width="80" height="46"/><text class="mono" x="160" y="427" text-anchor="middle">0</text>
+    <rect class="outc" x="208" y="398" width="80" height="46"/><text class="mono" x="248" y="427" text-anchor="middle">3</text>
+    <rect class="outc" x="296" y="398" width="80" height="46"/><text class="mono" x="336" y="427" text-anchor="middle">4</text>
+    <rect class="outc" x="384" y="398" width="80" height="46"/><text class="mono" x="424" y="427" text-anchor="middle">11</text>
+    <rect class="outc" x="472" y="398" width="80" height="46"/><text class="mono" x="512" y="427" text-anchor="middle">11</text>
+    <rect class="outc" x="560" y="398" width="80" height="46"/><text class="mono" x="600" y="427" text-anchor="middle">15</text>
+    <rect class="outc" x="648" y="398" width="80" height="46"/><text class="mono" x="688" y="427" text-anchor="middle">16</text>
+    <rect class="outc" x="736" y="398" width="80" height="46"/><text class="mono" x="776" y="427" text-anchor="middle">22</text>
+  </g>
+
+  <text class="small" x="40" y="492">Each output is the sum of everything before it.</text>
+</svg>
