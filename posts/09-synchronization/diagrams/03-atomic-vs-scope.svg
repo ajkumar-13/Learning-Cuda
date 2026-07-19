@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A memory fence publishes a write only as far as its scope: block, device, or system</title>
+  <desc id="d">Three concentric rings around a central write. The innermost ring is labelled block and drawn green as the cheap default scope, reaching only threads in the same block. The middle ring is labelled device, reaching all threads on the GPU. The outer ring is labelled system and drawn grey as the widest and most expensive reach, extending to the host and peer GPUs. An arrow notes that wider rings reach more threads and cost more.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .ringO{fill:none;stroke:var(--ts-border);stroke-width:1.5;}
+    .ringB{fill:none;stroke:var(--ts-success);stroke-width:2;}
+    .ringtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .gtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-success);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .write{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A fence reaches as far as its scope ring</text>
+  <text class="small" x="40" y="66">Wider scopes reach more threads and cost more; pick the narrowest that works.</text>
+
+  <!-- concentric rings -->
+  <circle class="ringO" cx="380" cy="300" r="180"/>
+  <circle class="ringO" cx="380" cy="300" r="120"/>
+  <circle class="ringB" cx="380" cy="300" r="64"/>
+
+  <!-- central write -->
+  <rect class="write" x="332" y="286" width="96" height="30" rx="4"/><text class="mono" x="380" y="306" text-anchor="middle">write</text>
+
+  <!-- ring labels along the top -->
+  <text class="gtxt"   x="380" y="252" text-anchor="middle">block</text>
+  <text class="ringtxt" x="380" y="196" text-anchor="middle">device</text>
+  <text class="ringtxt" x="380" y="138" text-anchor="middle">system</text>
+
+  <!-- legend on the right -->
+  <text class="mono" x="640" y="230">__threadfence_block()</text>
+  <text class="small" x="640" y="248">same block — cheapest</text>
+  <text class="mono" x="640" y="292">__threadfence()</text>
+  <text class="small" x="640" y="310">whole device (the GPU)</text>
+  <text class="mono" x="640" y="354">__threadfence_system()</text>
+  <text class="small" x="640" y="372">device + host + peers — widest</text>
+  <text class="gtxt" x="640" y="418">narrower scope = cheaper</text>
+</svg>

@@ -1,0 +1,7 @@
+slug: 09-synchronization
+title: "09 · When threads share data — barriers, atomics, and the memory model"
+date: 2026-07-16
+tags: [parallel-patterns, cuda, synchronization, atomics]
+hero: diagrams/01-race-condition.svg
+reading_time: 15
+part: "Part II — Parallel Patterns"

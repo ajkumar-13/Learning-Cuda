@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A lost update: two threads read the same counter, both add one, and one increment is overwritten</title>
+  <desc id="d">Two thread rows each perform read, add one, write on a shared counter that starts at 7. Thread 0 reads 7, computes 8, writes 8. Thread 1 reads 7 before thread 0's write lands, also computes 8, and writes 8 on top. Both arrows feed a counter box that ends at 8, with a red note that the correct answer is 9 and one increment was lost.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .edge{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .lost{stroke:var(--ts-alert);stroke-width:1.5;fill:none;}
+    .losttxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-alert);}
+    .counter{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
+    .big{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:30px;fill:var(--ts-ink);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A lost update: counter += 1 is really read, add, write</text>
+  <text class="small" x="40" y="66">Both threads read 7 before either writes, so the second write of 8 overwrites the first.</text>
+
+  <text class="label" x="150" y="120" text-anchor="middle">read</text>
+  <text class="label" x="360" y="120" text-anchor="middle">add one</text>
+  <text class="label" x="560" y="120" text-anchor="middle">write</text>
+
+  <!-- thread 0 -->
+  <text class="label" x="40" y="182">thread 0</text>
+  <rect class="box" x="110" y="158" width="90" height="44" rx="4"/><text class="mono" x="155" y="185" text-anchor="middle">reads 7</text>
+  <rect class="box" x="300" y="158" width="120" height="44" rx="4"/><text class="mono" x="360" y="185" text-anchor="middle">7 + 1 = 8</text>
+  <rect class="box" x="500" y="158" width="120" height="44" rx="4"/><text class="mono" x="560" y="185" text-anchor="middle">writes 8</text>
+
+  <!-- thread 1 -->
+  <text class="label" x="40" y="342">thread 1</text>
+  <rect class="box" x="110" y="318" width="90" height="44" rx="4"/><text class="mono" x="155" y="345" text-anchor="middle">reads 7</text>
+  <rect class="box" x="300" y="318" width="120" height="44" rx="4"/><text class="mono" x="360" y="345" text-anchor="middle">7 + 1 = 8</text>
+  <rect class="box" x="500" y="318" width="120" height="44" rx="4" stroke="var(--ts-alert)" stroke-width="1.5"/><text class="mono" x="560" y="345" text-anchor="middle">writes 8</text>
+
+  <!-- counter -->
+  <rect class="counter" x="770" y="210" width="140" height="100" rx="8"/>
+  <text class="small" x="840" y="234" text-anchor="middle">counter</text>
+  <text class="big" x="840" y="278" text-anchor="middle">8</text>
+
+  <!-- write arrows into counter -->
+  <path class="edge" d="M620,180 L770,250" marker-end="url(#a)"/>
+  <path class="lost" d="M620,340 L770,272" marker-end="url(#ar)"/>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+  </defs>
+
+  <text class="losttxt" x="840" y="352" text-anchor="middle">should be 9</text>
+  <text class="losttxt" x="490" y="410">One increment is lost: two adds, one counted. This is the race.</text>
+</svg>

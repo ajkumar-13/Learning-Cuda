@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A __syncthreads barrier releases no thread until every thread in the block has arrived</title>
+  <desc id="d">Top scene: five thread lanes advance toward a vertical __syncthreads barrier line. Four have reached it and wait, drawn grey, while one straggler lane is still short of the line. Bottom scene: once the last thread arrives, all five cross the barrier together, drawn green.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .wait{fill:var(--ts-grid);stroke:var(--ts-border);stroke-width:1;}
+    .move{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .cross{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .barrier{stroke:var(--ts-ink);stroke-width:2;stroke-dasharray:6 4;}
+    .barriertxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .gtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-success);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">__syncthreads(): all wait for the slowest, then all proceed</text>
+
+  <!-- TOP: waiting -->
+  <text class="label" x="40" y="86">Fast threads reach the barrier and wait</text>
+  <line class="barrier" x1="560" y1="96" x2="560" y2="250"/>
+  <text class="barriertxt" x="560" y="268" text-anchor="middle">__syncthreads()</text>
+  <g>
+    <rect class="wait" x="150" y="104" width="410" height="22" rx="4"/><text class="small" x="575" y="120">wait</text>
+    <rect class="wait" x="150" y="132" width="410" height="22" rx="4"/><text class="small" x="575" y="148">wait</text>
+    <rect class="wait" x="150" y="160" width="410" height="22" rx="4"/><text class="small" x="575" y="176">wait</text>
+    <rect class="wait" x="150" y="188" width="410" height="22" rx="4"/><text class="small" x="575" y="204">wait</text>
+    <rect class="move" x="150" y="216" width="250" height="22" rx="4"/><text class="small" x="410" y="232">still arriving</text>
+  </g>
+
+  <!-- BOTTOM: crossing -->
+  <text class="label" x="40" y="326">When the last thread arrives, all cross together</text>
+  <line class="barrier" x1="560" y1="336" x2="560" y2="452"/>
+  <g>
+    <rect class="cross" x="150" y="344" width="620" height="20" rx="4"/>
+    <rect class="cross" x="150" y="370" width="620" height="20" rx="4"/>
+    <rect class="cross" x="150" y="396" width="620" height="20" rx="4"/>
+    <rect class="cross" x="150" y="422" width="620" height="20" rx="4"/>
+  </g>
+  <text class="gtxt" x="700" y="478" text-anchor="middle">all proceed</text>
+  <text class="small" x="40" y="500">The slowest thread sets the pace; a barrier only some threads reach hangs the block.</text>
+</svg>
