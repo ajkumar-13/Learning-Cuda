@@ -1,6 +1,9 @@
 # Build directories
 /build/
 /build-*/
+/build_vs/
+/build_ninja/
+examples/build/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
@@ -46,6 +49,10 @@ install_manifest.txt
 .DS_Store
 *.swp
 *.excalidraw
+
+# Video assets (kept local; too large for the repo)
+**/videos/
+*.mp4
 
 # Keep internal/private documentation local-only (do not push to GitHub)
 SETUP_RESOLUTION.md
