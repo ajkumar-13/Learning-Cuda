@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A CUDA graph is nodes and dependency edges, instantiated once and launched as one unit</title>
+  <desc id="d">A directed graph enclosed in a green box that represents one replayable CUDA graph. At the top a host-to-device copy node has two arrows fanning down to two kernel nodes side by side. Each kernel node has an arrow down into a single reduce node at the bottom. The edges are the dependency order captured from the stream; the green box is the whole graph, instantiated once and launched with a single call.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .node{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .nodetxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .edge{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .unit{fill:none;stroke:var(--ts-success);stroke-width:1.5;stroke-dasharray:5 4;}
+    .unittxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-success);}
+  ]]></style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">A graph is nodes plus their dependency edges</text>
+  <text class="small" x="40" y="66">Captured from stream order, instantiated once, then launched as a single unit.</text>
+
+  <!-- the graph unit box -->
+  <rect class="unit" x="300" y="98" width="360" height="360" rx="10"/>
+  <text class="unittxt" x="480" y="120" text-anchor="middle">one CUDA graph  ·  one cudaGraphLaunch</text>
+
+  <!-- edges (drawn first, under nodes) -->
+  <path class="edge" d="M470,178 L400,236" marker-end="url(#ah)"/>
+  <path class="edge" d="M490,178 L560,236" marker-end="url(#ah)"/>
+  <path class="edge" d="M400,288 L470,352" marker-end="url(#ah)"/>
+  <path class="edge" d="M560,288 L490,352" marker-end="url(#ah)"/>
+
+  <!-- nodes -->
+  <rect class="node" x="410" y="134" width="140" height="44" rx="6"/><text class="nodetxt" x="480" y="161" text-anchor="middle">H2D copy</text>
+  <rect class="node" x="330" y="240" width="130" height="44" rx="6"/><text class="nodetxt" x="395" y="267" text-anchor="middle">kernel A</text>
+  <rect class="node" x="500" y="240" width="130" height="44" rx="6"/><text class="nodetxt" x="565" y="267" text-anchor="middle">kernel B</text>
+  <rect class="node" x="410" y="352" width="140" height="44" rx="6"/><text class="nodetxt" x="480" y="379" text-anchor="middle">reduce</text>
+
+  <text class="small" x="480" y="440" text-anchor="middle">edges = dependencies; the two kernels may run concurrently</text>
+</svg>

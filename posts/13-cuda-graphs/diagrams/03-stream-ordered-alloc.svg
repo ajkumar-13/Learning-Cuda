@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">cudaMalloc synchronizes the whole device; a stream-ordered pool returns a reused block without stalling</title>
+  <desc id="d">Two panels. On the left, labelled cudaMalloc, three horizontal stream lanes all stop at a single red vertical barrier that spans them, showing that the allocation forces a device-wide synchronization and freezes every stream. On the right, labelled cudaMallocAsync pool, the three lanes flow without interruption and one lane receives a green reused block handed back from a memory pool, with no barrier crossing the other lanes.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .lane{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .lanetxt{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .barrier{stroke:var(--ts-alert);stroke-width:3;}
+    .barriertxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-alert);}
+    .pool{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .pooltxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-success);}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Allocation: a device-wide stall versus a stream-ordered pool</text>
+  <text class="small" x="40" y="66">cudaMalloc freezes every stream; a pool hands back a reused block with no barrier.</text>
+
+  <line class="divider" x1="480" y1="96" x2="480" y2="470"/>
+
+  <!-- LEFT: cudaMalloc, device-wide barrier -->
+  <text class="label" x="60" y="120">cudaMalloc</text>
+  <text class="small" x="60" y="140">blocks: the whole device synchronizes</text>
+  <g>
+    <rect class="lane" x="60" y="170" width="150" height="34" rx="4"/><text class="lanetxt" x="70" y="192">stream 0</text>
+    <rect class="lane" x="60" y="230" width="150" height="34" rx="4"/><text class="lanetxt" x="70" y="252">stream 1</text>
+    <rect class="lane" x="60" y="290" width="150" height="34" rx="4"/><text class="lanetxt" x="70" y="312">stream 2</text>
+  </g>
+  <line class="barrier" x1="250" y1="160" x2="250" y2="334"/>
+  <text class="barriertxt" x="250" y="356" text-anchor="middle">cudaMalloc</text>
+  <text class="small" x="330" y="250">every lane waits here</text>
+
+  <!-- RIGHT: pool, no barrier -->
+  <text class="label" x="520" y="120">cudaMallocAsync pool</text>
+  <text class="small" x="520" y="140">stream-ordered: a reused block, no device sync</text>
+  <g>
+    <rect class="lane" x="520" y="170" width="340" height="34" rx="4"/><text class="lanetxt" x="530" y="192">stream 0</text>
+    <rect class="lane" x="520" y="230" width="340" height="34" rx="4"/><text class="lanetxt" x="530" y="252">stream 1</text>
+    <rect class="lane" x="520" y="290" width="340" height="34" rx="4"/><text class="lanetxt" x="530" y="312">stream 2</text>
+  </g>
+  <rect class="pool" x="700" y="228" width="120" height="38" rx="4"/><text class="pooltxt" x="760" y="252" text-anchor="middle">reused block</text>
+  <text class="small" x="690" y="356" text-anchor="middle">other lanes keep running</text>
+</svg>

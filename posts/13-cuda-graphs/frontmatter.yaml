@@ -1,0 +1,7 @@
+slug: 13-cuda-graphs
+title: "13 · Cutting launch overhead — CUDA Graphs and stream-ordered allocation"
+date: 2026-07-24
+tags: [systems-execution, cuda, cuda-graphs, memory-pools]
+hero: diagrams/01-launch-overhead.svg
+reading_time: 14
+part: "Part IV — Systems & Execution"

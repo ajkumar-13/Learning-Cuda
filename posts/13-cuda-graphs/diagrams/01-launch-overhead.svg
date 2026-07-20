@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Direct launches leave a host gap before every kernel; a graph replay closes the gaps</title>
+  <desc id="d">Two timelines. The top, labelled direct launches, alternates a grey host-gap segment and a neutral kernel block six times, so the sequence is long and the GPU idles in every grey gap while the CPU issues the next launch. The bottom, labelled graph replay, is a single green launch marker followed by six kernel blocks packed back to back with no gaps, so it finishes much sooner. A dashed bracket marks the time saved by removing the per-launch host gaps.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .kernel{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .gap{fill:var(--ts-grid);stroke:none;}
+    .gk{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .glaunch{fill:var(--ts-success);stroke:none;}
+    .gtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-success);}
+    .saved{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:4 3;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Launch overhead: the CPU gap before every kernel</text>
+  <text class="small" x="40" y="66">Direct launches wait on the host each time; a graph replays the whole sequence with one call.</text>
+
+  <!-- Row A: direct launches -->
+  <text class="label" x="40" y="130">Direct: N launches, a host gap before each</text>
+  <g>
+    <rect class="gap"    x="150" y="150" width="44" height="46"/>
+    <rect class="kernel" x="194" y="150" width="70" height="46" rx="4"/><text class="mono" x="229" y="178" text-anchor="middle">K1</text>
+    <rect class="gap"    x="264" y="150" width="44" height="46"/>
+    <rect class="kernel" x="308" y="150" width="70" height="46" rx="4"/><text class="mono" x="343" y="178" text-anchor="middle">K2</text>
+    <rect class="gap"    x="378" y="150" width="44" height="46"/>
+    <rect class="kernel" x="422" y="150" width="70" height="46" rx="4"/><text class="mono" x="457" y="178" text-anchor="middle">K3</text>
+    <rect class="gap"    x="492" y="150" width="44" height="46"/>
+    <rect class="kernel" x="536" y="150" width="70" height="46" rx="4"/><text class="mono" x="571" y="178" text-anchor="middle">K4</text>
+    <rect class="gap"    x="606" y="150" width="44" height="46"/>
+    <rect class="kernel" x="650" y="150" width="70" height="46" rx="4"/><text class="mono" x="685" y="178" text-anchor="middle">K5</text>
+    <rect class="gap"    x="720" y="150" width="44" height="46"/>
+    <rect class="kernel" x="764" y="150" width="70" height="46" rx="4"/><text class="mono" x="799" y="178" text-anchor="middle">K6</text>
+  </g>
+  <text class="small" x="172" y="222" text-anchor="middle">host gap</text>
+  <text class="small" x="150" y="244">The GPU idles in every grey gap, waiting for the CPU to issue the next launch.</text>
+
+  <!-- Row B: graph replay -->
+  <text class="label" x="40" y="330">Graph: instantiate once, then replay with a single call</text>
+  <g>
+    <rect class="glaunch" x="150" y="350" width="40" height="46" rx="4"/>
+    <rect class="gk" x="194" y="350" width="70" height="46" rx="4"/><text class="mono" x="229" y="378" text-anchor="middle">K1</text>
+    <rect class="gk" x="264" y="350" width="70" height="46" rx="4"/><text class="mono" x="299" y="378" text-anchor="middle">K2</text>
+    <rect class="gk" x="334" y="350" width="70" height="46" rx="4"/><text class="mono" x="369" y="378" text-anchor="middle">K3</text>
+    <rect class="gk" x="404" y="350" width="70" height="46" rx="4"/><text class="mono" x="439" y="378" text-anchor="middle">K4</text>
+    <rect class="gk" x="474" y="350" width="70" height="46" rx="4"/><text class="mono" x="509" y="378" text-anchor="middle">K5</text>
+    <rect class="gk" x="544" y="350" width="70" height="46" rx="4"/><text class="mono" x="579" y="378" text-anchor="middle">K6</text>
+  </g>
+  <text class="gtxt" x="170" y="342" text-anchor="middle">launch</text>
+  <text class="small" x="150" y="422">One cudaGraphLaunch replays all six kernels; the gaps are gone.</text>
+
+  <!-- time saved bracket between the two end points -->
+  <path class="saved" d="M614,300 L614,470 M834,300 L834,470 M614,470 L834,470"/>
+  <text class="small" x="724" y="490" text-anchor="middle">time saved</text>
+</svg>
