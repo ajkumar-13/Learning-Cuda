@@ -1,0 +1,7 @@
+slug: 15-async-copy-pipelining
+title: "15 · Asynchronous copy and software pipelining — cp.async, double buffering, and hiding memory latency"
+date: 2026-07-20
+tags: [systems, cuda, performance]
+hero: diagrams/01-stall-vs-pipeline.svg
+reading_time: 16
+part: "Part IV — Systems & Execution"

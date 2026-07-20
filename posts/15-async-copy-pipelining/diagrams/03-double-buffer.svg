@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 660" role="img" aria-labelledby="t d">
+  <title id="t">Double buffering: compute reads one shared-memory tile while cp.async fills the other, then the roles swap</title>
+  <desc id="d">Two shared-memory tile buffers, A and B, drawn as boxes. In the first step, the compute units read from buffer A, traced in green, while cp.async fills buffer B with the next tile from global memory, drawn in blue. A swap arrow leads to the second step, where the roles are reversed: compute now reads from buffer B and cp.async fills buffer A. The traced buffer A is followed end to end: it is read, then refilled. Because one buffer is always being filled while the other is being consumed, the load never blocks the compute.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#7E9CD0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .buf{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1.5;}
+    .bufread{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .buffill{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    .read{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .fill{stroke:var(--ts-primary);stroke-width:1.5;fill:none;}
+    .swap{stroke:var(--ts-ink);stroke-width:1.5;fill:none;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="880" height="660"/>
+  <text class="title" x="40" y="44">Double buffering: read one tile, fill the other</text>
+
+  <defs>
+    <marker id="aR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+    <marker id="aF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-primary)"/></marker>
+    <marker id="aK" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink)"/></marker>
+  </defs>
+
+  <!-- STEP 1 -->
+  <text class="label" x="40" y="100">Step k: compute reads A, cp.async fills B</text>
+  <text class="small" x="120" y="150" text-anchor="middle">compute</text>
+  <rect class="bufread" x="300" y="120" width="120" height="80" rx="6"/>
+  <text class="mono" x="360" y="156" text-anchor="middle">buffer A</text>
+  <text class="small" x="360" y="176" text-anchor="middle">tile k</text>
+  <rect class="buffill" x="540" y="120" width="120" height="80" rx="6"/>
+  <text class="mono" x="600" y="156" text-anchor="middle">buffer B</text>
+  <text class="small" x="600" y="176" text-anchor="middle">tile k+1</text>
+  <text class="small" x="760" y="165" text-anchor="middle">global</text>
+  <!-- read A -->
+  <path class="read" d="M300,160 L175,160" marker-end="url(#aR)"/>
+  <text class="small" x="240" y="148" text-anchor="middle" fill="var(--ts-success)">read</text>
+  <!-- fill B from global -->
+  <path class="fill" d="M715,160 L662,160" marker-end="url(#aF)"/>
+  <text class="small" x="690" y="148" text-anchor="middle" fill="var(--ts-primary)">cp.async</text>
+
+  <!-- swap arrow -->
+  <path class="swap" d="M440,250 L440,300" marker-end="url(#aK)"/>
+  <text class="label" x="470" y="282">swap buffers</text>
+
+  <line class="divider" x1="40" y1="340" x2="840" y2="340"/>
+
+  <!-- STEP 2 -->
+  <text class="label" x="40" y="400">Step k+1: compute reads B, cp.async fills A</text>
+  <text class="small" x="120" y="450" text-anchor="middle">compute</text>
+  <!-- arrows first, so the white buffer boxes occlude the crossings -->
+  <path class="read" d="M540,460 L175,460" marker-end="url(#aR)"/>
+  <path class="fill" d="M715,460 L422,460" marker-end="url(#aF)"/>
+  <rect class="buffill" x="300" y="420" width="120" height="80" rx="6"/>
+  <text class="mono" x="360" y="456" text-anchor="middle">buffer A</text>
+  <text class="small" x="360" y="476" text-anchor="middle">tile k+2</text>
+  <rect class="bufread" x="540" y="420" width="120" height="80" rx="6"/>
+  <text class="mono" x="600" y="456" text-anchor="middle">buffer B</text>
+  <text class="small" x="600" y="476" text-anchor="middle">tile k+1</text>
+  <text class="small" x="760" y="465" text-anchor="middle">global</text>
+  <!-- labels sit in the clear gaps, off the boxes -->
+  <text class="small" x="235" y="448" text-anchor="middle" fill="var(--ts-success)">read</text>
+  <text class="small" x="690" y="448" text-anchor="middle" fill="var(--ts-primary)">cp.async</text>
+
+  <text class="small" x="40" y="580">Trace buffer A: read in step k, then refilled in step k+1. One buffer is always full while the other fills, so the load never blocks compute.</text>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">cp.async copies from global memory to shared memory directly, bypassing the register file</title>
+  <desc id="d">Two data paths from global memory to shared memory. The ordinary synchronous path, shown greyed out and dashed, goes global memory into the register file and then out of the register file into shared memory, occupying registers and stalling the thread while it waits. The cp.async path, shown solid and in green, goes from global memory through the level-two cache straight into shared memory, skipping the register file entirely, which is drawn faded and crossed to show it is bypassed. Because the copy never touches registers it frees them for compute and runs in the background.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#7E9CD0;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-success);}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
+    .boxskip{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;stroke-dasharray:4 3;}
+    .skiptxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink-muted);}
+    .old{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;stroke-dasharray:4 3;}
+    .new{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    .cross{stroke:var(--ts-alert);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">cp.async: global to shared, around the register file</text>
+
+  <defs>
+    <marker id="aM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- nodes -->
+  <rect class="box" x="80"  y="240" width="150" height="64" rx="6"/>
+  <text class="label" x="155" y="270" text-anchor="middle">global memory</text>
+  <text class="small" x="155" y="290" text-anchor="middle">(DRAM)</text>
+
+  <rect class="box" x="405" y="160" width="150" height="64" rx="6"/>
+  <text class="label" x="480" y="190" text-anchor="middle">L2 cache</text>
+  <text class="small" x="480" y="210" text-anchor="middle">on the way</text>
+
+  <!-- register file: bypassed -->
+  <rect class="boxskip" x="405" y="330" width="150" height="64" rx="6"/>
+  <text class="skiptxt" x="480" y="360" text-anchor="middle">register file</text>
+  <text class="small" x="480" y="380" text-anchor="middle">bypassed</text>
+  <line class="cross" x1="420" y1="345" x2="540" y2="379"/>
+  <line class="cross" x1="540" y1="345" x2="420" y2="379"/>
+
+  <rect class="box" x="730" y="240" width="150" height="64" rx="6"/>
+  <text class="label" x="805" y="270" text-anchor="middle">shared memory</text>
+  <text class="small" x="805" y="290" text-anchor="middle">(on-chip, SMEM)</text>
+
+  <!-- OLD synchronous path: global -> registers -> shared (greyed) -->
+  <path class="old" d="M170,304 C200,360 360,372 405,366" marker-end="url(#aM)"/>
+  <path class="old" d="M555,366 C620,372 740,330 770,304" marker-end="url(#aM)"/>
+  <text class="small" x="300" y="430" text-anchor="middle">synchronous load: through registers, thread stalls</text>
+
+  <!-- NEW cp.async path: global -> L2 -> shared (green) -->
+  <path class="new" d="M205,250 C300,180 360,178 405,190" marker-end="url(#aS)"/>
+  <path class="new" d="M555,196 C640,178 720,210 760,256" marker-end="url(#aS)"/>
+  <text class="mono" x="470" y="128" text-anchor="middle">cp.async: direct, in the background</text>
+</svg>
