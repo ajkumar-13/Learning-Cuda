@@ -1,0 +1,7 @@
+slug: 14-kernel-fusion
+title: "14 · Kernel fusion — the fastest kernel is the one you don't launch"
+date: 2026-07-16
+tags: [systems, cuda, memory-bound]
+hero: diagrams/01-fusion-traffic.svg
+reading_time: 14
+part: "Part IV — Systems & Execution"

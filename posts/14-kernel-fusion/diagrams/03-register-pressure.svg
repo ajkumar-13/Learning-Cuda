@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Fusing too much raises registers per thread, which lowers how many threads fit on a streaming multiprocessor and can cause register spilling</title>
+  <desc id="d">Two panels, each showing the fixed register file of a streaming multiprocessor, 65,536 registers, divided among threads. On the left, a simple kernel using 32 registers per thread fits 2,048 threads, full occupancy, drawn as many small cells; with that many threads the hardware hides memory latency well. On the right, an over-fused kernel using 128 registers per thread fits only 512 threads, 25 percent occupancy, drawn as a few large cells in the alert colour; fewer threads means less latency hiding and slower execution. Worse, if a kernel needs more registers than exist, the compiler spills them to local memory, which is actually DRAM and about 100 times slower than a register. The lesson is that fusion is not always free: profile occupancy before fusing heavily.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .file{fill:none;stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .thr{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1;}
+    .thrbad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Fusion is not always free: watch register pressure</text>
+  <text class="small" x="40" y="62">Each SM has a fixed register file (65,536). More registers per thread means fewer threads fit at once.</text>
+
+  <!-- LEFT: simple -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">Simple kernel — 32 reg/thread</text>
+  <rect class="file" x="64" y="140" width="382" height="200" rx="6"/>
+  <g>
+    <rect class="thr" x="74"  y="150" width="42" height="36"/><rect class="thr" x="120" y="150" width="42" height="36"/><rect class="thr" x="166" y="150" width="42" height="36"/><rect class="thr" x="212" y="150" width="42" height="36"/><rect class="thr" x="258" y="150" width="42" height="36"/><rect class="thr" x="304" y="150" width="42" height="36"/><rect class="thr" x="350" y="150" width="42" height="36"/><rect class="thr" x="396" y="150" width="42" height="36"/>
+    <rect class="thr" x="74"  y="192" width="42" height="36"/><rect class="thr" x="120" y="192" width="42" height="36"/><rect class="thr" x="166" y="192" width="42" height="36"/><rect class="thr" x="212" y="192" width="42" height="36"/><rect class="thr" x="258" y="192" width="42" height="36"/><rect class="thr" x="304" y="192" width="42" height="36"/><rect class="thr" x="350" y="192" width="42" height="36"/><rect class="thr" x="396" y="192" width="42" height="36"/>
+    <rect class="thr" x="74"  y="234" width="42" height="36"/><rect class="thr" x="120" y="234" width="42" height="36"/><rect class="thr" x="166" y="234" width="42" height="36"/><rect class="thr" x="212" y="234" width="42" height="36"/><rect class="thr" x="258" y="234" width="42" height="36"/><rect class="thr" x="304" y="234" width="42" height="36"/><rect class="thr" x="350" y="234" width="42" height="36"/><rect class="thr" x="396" y="234" width="42" height="36"/>
+    <rect class="thr" x="74"  y="276" width="42" height="36"/><rect class="thr" x="120" y="276" width="42" height="36"/><rect class="thr" x="166" y="276" width="42" height="36"/><rect class="thr" x="212" y="276" width="42" height="36"/><rect class="thr" x="258" y="276" width="42" height="36"/><rect class="thr" x="304" y="276" width="42" height="36"/><rect class="thr" x="350" y="276" width="42" height="36"/><rect class="thr" x="396" y="276" width="42" height="36"/>
+  </g>
+  <text class="small" x="60" y="372">2,048 threads/SM  →  100% occupancy</text>
+  <text class="small" x="60" y="396" fill="var(--ts-success)">plenty of warps to hide memory latency</text>
+
+  <!-- RIGHT: over-fused -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120">Over-fused — 128 reg/thread</text>
+  <rect class="file" x="524" y="140" width="382" height="200" rx="6"/>
+  <g>
+    <rect class="thrbad" x="540" y="156" width="170" height="80"/><rect class="thrbad" x="720" y="156" width="170" height="80"/>
+    <rect class="thrbad" x="540" y="244" width="170" height="80"/><rect class="thrbad" x="720" y="244" width="170" height="80"/>
+  </g>
+  <text class="small" x="520" y="372" fill="var(--ts-alert)">512 threads/SM  →  25% occupancy</text>
+  <text class="small" x="520" y="396">fewer warps to hide latency: slower, despite less traffic</text>
+  <text class="small" x="520" y="420" fill="var(--ts-alert)">if it spills: local memory (DRAM), ~100x slower than a register</text>
+</svg>

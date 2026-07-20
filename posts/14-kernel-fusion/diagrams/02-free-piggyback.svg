@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A memory-bound ReLU run on its own mostly waits on memory, but fused onto a compute-bound conv it runs during the conv's memory stalls for free</title>
+  <desc id="d">Two timelines. The top, separate: a conv kernel runs as a long compute bar because it is compute-bound, then a ReLU kernel runs as a tiny compute sliver followed by a long stretch of waiting on memory, because ReLU is memory-bound with an arithmetic intensity of only 0.125. The total time is the conv plus a whole extra kernel launch plus the ReLU's own memory round-trip. The bottom, fused: the conv and ReLU run in one kernel, and the ReLU's single instruction executes during the conv's existing memory stalls, drawn green, so the total time is essentially the conv alone. The takeaway is that a memory-bound op can piggyback on a compute-bound op at almost no cost.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .compute{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .wait{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:4 3;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+    .brk{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">A memory-bound op is free when it rides a compute-bound one</text>
+  <text class="small" x="40" y="62">ReLU does ~1 operation per 8 bytes (arithmetic intensity 0.125): on its own, the cores just wait on memory.</text>
+
+  <!-- SEPARATE -->
+  <text class="label" x="40" y="106">Separate kernels</text>
+  <rect class="compute" x="120" y="118" width="360" height="44"/><text class="small" x="300" y="145" text-anchor="middle">conv (compute-bound): cores busy</text>
+  <rect class="compute" x="500" y="118" width="26" height="44"/>
+  <rect class="wait" x="526" y="118" width="314" height="44"/><text class="small" x="690" y="145" text-anchor="middle">ReLU: mostly waiting on memory</text>
+  <path class="brk" d="M120,176 L120,184 L840,184 L840,176"/>
+  <text class="small" x="480" y="202" text-anchor="middle">total = conv + a whole extra launch + ReLU's own memory round-trip</text>
+
+  <line class="divider" x1="40" y1="246" x2="920" y2="246"/>
+
+  <!-- FUSED -->
+  <text class="label" x="40" y="290">Fused kernel</text>
+  <rect class="compute" x="120" y="302" width="386" height="44"/>
+  <text class="small" x="300" y="329" text-anchor="middle">conv + ReLU in one kernel</text>
+  <text class="small" x="460" y="329" text-anchor="middle" fill="var(--ts-success)">+ReLU</text>
+  <path class="brk" d="M120,360 L120,368 L506,368 L506,360"/>
+  <text class="small" x="313" y="386" text-anchor="middle">total = conv alone (the ReLU instruction hides in the conv's memory stalls)</text>
+</svg>

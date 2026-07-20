@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Speedup from fusing several common operation patterns into one kernel</title>
+  <desc id="d">A bar chart of speedup from fusing operations, higher is better, with a dashed line at 1 times for the unfused baseline. MatMul plus ReLU is only 1.07 times, because a single elementwise op adds little. MatMul plus Bias plus ReLU is 1.24, MatMul plus Bias plus GELU is 1.35, and Conv plus BatchNorm plus ReLU is 1.41. The bigger wins, drawn green, are Residual plus LayerNorm at 1.94 times and Attention's three operations fused at 3.33 times. The pattern is that the more chained operations you fuse, the more redundant memory round-trips you remove, so the larger the speedup.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .base{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
+    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">More chained ops fused = bigger win (speedup, higher is better)</text>
+
+  <g>
+    <line class="grid" x1="150" y1="440" x2="900" y2="440"/><text class="small" x="142" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="150" y1="257" x2="900" y2="257"/><text class="small" x="142" y="261" text-anchor="end">2x</text>
+    <line class="grid" x1="150" y1="166" x2="900" y2="166"/><text class="small" x="142" y="170" text-anchor="end">3x</text>
+  </g>
+  <line class="base" x1="150" y1="349" x2="900" y2="349"/><text class="small" x="156" y="132">- - -  1x (unfused baseline)</text>
+  <line class="axis" x1="150" y1="110" x2="150" y2="440"/>
+
+  <rect class="n" x="190" y="342" width="80" height="98"/><text class="val" x="230" y="334" text-anchor="middle">1.07</text>
+  <text class="small" x="230" y="460" text-anchor="middle">MatMul</text><text class="small" x="230" y="476" text-anchor="middle">+ReLU</text>
+
+  <rect class="n" x="300" y="327" width="80" height="113"/><text class="val" x="340" y="319" text-anchor="middle">1.24</text>
+  <text class="small" x="340" y="460" text-anchor="middle">+Bias</text><text class="small" x="340" y="476" text-anchor="middle">+ReLU</text>
+
+  <rect class="n" x="410" y="317" width="80" height="123"/><text class="val" x="450" y="309" text-anchor="middle">1.35</text>
+  <text class="small" x="450" y="460" text-anchor="middle">+Bias</text><text class="small" x="450" y="476" text-anchor="middle">+GELU</text>
+
+  <rect class="n" x="520" y="311" width="80" height="129"/><text class="val" x="560" y="303" text-anchor="middle">1.41</text>
+  <text class="small" x="560" y="460" text-anchor="middle">Conv+BN</text><text class="small" x="560" y="476" text-anchor="middle">+ReLU</text>
+
+  <rect class="g" x="630" y="263" width="80" height="177"/><text class="val" x="670" y="255" text-anchor="middle" fill="var(--ts-success)">1.94</text>
+  <text class="small" x="670" y="460" text-anchor="middle">Residual</text><text class="small" x="670" y="476" text-anchor="middle">+LayerNorm</text>
+
+  <rect class="g" x="740" y="136" width="80" height="304"/><text class="val" x="780" y="128" text-anchor="middle" fill="var(--ts-success)">3.33</text>
+  <text class="small" x="780" y="460" text-anchor="middle">Attention</text><text class="small" x="780" y="476" text-anchor="middle">(3 ops)</text>
+
+  <text class="small" x="40" y="512">Each fused op removes one memory round-trip of the intermediate. Attention fusing three operations (the FlashAttention idea) wins most.</text>
+</svg>

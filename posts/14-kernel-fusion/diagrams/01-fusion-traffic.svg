@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Separate kernels write an intermediate tensor to memory and read it back; a fused kernel keeps it in registers and writes once</title>
+  <desc id="d">Two rows. The top, separate kernels: input X in global memory is read by a conv kernel that writes the intermediate Y back to global memory, drawn red, and then a ReLU kernel reads Y from global memory again and writes Z. That is two launches, two reads, and two writes, and Y exists only to be written and immediately re-read. The bottom, a fused kernel: X is read once, the conv and ReLU run together with the intermediate kept in registers, drawn green, and Z is written once. That is one launch, one read, one write. The CPU model shows a four-op chain dropping from 134 megabytes of traffic to 34, a 75 percent saving, since for N ops the fused version moves 1 over N of the bytes.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .hbm{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .kern{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .waste{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .fused{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">The fastest kernel is the one you don't launch</text>
+  <text class="small" x="40" y="62">Separate kernels round-trip the intermediate through global memory; fusion keeps it in registers.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- SEPARATE -->
+  <text class="label" x="40" y="104">Separate kernels</text>
+  <rect class="hbm"  x="64"  y="120" width="96" height="58" rx="6"/><text class="small" x="112" y="146" text-anchor="middle">X</text><text class="small" x="112" y="164" text-anchor="middle">(global)</text>
+  <rect class="kern" x="208" y="120" width="120" height="58" rx="6"/><text class="mono" x="268" y="154" text-anchor="middle">conv</text>
+  <rect class="waste" x="376" y="120" width="96" height="58" rx="6"/><text class="small" x="424" y="146" text-anchor="middle" fill="var(--ts-alert)">Y</text><text class="small" x="424" y="164" text-anchor="middle">(global)</text>
+  <rect class="kern" x="520" y="120" width="120" height="58" rx="6"/><text class="mono" x="580" y="154" text-anchor="middle">ReLU</text>
+  <rect class="hbm"  x="688" y="120" width="96" height="58" rx="6"/><text class="small" x="736" y="146" text-anchor="middle">Z</text><text class="small" x="736" y="164" text-anchor="middle">(global)</text>
+  <g class="flow">
+    <path d="M160,149 L204,149" marker-end="url(#a)"/>
+    <path d="M328,149 L372,149" marker-end="url(#a)"/>
+    <path d="M472,149 L516,149" marker-end="url(#a)"/>
+    <path d="M640,149 L684,149" marker-end="url(#a)"/>
+  </g>
+  <text class="small" x="424" y="206" text-anchor="middle" fill="var(--ts-alert)">Y is written, then immediately re-read</text>
+  <text class="small" x="64" y="240">2 launches · 2 reads · 2 writes</text>
+
+  <line class="divider" x1="40" y1="280" x2="920" y2="280"/>
+
+  <!-- FUSED -->
+  <text class="label" x="40" y="320">Fused kernel</text>
+  <rect class="hbm"  x="64"  y="336" width="96" height="64" rx="6"/><text class="small" x="112" y="364" text-anchor="middle">X</text><text class="small" x="112" y="382" text-anchor="middle">(global)</text>
+  <rect class="fused" x="208" y="336" width="432" height="64" rx="8"/>
+  <text class="mono" x="424" y="364" text-anchor="middle">conv + ReLU  (one kernel)</text>
+  <text class="small" x="424" y="384" text-anchor="middle" fill="var(--ts-success)">Y stays in registers — never touches global memory</text>
+  <rect class="hbm"  x="688" y="336" width="96" height="64" rx="6"/><text class="small" x="736" y="364" text-anchor="middle">Z</text><text class="small" x="736" y="382" text-anchor="middle">(global)</text>
+  <g class="flow">
+    <path d="M160,368 L204,368" marker-end="url(#a)"/>
+    <path d="M640,368 L684,368" marker-end="url(#a)"/>
+  </g>
+  <text class="small" x="64" y="430">1 launch · 1 read · 1 write</text>
+</svg>
