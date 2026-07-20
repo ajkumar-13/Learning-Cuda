@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Pageable host memory needs a staging copy that makes async transfers synchronous; pinned memory lets the GPU DMA directly</title>
+  <desc id="d">Two panels on why pinned memory is required for overlap. On the left, pageable memory from malloc: the data sits in swappable CPU pages, so a transfer is two steps, first the driver copies it into a pinned staging buffer, which blocks the CPU, drawn red, then the GPU DMAs from the staging buffer. Because of the blocking copy, cudaMemcpyAsync silently becomes synchronous and no overlap is possible. On the right, pinned memory from cudaMallocHost: the data is page-locked, so the GPU DMAs directly from it in one step, drawn green, and cudaMemcpyAsync is truly asynchronous, freeing the CPU and allowing streams to overlap. The caution is that pinned memory is a limited resource and slow to allocate, so allocate it once at startup.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .stage{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .pin{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .red{stroke:var(--ts-alert);stroke-width:1.5;fill:none;}
+    .grn{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Pinned memory: the silent requirement for async</text>
+  <text class="small" x="40" y="62">cudaMemcpyAsync is only truly asynchronous from page-locked (pinned) host memory.</text>
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-alert)"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- LEFT pageable -->
+  <rect class="panel" x="40" y="92" width="430" height="360" rx="10"/>
+  <text class="label" x="60" y="120">Pageable (malloc)</text>
+  <rect class="box" x="64" y="146" width="150" height="64" rx="6"/><text class="small" x="139" y="174" text-anchor="middle">CPU RAM</text><text class="small" x="139" y="192" text-anchor="middle">(swappable pages)</text>
+  <rect class="stage" x="64" y="262" width="150" height="64" rx="6"/><text class="small" x="139" y="290" text-anchor="middle">staging buffer</text><text class="small" x="139" y="308" text-anchor="middle">(pinned, hidden)</text>
+  <rect class="box" x="300" y="262" width="150" height="64" rx="6"/><text class="small" x="375" y="298" text-anchor="middle">GPU</text>
+  <path class="red" d="M139,210 L139,258" marker-end="url(#ar)"/><text class="small" x="150" y="240">1. CPU copies (blocks)</text>
+  <path class="red" d="M214,294 L296,294" marker-end="url(#ar)"/><text class="small" x="232" y="284">2. DMA</text>
+  <text class="small" x="60" y="368" fill="var(--ts-alert)">cudaMemcpyAsync silently becomes synchronous</text>
+
+  <!-- RIGHT pinned -->
+  <rect class="panel" x="500" y="92" width="430" height="360" rx="10"/>
+  <text class="label" x="520" y="120">Pinned (cudaMallocHost)</text>
+  <rect class="pin" x="524" y="200" width="170" height="64" rx="6"/><text class="small" x="609" y="228" text-anchor="middle">CPU RAM</text><text class="small" x="609" y="246" text-anchor="middle">(page-locked)</text>
+  <rect class="box" x="760" y="200" width="150" height="64" rx="6"/><text class="small" x="835" y="236" text-anchor="middle">GPU</text>
+  <path class="grn" d="M694,232 L756,232" marker-end="url(#ag)"/><text class="small" x="725" y="222" text-anchor="middle">direct DMA</text>
+  <text class="small" x="520" y="320" fill="var(--ts-success)">cudaMemcpyAsync is truly asynchronous</text>
+</svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A GPU has separate copy and compute engines, and PCIe is full-duplex, so transfers and computation can run at the same time</title>
+  <desc id="d">A GPU chip at the top contains three independent engines: the compute engines or streaming multiprocessors that run kernels from any stream, a host-to-device copy engine, and a device-to-host copy engine. Below, the PCIe bus connects the GPU to the CPU and system RAM at the bottom. Because PCIe is full-duplex, a host-to-device transfer flows up while a device-to-host transfer flows down at the same time, shown as two arrows crossing the bus in opposite directions. The takeaway is that these three engines can all work simultaneously, which is what streams exploit; using only the default stream forces them to take turns.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .chip{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .eng{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1.5;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .bus{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1;}
+    .up{stroke:var(--ts-ink);stroke-width:1.5;fill:none;}
+    .trace{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Separate engines, full-duplex bus: three things at once</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink)"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+  </defs>
+
+  <!-- GPU chip -->
+  <rect class="chip" x="120" y="90" width="720" height="150" rx="12"/>
+  <text class="label" x="140" y="116">GPU chip</text>
+  <rect class="eng" x="150" y="130" width="380" height="92" rx="8"/>
+  <text class="label" x="340" y="166" text-anchor="middle">Compute engines (SMs)</text>
+  <text class="small" x="340" y="186" text-anchor="middle">run kernels from any stream concurrently</text>
+  <rect class="eng" x="548" y="130" width="138" height="92" rx="8"/>
+  <text class="small" x="617" y="170" text-anchor="middle">H2D copy</text>
+  <text class="small" x="617" y="188" text-anchor="middle">engine</text>
+  <rect class="eng" x="700" y="130" width="124" height="92" rx="8"/>
+  <text class="small" x="762" y="170" text-anchor="middle">D2H copy</text>
+  <text class="small" x="762" y="188" text-anchor="middle">engine</text>
+
+  <!-- PCIe bus -->
+  <rect class="bus" x="320" y="320" width="320" height="48" rx="8"/>
+  <text class="label" x="480" y="349" text-anchor="middle">PCIe bus — full-duplex</text>
+
+  <!-- CPU -->
+  <rect class="box" x="320" y="430" width="320" height="64" rx="8"/>
+  <text class="label" x="480" y="468" text-anchor="middle">CPU + system RAM</text>
+
+  <!-- full-duplex arrows: H2D up (left), D2H down (right), at once -->
+  <path class="trace" d="M400,430 L400,368" marker-end="url(#ag)"/>
+  <path class="trace" d="M400,320 L400,240" marker-end="url(#ag)"/>
+  <text class="small" x="356" y="300" text-anchor="end">H2D</text>
+  <path class="up" d="M560,240 L560,320" marker-end="url(#a)"/>
+  <path class="up" d="M560,368 L560,430" marker-end="url(#a)"/>
+  <text class="small" x="604" y="300">D2H</text>
+</svg>

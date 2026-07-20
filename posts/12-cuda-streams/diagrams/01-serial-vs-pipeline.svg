@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Serial execution runs copy and compute one at a time; splitting the work across streams overlaps them into a pipeline</title>
+  <desc id="d">Two timelines. The top, serial with the default stream, is one row of twelve blocks: for each of four chunks a host-to-device copy, a kernel, and a device-to-host copy, end to end, twelve stage-times total, because only one engine works at a time so the other two sit idle, about 33 percent utilization. The bottom, pipelined with four streams, has three engine rows: the host-to-device copy engine, the compute engine, and the device-to-host copy engine. Each runs its four chunks staggered diagonally so that in the steady state, highlighted with a green band, all three engines are busy at once. The pipeline finishes in six stage-times instead of twelve, a 2 times speedup here that approaches 3 times with more chunks as utilization approaches 100 percent.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink);}
+    .blk{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .band{fill:none;stroke:var(--ts-success);stroke-width:1.5;stroke-dasharray:5 3;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">The serial trap, and the pipeline that fixes it</text>
+
+  <!-- SERIAL -->
+  <text class="label" x="40" y="100">Serial (default stream): one engine at a time</text>
+  <g>
+    <rect class="blk" x="160" y="112" width="44" height="34"/><text class="mono" x="182" y="133" text-anchor="middle">H2D</text>
+    <rect class="blk" x="204" y="112" width="44" height="34"/><text class="mono" x="226" y="133" text-anchor="middle">K</text>
+    <rect class="blk" x="248" y="112" width="44" height="34"/><text class="mono" x="270" y="133" text-anchor="middle">D2H</text>
+    <rect class="blk" x="292" y="112" width="44" height="34"/><text class="mono" x="314" y="133" text-anchor="middle">H2D</text>
+    <rect class="blk" x="336" y="112" width="44" height="34"/><text class="mono" x="358" y="133" text-anchor="middle">K</text>
+    <rect class="blk" x="380" y="112" width="44" height="34"/><text class="mono" x="402" y="133" text-anchor="middle">D2H</text>
+    <rect class="blk" x="424" y="112" width="44" height="34"/><text class="mono" x="446" y="133" text-anchor="middle">H2D</text>
+    <rect class="blk" x="468" y="112" width="44" height="34"/><text class="mono" x="490" y="133" text-anchor="middle">K</text>
+    <rect class="blk" x="512" y="112" width="44" height="34"/><text class="mono" x="534" y="133" text-anchor="middle">D2H</text>
+    <rect class="blk" x="556" y="112" width="44" height="34"/><text class="mono" x="578" y="133" text-anchor="middle">H2D</text>
+    <rect class="blk" x="600" y="112" width="44" height="34"/><text class="mono" x="622" y="133" text-anchor="middle">K</text>
+    <rect class="blk" x="644" y="112" width="44" height="34"/><text class="mono" x="666" y="133" text-anchor="middle">D2H</text>
+  </g>
+
+  <line class="divider" x1="40" y1="206" x2="920" y2="206"/>
+
+  <!-- PIPELINED -->
+  <text class="label" x="40" y="244">Pipelined (4 streams): engines overlap</text>
+  <text class="small" x="40" y="312" >H2D copy</text>
+  <text class="small" x="40" y="352">compute</text>
+  <text class="small" x="40" y="392">D2H copy</text>
+  <!-- steady-state overlap band -->
+  <rect class="band" x="408" y="296" width="208" height="116" rx="6"/>
+  <text class="small" x="512" y="430" text-anchor="middle" fill="var(--ts-success)">all 3 engines busy</text>
+  <!-- H2D row -->
+  <g>
+    <rect class="blk" x="200" y="300" width="100" height="28"/><text class="mono" x="250" y="319" text-anchor="middle">1</text>
+    <rect class="blk" x="304" y="300" width="100" height="28"/><text class="mono" x="354" y="319" text-anchor="middle">2</text>
+    <rect class="blk" x="408" y="300" width="100" height="28"/><text class="mono" x="458" y="319" text-anchor="middle">3</text>
+    <rect class="blk" x="512" y="300" width="100" height="28"/><text class="mono" x="562" y="319" text-anchor="middle">4</text>
+  </g>
+  <!-- compute row -->
+  <g>
+    <rect class="blk" x="304" y="340" width="100" height="28"/><text class="mono" x="354" y="359" text-anchor="middle">1</text>
+    <rect class="blk" x="408" y="340" width="100" height="28"/><text class="mono" x="458" y="359" text-anchor="middle">2</text>
+    <rect class="blk" x="512" y="340" width="100" height="28"/><text class="mono" x="562" y="359" text-anchor="middle">3</text>
+    <rect class="blk" x="616" y="340" width="100" height="28"/><text class="mono" x="666" y="359" text-anchor="middle">4</text>
+  </g>
+  <!-- D2H row -->
+  <g>
+    <rect class="blk" x="408" y="380" width="100" height="28"/><text class="mono" x="458" y="399" text-anchor="middle">1</text>
+    <rect class="blk" x="512" y="380" width="100" height="28"/><text class="mono" x="562" y="399" text-anchor="middle">2</text>
+    <rect class="blk" x="616" y="380" width="100" height="28"/><text class="mono" x="666" y="399" text-anchor="middle">3</text>
+    <rect class="blk" x="720" y="380" width="100" height="28"/><text class="mono" x="770" y="399" text-anchor="middle">4</text>
+  </g>
+</svg>

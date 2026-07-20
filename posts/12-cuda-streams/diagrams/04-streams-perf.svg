@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Time to process 256 megabytes with pageable serial copies, pinned serial copies, and four overlapped streams</title>
+  <desc id="d">A bar chart of time in milliseconds, shorter is faster, for a 256 megabyte vector add on an RTX 3080. Serial with pageable memory takes 45.2 milliseconds. Serial with pinned memory takes 32.1, about 1.4 times faster because there is no staging buffer. Four streams with async transfers take 12.5, drawn green, about 3.6 times faster than the pageable baseline, because the copies and compute overlap and engine utilization rises from about 33 percent to over 90 percent. For a bandwidth-bound kernel like this, the computation hides almost entirely behind the transfers.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Pinned memory, then overlap: 45 ms to 12.5 ms (256 MB, RTX 3080)</text>
+  <text class="small" x="40" y="66">Time for a 256 MB vector add — shorter is faster.</text>
+
+  <g>
+    <line class="grid" x1="200" y1="440" x2="900" y2="440"/><text class="small" x="192" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="200" y1="373" x2="900" y2="373"/><text class="small" x="192" y="377" text-anchor="end">10</text>
+    <line class="grid" x1="200" y1="307" x2="900" y2="307"/><text class="small" x="192" y="311" text-anchor="end">20</text>
+    <line class="grid" x1="200" y1="240" x2="900" y2="240"/><text class="small" x="192" y="244" text-anchor="end">30</text>
+    <line class="grid" x1="200" y1="173" x2="900" y2="173"/><text class="small" x="192" y="177" text-anchor="end">40</text>
+  </g>
+  <line class="axis" x1="200" y1="110" x2="200" y2="440"/>
+  <text class="small" x="116" y="280" transform="rotate(-90 116 280)" text-anchor="middle">time (ms)</text>
+
+  <rect class="n" x="280" y="139" width="150" height="301"/>
+  <text class="val" x="355" y="131" text-anchor="middle">45.2</text>
+  <text class="label" x="355" y="462" text-anchor="middle">serial (pageable)</text>
+  <text class="small" x="355" y="480" text-anchor="middle">~33% utilization</text>
+
+  <rect class="n" x="475" y="226" width="150" height="214"/>
+  <text class="val" x="550" y="218" text-anchor="middle">32.1</text>
+  <text class="label" x="550" y="462" text-anchor="middle">serial (pinned)</text>
+  <text class="small" x="550" y="480" text-anchor="middle">1.4x · no staging</text>
+
+  <rect class="g" x="670" y="357" width="150" height="83"/>
+  <text class="val" x="745" y="349" text-anchor="middle" fill="var(--ts-success)">12.5</text>
+  <text class="label" x="745" y="462" text-anchor="middle">4 streams (async)</text>
+  <text class="small" x="745" y="480" text-anchor="middle">3.6x · ~90% utilization</text>
+</svg>
