@@ -1,0 +1,7 @@
+slug: 18-flash-attention
+title: "18 · FlashAttention — making attention memory-linear with tiling and online softmax"
+date: 2026-07-20
+tags: [tensor-attention, cuda, attention]
+hero: diagrams/01-quadratic-wall.svg
+reading_time: 16
+part: "Part V — Tensor & Attention"

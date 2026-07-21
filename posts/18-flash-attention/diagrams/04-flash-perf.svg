@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">FlashAttention speedup over standard attention as the sequence length grows, including cases where standard attention runs out of memory</title>
+  <desc id="d">A bar chart of FlashAttention's speedup over standard attention, in green, growing with sequence length: 1.7 times at 512 tokens, 3.8 at 2048, 8.5 at 8192, and 15.6 at 16384. At 32768 tokens standard attention runs out of memory because its N by N score matrix is 2.1 gigabytes, so the speedup is effectively infinite, shown as a full-height bar marked OOM. The speedup grows because the quadratic memory traffic of standard attention dominates more and more as the sequence lengthens, while FlashAttention stays linear. This is what makes 100,000-plus token context windows possible.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .oom{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:5 3;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Speedup grows with sequence length (and unlocks the impossible)</text>
+  <text class="small" x="40" y="66">FlashAttention vs standard attention; standard runs out of memory past ~16K tokens.</text>
+
+  <g>
+    <line class="grid" x1="150" y1="440" x2="900" y2="440"/><text class="small" x="142" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="150" y1="351" x2="900" y2="351"/><text class="small" x="142" y="355" text-anchor="end">5x</text>
+    <line class="grid" x1="150" y1="262" x2="900" y2="262"/><text class="small" x="142" y="266" text-anchor="end">10x</text>
+    <line class="grid" x1="150" y1="173" x2="900" y2="173"/><text class="small" x="142" y="177" text-anchor="end">15x</text>
+  </g>
+  <line class="axis" x1="150" y1="110" x2="150" y2="440"/>
+  <text class="small" x="80" y="280" transform="rotate(-90 80 280)" text-anchor="middle">speedup</text>
+
+  <rect class="g" x="220" y="410" width="90" height="30"/><text class="val" x="265" y="402" text-anchor="middle">1.7x</text>
+  <text class="small" x="265" y="462" text-anchor="middle">512</text>
+
+  <rect class="g" x="360" y="372" width="90" height="68"/><text class="val" x="405" y="364" text-anchor="middle">3.8x</text>
+  <text class="small" x="405" y="462" text-anchor="middle">2,048</text>
+
+  <rect class="g" x="500" y="289" width="90" height="151"/><text class="val" x="545" y="281" text-anchor="middle">8.5x</text>
+  <text class="small" x="545" y="462" text-anchor="middle">8,192</text>
+
+  <rect class="g" x="640" y="162" width="90" height="278"/><text class="val" x="685" y="154" text-anchor="middle">15.6x</text>
+  <text class="small" x="685" y="462" text-anchor="middle">16,384</text>
+
+  <rect class="oom" x="780" y="120" width="90" height="320"/><text class="val" x="825" y="112" text-anchor="middle" fill="var(--ts-alert)">infinity</text>
+  <text class="small" x="825" y="462" text-anchor="middle">32,768</text>
+  <text class="small" x="825" y="290" text-anchor="middle" fill="var(--ts-alert)">standard</text>
+  <text class="small" x="825" y="306" text-anchor="middle" fill="var(--ts-alert)">OOM</text>
+</svg>

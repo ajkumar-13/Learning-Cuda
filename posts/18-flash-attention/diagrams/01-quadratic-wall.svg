@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Standard attention writes the N by N score matrix to memory twice; FlashAttention fuses everything in on-chip memory so it is never written</title>
+  <desc id="d">Two rows. The top, standard attention: from Q and K it computes Q times K transpose, writes the N by N score matrix S to global memory, reads it back for the softmax, writes the N by N probability matrix P, reads it back, and multiplies by V to get O. The two N by N matrices, drawn red, are written and read from slow global memory, about three times N squared of traffic, and they blow up quadratically: at sequence 2048 the matrix is 8 megabytes, at 8192 it is 134, at 32768 it is 2.1 gigabytes. The bottom, FlashAttention: Q, K and V feed one fused kernel, drawn green, that tiles the work in fast on-chip SRAM, computing the scores, an online softmax, and the multiply by V block by block, accumulating O. The N by N matrix never leaves SRAM, so the memory is order N instead of order N squared.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .nn{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .sram{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    .divider{stroke:var(--ts-grid);stroke-width:1;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Attention's quadratic wall, and how fusion removes it</text>
+  <text class="small" x="40" y="62">Standard attention materializes the N x N score matrix in HBM; FlashAttention keeps it on-chip.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- STANDARD -->
+  <text class="label" x="40" y="104">Standard attention (3 kernels)</text>
+  <rect class="box" x="40"  y="118" width="70" height="50" rx="6"/><text class="mono" x="75" y="148" text-anchor="middle">Q, K</text>
+  <rect class="box" x="142" y="118" width="78" height="50" rx="6"/><text class="mono" x="181" y="148" text-anchor="middle">QK^T</text>
+  <rect class="nn"  x="252" y="118" width="96" height="50" rx="6"/><text class="small" x="300" y="140" text-anchor="middle" fill="var(--ts-alert)">S (N x N)</text><text class="small" x="300" y="158" text-anchor="middle">HBM</text>
+  <rect class="box" x="380" y="118" width="82" height="50" rx="6"/><text class="mono" x="421" y="148" text-anchor="middle">softmax</text>
+  <rect class="nn"  x="494" y="118" width="96" height="50" rx="6"/><text class="small" x="542" y="140" text-anchor="middle" fill="var(--ts-alert)">P (N x N)</text><text class="small" x="542" y="158" text-anchor="middle">HBM</text>
+  <rect class="box" x="622" y="118" width="70" height="50" rx="6"/><text class="mono" x="657" y="148" text-anchor="middle">P·V</text>
+  <rect class="box" x="724" y="118" width="60" height="50" rx="6"/><text class="mono" x="754" y="148" text-anchor="middle">O</text>
+  <g class="flow">
+    <path d="M110,143 L138,143" marker-end="url(#a)"/><path d="M220,143 L248,143" marker-end="url(#a)"/><path d="M348,143 L376,143" marker-end="url(#a)"/><path d="M462,143 L490,143" marker-end="url(#a)"/><path d="M590,143 L618,143" marker-end="url(#a)"/><path d="M692,143 L720,143" marker-end="url(#a)"/>
+  </g>
+  <line class="divider" x1="40" y1="266" x2="920" y2="266"/>
+
+  <!-- FLASH -->
+  <text class="label" x="40" y="306">FlashAttention (1 fused kernel)</text>
+  <rect class="box" x="40" y="320" width="90" height="70" rx="6"/><text class="mono" x="85" y="360" text-anchor="middle">Q, K, V</text>
+  <rect class="sram" x="160" y="320" width="600" height="70" rx="8"/>
+  <text class="label" x="460" y="348" text-anchor="middle" fill="var(--ts-success)">on-chip SRAM (tiled)</text>
+  <text class="small" x="460" y="370" text-anchor="middle">S = QK^T  ->  online softmax  ->  · V  ->  accumulate O   (N x N never written to HBM)</text>
+  <rect class="box" x="790" y="320" width="60" height="70" rx="6"/><text class="mono" x="820" y="360" text-anchor="middle">O</text>
+  <g class="flow"><path d="M130,355 L156,355" marker-end="url(#a)"/><path d="M760,355 L786,355" marker-end="url(#a)"/></g>
+</svg>

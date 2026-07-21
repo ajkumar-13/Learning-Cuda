@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">FlashAttention loops over blocks of Q on the outside and blocks of K and V on the inside, doing all the work in on-chip SRAM and writing each output block once</title>
+  <desc id="d">The tiling structure. On the left, Q is split into row blocks Q1, Q2, Q3, with Q1 highlighted green as the current outer-loop block. In the centre, a green SRAM box holds the current Q block and loops over blocks of K and V, the inner loop: for each it computes the block scores Q times K transpose, applies the online softmax, multiplies by the V block, and accumulates into the running output O. The K and V blocks stream in below. On the right, the output blocks O1, O2, O3, with O1 written once after the inner loop finishes. Nothing of size N by N is ever written to global memory; only the block-sized tiles live in SRAM at any moment.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .blk{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .hot{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .sram{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Tiling: outer loop over Q blocks, inner over K and V</text>
+  <text class="small" x="40" y="62">Only block-sized tiles ever live in SRAM; the full attention matrix never does.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- Q blocks (outer) -->
+  <text class="label" x="100" y="110" text-anchor="middle">Q (outer loop)</text>
+  <rect class="hot" x="50" y="122" width="100" height="48" rx="5"/><text class="mono" x="100" y="151" text-anchor="middle">Q1</text>
+  <rect class="blk" x="50" y="176" width="100" height="48" rx="5"/><text class="mono" x="100" y="205" text-anchor="middle">Q2</text>
+  <rect class="blk" x="50" y="230" width="100" height="48" rx="5"/><text class="mono" x="100" y="259" text-anchor="middle">Q3</text>
+  <path class="flow" d="M154,146 L214,146" marker-end="url(#a)"/>
+
+  <!-- SRAM box -->
+  <rect class="sram" x="218" y="118" width="430" height="200" rx="10"/>
+  <text class="label" x="433" y="146" text-anchor="middle" fill="var(--ts-success)">on-chip SRAM</text>
+  <text class="small" x="433" y="168" text-anchor="middle">load Q1, then loop over K/V blocks:</text>
+  <text class="mono" x="238" y="200">S = Q1 · Kj^T        (block scores)</text>
+  <text class="mono" x="238" y="226">online softmax        (running m, l)</text>
+  <text class="mono" x="238" y="252">O += softmax(S) · Vj  (accumulate)</text>
+  <text class="small" x="238" y="290">inner loop streams K, V blocks through; nothing N x N is stored</text>
+
+  <!-- K/V blocks (inner) -->
+  <text class="label" x="433" y="372" text-anchor="middle">K, V (inner loop)</text>
+  <g>
+    <rect class="blk" x="258" y="384" width="80" height="40" rx="5"/><text class="mono" x="298" y="409" text-anchor="middle">K1,V1</text>
+    <rect class="blk" x="350" y="384" width="80" height="40" rx="5"/><text class="mono" x="390" y="409" text-anchor="middle">K2,V2</text>
+    <rect class="blk" x="442" y="384" width="80" height="40" rx="5"/><text class="mono" x="482" y="409" text-anchor="middle">K3,V3</text>
+    <rect class="blk" x="534" y="384" width="80" height="40" rx="5"/><text class="mono" x="574" y="409" text-anchor="middle">...</text>
+  </g>
+  <path class="flow" d="M433,380 L433,322" marker-end="url(#a)"/>
+
+  <!-- O blocks -->
+  <path class="flow" d="M652,218 L712,218" marker-end="url(#a)"/>
+  <text class="label" x="800" y="110" text-anchor="middle">O (written once)</text>
+  <rect class="hot" x="750" y="122" width="100" height="48" rx="5"/><text class="mono" x="800" y="151" text-anchor="middle">O1</text>
+  <rect class="blk" x="750" y="176" width="100" height="48" rx="5"/><text class="mono" x="800" y="205" text-anchor="middle">O2</text>
+  <rect class="blk" x="750" y="230" width="100" height="48" rx="5"/><text class="mono" x="800" y="259" text-anchor="middle">O3</text>
+</svg>
