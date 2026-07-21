@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Summation order changes the answer: big-first rounds the small terms away, small-first keeps them</title>
+  <desc id="d">The same list, one large value 1e8 and a million 1.0s, summed two ways. The left column adds the big value first, so each 1.0 falls below the rounding threshold and is thrown away, shown struck through in red, and the sum lands on 100000000. The right column adds the small values first, in green, building them into 1000000 before the big value absorbs them, and reaches the correct 101000000.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
+    .lost{fill:var(--ts-alert);stroke:var(--ts-alert);stroke-width:1;}
+    .losttxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-alert);text-decoration:line-through;}
+    .keeptxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-success);}
+    .resR{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
+    .resG{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .arr{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="42">Same numbers, two orders, two sums</text>
+  <text class="small" x="40" y="64">Adding 1e8 first, each 1.0 lands below the rounding gap (8 near 1e8) and vanishes.</text>
+
+  <!-- LEFT: big first -->
+  <text class="label" x="90" y="110">big first</text>
+  <rect class="box" x="90" y="126" width="300" height="40" rx="4"/><text class="mono" x="240" y="152" text-anchor="middle">acc = 1e8</text>
+  <text class="losttxt" x="90" y="196">acc + 1.0 = 1e8   (1.0 lost)</text>
+  <text class="losttxt" x="90" y="222">acc + 1.0 = 1e8   (1.0 lost)</text>
+  <text class="small" x="90" y="248">... one million times, every 1.0 rounded away ...</text>
+  <path class="arr" d="M240,262 L240,300" marker-end="url(#a)"/>
+  <rect class="resR" x="90" y="306" width="300" height="46" rx="4"/><text class="mono" x="240" y="335" text-anchor="middle">= 100000000</text>
+  <text class="losttxt" x="90" y="384">the whole million is gone</text>
+
+  <!-- RIGHT: small first -->
+  <text class="label" x="560" y="110">small first</text>
+  <rect class="box" x="560" y="126" width="300" height="40" rx="4"/><text class="keeptxt" x="710" y="152" text-anchor="middle">1.0 + 1.0 + ... (1e6 of them)</text>
+  <path class="arr" d="M710,170 L710,206" marker-end="url(#a)"/>
+  <rect class="box" x="560" y="212" width="300" height="40" rx="4"/><text class="keeptxt" x="710" y="238" text-anchor="middle">= 1000000</text>
+  <text class="small" x="560" y="286">then + 1e8, now big enough to keep them</text>
+  <path class="arr" d="M710,296 L710,300" marker-end="url(#a)"/>
+  <rect class="resG" x="560" y="306" width="300" height="46" rx="4"/><text class="mono" x="710" y="335" text-anchor="middle">= 101000000</text>
+  <text class="keeptxt" x="560" y="384">correct: exact = 101000000</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+</svg>

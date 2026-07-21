@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">FP32, FP16, BF16, and TF32 split a bit budget differently between exponent range and mantissa precision</title>
+  <desc id="d">Four horizontal bit strips aligned on the left, each split into a sign field, an exponent field, and a mantissa field with widths proportional to bit counts. FP32 has 1 sign, 8 exponent, 23 mantissa. FP16 has 1, 5, 10. BF16 has 1, 8, 7, with its wide 8-bit exponent highlighted in green because it matches FP32's range. TF32 has 1, 8, 10. Exponent fields are grey to signal range; mantissa fields are light to signal precision.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .name{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .sign{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .exp{fill:var(--ts-grid);stroke:var(--ts-border);stroke-width:1;}
+    .expG{fill:var(--ts-success);fill-opacity:0.22;stroke:var(--ts-success);stroke-width:1.5;}
+    .mant{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .seg{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
+    .gtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-success);}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="42">One bit budget, split between range and precision</text>
+  <text class="small" x="40" y="64">Exponent bits (grey) set the range; mantissa bits (light) set the precision.</text>
+
+  <!-- FP32: sign18 exp144 mant414 -->
+  <text class="name" x="180" y="122" text-anchor="end">FP32</text>
+  <rect class="sign" x="200" y="100" width="18" height="34"/>
+  <rect class="exp"  x="218" y="100" width="144" height="34"/><text class="seg" x="290" y="122" text-anchor="middle">8 exp</text>
+  <rect class="mant" x="362" y="100" width="414" height="34"/><text class="seg" x="569" y="122" text-anchor="middle">23 mantissa</text>
+
+  <!-- FP16: sign18 exp90 mant180 -->
+  <text class="name" x="180" y="182" text-anchor="end">FP16</text>
+  <rect class="sign" x="200" y="160" width="18" height="34"/>
+  <rect class="exp"  x="218" y="160" width="90" height="34"/><text class="seg" x="263" y="182" text-anchor="middle">5</text>
+  <rect class="mant" x="308" y="160" width="180" height="34"/><text class="seg" x="398" y="182" text-anchor="middle">10 mantissa</text>
+  <text class="small" x="500" y="182">max 65,504 — overflows easily</text>
+
+  <!-- BF16: sign18 exp144(green) mant126 -->
+  <text class="name" x="180" y="242" text-anchor="end">bf16</text>
+  <rect class="sign" x="200" y="220" width="18" height="34"/>
+  <rect class="expG" x="218" y="220" width="144" height="34"/><text class="gtxt" x="290" y="242" text-anchor="middle">8 exp</text>
+  <rect class="mant" x="362" y="220" width="126" height="34"/><text class="seg" x="425" y="242" text-anchor="middle">7</text>
+  <text class="gtxt" x="500" y="242">same 8-bit exponent as FP32 = same range</text>
+
+  <!-- TF32: sign18 exp144 mant180 -->
+  <text class="name" x="180" y="302" text-anchor="end">TF32</text>
+  <rect class="sign" x="200" y="280" width="18" height="34"/>
+  <rect class="exp"  x="218" y="280" width="144" height="34"/><text class="seg" x="290" y="302" text-anchor="middle">8 exp</text>
+  <rect class="mant" x="362" y="280" width="180" height="34"/><text class="seg" x="452" y="302" text-anchor="middle">10</text>
+  <text class="small" x="556" y="302">FP32 range, narrower multiply</text>
+
+  <text class="small" x="40" y="366">FP16 spends its 16 bits on mantissa (precision); bf16 spends them on exponent (range). Opposite bets.</text>
+</svg>

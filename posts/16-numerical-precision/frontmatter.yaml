@@ -1,0 +1,7 @@
+slug: 16-numerical-precision
+title: "16 · Numbers on a GPU — FP32, FP16, BF16, and numerical stability"
+date: 2026-08-01
+tags: [tensor-attention, cuda, floating-point, numerical-stability]
+hero: diagrams/01-float-formats.svg
+reading_time: 15
+part: "Part V — Tensor & Attention"
