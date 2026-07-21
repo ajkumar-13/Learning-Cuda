@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The WMMA API loads matrix tiles from memory into warp-distributed fragments, runs one mma_sync, and stores the result back</title>
+  <desc id="d">A left-to-right flow of the WMMA lifecycle. On the left, global memory holds the A and B tiles in FP16. The load_matrix_sync calls move them into fragments, opaque register containers whose elements are distributed across all 32 lanes of the warp, shown as a_frag, b_frag, and an FP32 accumulator c_frag. The central mma_sync, drawn green, computes d_frag equals A times B plus C in a single warp instruction. Finally store_matrix_sync writes the FP32 result D back to global memory. Every call ends in sync, meaning it is warp-synchronous: all 32 threads must execute it together, so the operations must not sit inside a divergent branch.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
+    .stage{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .mma{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">The WMMA lifecycle: load, mma_sync, store</text>
+  <text class="small" x="40" y="62">You never touch Tensor Core registers directly; you work through fragments distributed across the warp.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <!-- global in -->
+  <rect class="stage" x="40" y="140" width="180" height="200" rx="10"/>
+  <text class="label" x="130" y="166" text-anchor="middle">Global memory</text>
+  <rect class="box" x="64" y="184" width="132" height="56" rx="6"/><text class="mono" x="130" y="217" text-anchor="middle">A tile (FP16)</text>
+  <rect class="box" x="64" y="256" width="132" height="56" rx="6"/><text class="mono" x="130" y="289" text-anchor="middle">B tile (FP16)</text>
+
+  <path class="flow" d="M224,240 L300,240" marker-end="url(#a)"/>
+  <text class="small" x="262" y="228" text-anchor="middle">load</text><text class="small" x="262" y="256" text-anchor="middle">_sync</text>
+
+  <!-- fragments -->
+  <rect class="stage" x="304" y="140" width="220" height="200" rx="10"/>
+  <text class="label" x="414" y="166" text-anchor="middle">Fragments (registers)</text>
+  <text class="small" x="414" y="184" text-anchor="middle">distributed across 32 lanes</text>
+  <rect class="box" x="324" y="196" width="180" height="36" rx="5"/><text class="mono" x="414" y="219" text-anchor="middle">a_frag</text>
+  <rect class="box" x="324" y="240" width="180" height="36" rx="5"/><text class="mono" x="414" y="263" text-anchor="middle">b_frag</text>
+  <rect class="box" x="324" y="284" width="180" height="36" rx="5"/><text class="mono" x="414" y="307" text-anchor="middle">c_frag (FP32)</text>
+
+  <path class="flow" d="M528,240 L600,240" marker-end="url(#a)"/>
+  <text class="small" x="564" y="228" text-anchor="middle">mma</text><text class="small" x="564" y="256" text-anchor="middle">_sync</text>
+
+  <!-- mma + d_frag -->
+  <rect class="mma" x="604" y="200" width="150" height="80" rx="8"/>
+  <text class="mono" x="679" y="234" text-anchor="middle" font-size="13">d_frag =</text>
+  <text class="mono" x="679" y="254" text-anchor="middle" font-size="13">A*B + C</text>
+
+  <path class="flow" d="M758,240 L818,240" marker-end="url(#a)"/>
+  <text class="small" x="788" y="228" text-anchor="middle">store</text>
+
+  <rect class="box" x="822" y="200" width="100" height="80" rx="8"/><text class="mono" x="872" y="236" text-anchor="middle">D</text><text class="small" x="872" y="256" text-anchor="middle">FP32</text>
+</svg>

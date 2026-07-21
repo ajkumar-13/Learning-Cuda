@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Throughput in TFLOPS of the same 4096 matrix multiply across FP32 kernels and Tensor Core kernels</title>
+  <desc id="d">A bar chart of throughput in TFLOPS for a 4096 by 4096 by 4096 matrix multiply on an RTX 3080. The FP32 kernels, drawn neutral: naive FP32 reaches 3, tiled FP32 with shared memory reaches 11, and cuBLAS SGEMM reaches 33. The Tensor Core kernels using FP16 with FP32 accumulate, drawn green: a basic WMMA kernel reaches 65 and an optimized one reaches 98, roughly 20 to 33 times the naive FP32. The cuBLAS HGEMM library, drawn blue, reaches 125. The takeaway is that Tensor Cores plus mixed precision unlock an order of magnitude beyond a tuned FP32 kernel, at the cost of FP16 input precision.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .p{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Same matmul, 3 to 125 TFLOPS (4096 cubed, RTX 3080)</text>
+  <text class="small" x="40" y="66">FP32 kernels (grey) versus Tensor Core kernels using FP16 with an FP32 accumulator (green) and the library (blue).</text>
+
+  <g>
+    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="160" y1="366" x2="900" y2="366"/><text class="small" x="152" y="370" text-anchor="end">30</text>
+    <line class="grid" x1="160" y1="292" x2="900" y2="292"/><text class="small" x="152" y="296" text-anchor="end">60</text>
+    <line class="grid" x1="160" y1="218" x2="900" y2="218"/><text class="small" x="152" y="222" text-anchor="end">90</text>
+    <line class="grid" x1="160" y1="145" x2="900" y2="145"/><text class="small" x="152" y="149" text-anchor="end">120</text>
+  </g>
+  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
+  <text class="small" x="80" y="280" transform="rotate(-90 80 280)" text-anchor="middle">throughput (TFLOPS)</text>
+
+  <rect class="n" x="190" y="433" width="86" height="7"/><text class="val" x="233" y="425" text-anchor="middle">3</text>
+  <text class="small" x="233" y="460" text-anchor="middle">naive</text><text class="small" x="233" y="476" text-anchor="middle">FP32</text>
+
+  <rect class="n" x="300" y="413" width="86" height="27"/><text class="val" x="343" y="405" text-anchor="middle">11</text>
+  <text class="small" x="343" y="460" text-anchor="middle">tiled</text><text class="small" x="343" y="476" text-anchor="middle">FP32</text>
+
+  <rect class="n" x="410" y="359" width="86" height="81"/><text class="val" x="453" y="351" text-anchor="middle">33</text>
+  <text class="small" x="453" y="460" text-anchor="middle">cuBLAS</text><text class="small" x="453" y="476" text-anchor="middle">SGEMM</text>
+
+  <rect class="g" x="520" y="280" width="86" height="160"/><text class="val" x="563" y="272" text-anchor="middle" fill="var(--ts-success)">65</text>
+  <text class="small" x="563" y="460" text-anchor="middle">TC basic</text><text class="small" x="563" y="476" text-anchor="middle">WMMA</text>
+
+  <rect class="g" x="630" y="199" width="86" height="241"/><text class="val" x="673" y="191" text-anchor="middle" fill="var(--ts-success)">98</text>
+  <text class="small" x="673" y="460" text-anchor="middle">TC opt</text><text class="small" x="673" y="476" text-anchor="middle">WMMA</text>
+
+  <rect class="p" x="740" y="132" width="86" height="308"/><text class="val" x="783" y="124" text-anchor="middle" fill="var(--ts-primary)">125</text>
+  <text class="small" x="783" y="460" text-anchor="middle">cuBLAS</text><text class="small" x="783" y="476" text-anchor="middle">HGEMM</text>
+</svg>

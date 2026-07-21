@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">A CUDA core does one fused multiply-add per thread; a Tensor Core does a whole 16 by 16 by 16 matrix multiply-accumulate per warp instruction</title>
+  <desc id="d">Two panels. On the left, the CUDA core model: 32 threads of a warp, each doing one fused multiply-add c equals a times b plus c, for 32 FMAs per warp per cycle. On the right, the Tensor Core model: the whole warp cooperates on one matrix operation, D equals A times B plus C, where A and B are 16 by 16 FP16 matrices and C and D are 16 by 16 FP32 matrices, drawn green. That single warp instruction is 16 times 16 times 16 equals 4096 fused multiply-adds, 128 times more than the CUDA core. This density is where the missing TFLOPS hide.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:10px;fill:var(--ts-ink);}
+    .op{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:22px;fill:var(--ts-ink-muted);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .th{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
+    .mat{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .gl{stroke:var(--ts-grid);stroke-width:0.75;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Where the missing TFLOPS hide: matrix-at-once hardware</text>
+  <text class="small" x="40" y="62">Standard cores do scalar math; Tensor Cores do a whole tile of multiply-accumulate in one warp instruction.</text>
+
+  <!-- LEFT: CUDA core -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">CUDA core: one FMA per thread</text>
+  <g>
+    <!-- 32 thread cells, 8 x 4 -->
+    <g>
+      <rect class="th" x="64"  y="150" width="44" height="30"/><rect class="th" x="112" y="150" width="44" height="30"/><rect class="th" x="160" y="150" width="44" height="30"/><rect class="th" x="208" y="150" width="44" height="30"/><rect class="th" x="256" y="150" width="44" height="30"/><rect class="th" x="304" y="150" width="44" height="30"/><rect class="th" x="352" y="150" width="44" height="30"/><rect class="th" x="400" y="150" width="44" height="30"/>
+    </g>
+    <g>
+      <rect class="th" x="64"  y="184" width="44" height="30"/><rect class="th" x="112" y="184" width="44" height="30"/><rect class="th" x="160" y="184" width="44" height="30"/><rect class="th" x="208" y="184" width="44" height="30"/><rect class="th" x="256" y="184" width="44" height="30"/><rect class="th" x="304" y="184" width="44" height="30"/><rect class="th" x="352" y="184" width="44" height="30"/><rect class="th" x="400" y="184" width="44" height="30"/>
+    </g>
+    <g>
+      <rect class="th" x="64"  y="218" width="44" height="30"/><rect class="th" x="112" y="218" width="44" height="30"/><rect class="th" x="160" y="218" width="44" height="30"/><rect class="th" x="208" y="218" width="44" height="30"/><rect class="th" x="256" y="218" width="44" height="30"/><rect class="th" x="304" y="218" width="44" height="30"/><rect class="th" x="352" y="218" width="44" height="30"/><rect class="th" x="400" y="218" width="44" height="30"/>
+    </g>
+    <g>
+      <rect class="th" x="64"  y="252" width="44" height="30"/><rect class="th" x="112" y="252" width="44" height="30"/><rect class="th" x="160" y="252" width="44" height="30"/><rect class="th" x="208" y="252" width="44" height="30"/><rect class="th" x="256" y="252" width="44" height="30"/><rect class="th" x="304" y="252" width="44" height="30"/><rect class="th" x="352" y="252" width="44" height="30"/><rect class="th" x="400" y="252" width="44" height="30"/>
+    </g>
+  </g>
+  <text class="mono" x="64" y="312" font-size="12">each: c = a*b + c</text>
+  <text class="label" x="60" y="360">32 FMAs per warp per cycle</text>
+
+  <!-- RIGHT: Tensor core -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120">Tensor Core: one matrix op per warp</text>
+  <g>
+    <rect class="mat" x="528" y="170" width="72" height="72"/><text class="small" x="564" y="258" text-anchor="middle">A · FP16</text>
+    <text class="op" x="618" y="212" text-anchor="middle">x</text>
+    <rect class="mat" x="636" y="170" width="72" height="72"/><text class="small" x="672" y="258" text-anchor="middle">B · FP16</text>
+    <text class="op" x="726" y="212" text-anchor="middle">+</text>
+    <rect class="mat" x="744" y="170" width="72" height="72"/><text class="small" x="780" y="258" text-anchor="middle">C · FP32</text>
+  </g>
+  <text class="op" x="564" y="312" text-anchor="middle">=</text>
+  <rect class="mat" x="636" y="282" width="72" height="72"/><text class="small" x="672" y="370" text-anchor="middle">D · FP32  (16x16)</text>
+  <text class="label" x="520" y="410" fill="var(--ts-success)">16 x 16 x 16 = 4096 FMAs per instruction</text>
+  <text class="small" x="520" y="432">128x the work of a CUDA-core warp.</text>
+
+  <text class="small" x="40" y="510">The whole warp cooperates on one tile of D = A*B + C. You do not write the scalar loop; the hardware does the tile.</text>
+</svg>

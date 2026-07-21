@@ -1,0 +1,7 @@
+slug: 17-tensor-cores
+title: "17 · Tensor cores — matrix-at-once hardware and mixed precision"
+date: 2026-07-18
+tags: [tensor-attention, cuda, mixed-precision]
+hero: diagrams/01-cuda-vs-tensor.svg
+reading_time: 15
+part: "Part V — Tensor & Attention"

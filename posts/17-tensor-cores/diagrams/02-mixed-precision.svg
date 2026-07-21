@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">Mixed precision multiplies in fast FP16 but accumulates in accurate FP32, keeping Tensor Core speed with near-FP32 accuracy</title>
+  <desc id="d">A left-to-right pipeline. FP32 inputs A and B are converted to FP16, which is fast but limited to a maximum of 65,504 and about 3 decimal digits. The Tensor Core multiplies in FP16. Crucially, the products are accumulated in FP32, drawn green, which avoids overflow and preserves accuracy. The output D is FP32. Below, a comparison from the CPU model on length-4096 dot products against a float64 reference: accumulating purely in FP16 gives a max error of 0.031, while FP16 multiply with FP32 accumulate gives 0.0006, about 52 times more accurate. This is how automatic mixed precision training works: FP16 speed with FP32 accuracy.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-ink);}
+    .box{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .acc{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Mixed precision: multiply in FP16, accumulate in FP32</text>
+  <text class="small" x="40" y="62">FP16 is fast but small (max 65,504, ~3 digits). Accumulating in FP32 keeps the speed without losing accuracy.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+  </defs>
+
+  <rect class="box" x="40"  y="150" width="120" height="70" rx="8"/><text class="label" x="100" y="180" text-anchor="middle">A, B</text><text class="small" x="100" y="200" text-anchor="middle">FP32 inputs</text>
+  <path class="flow" d="M164,185 L204,185" marker-end="url(#a)"/>
+  <rect class="box" x="208" y="150" width="130" height="70" rx="8"/><text class="label" x="273" y="180" text-anchor="middle">to FP16</text><text class="small" x="273" y="200" text-anchor="middle">fast, but limited</text>
+  <path class="flow" d="M342,185 L382,185" marker-end="url(#a)"/>
+  <rect class="box" x="386" y="150" width="150" height="70" rx="8"/><text class="label" x="461" y="180" text-anchor="middle">multiply (FP16)</text><text class="small" x="461" y="200" text-anchor="middle">Tensor Core</text>
+  <path class="flow" d="M540,185 L580,185" marker-end="url(#a)"/>
+  <rect class="acc" x="584" y="150" width="180" height="70" rx="8"/><text class="label" x="674" y="180" text-anchor="middle" fill="var(--ts-success)">accumulate (FP32)</text><text class="small" x="674" y="200" text-anchor="middle">accurate, no overflow</text>
+  <path class="flow" d="M768,185 L808,185" marker-end="url(#a)"/>
+  <rect class="box" x="812" y="150" width="108" height="70" rx="8"/><text class="label" x="866" y="180" text-anchor="middle">D</text><text class="small" x="866" y="200" text-anchor="middle">FP32 result</text>
+
+  <text class="mono" x="40" y="290">D = A * B + C    // A, B in FP16; C, D accumulate in FP32</text>
+
+  <text class="label" x="40" y="346">Accuracy on length-4096 dot products (max error vs an FP64 reference):</text>
+  <text class="small" x="60" y="378">pure FP16 accumulate</text><text class="mono" x="420" y="378">0.031</text>
+  <text class="small" x="60" y="406" fill="var(--ts-success)">FP16 multiply + FP32 accumulate</text><text class="mono" x="420" y="406" fill="var(--ts-success)">0.0006   (52x more accurate)</text>
+</svg>
