@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">GEMM throughput and developer effort across cuBLAS, CUTLASS, Triton, and a hand-written CUDA kernel</title>
+  <desc id="d">A bar chart of throughput in TFLOPS for a 4096 cubed FP16 matrix multiply on an A100, with developer effort noted under each bar. cuBLAS reaches 275, the library baseline, in minutes, drawn blue. CUTLASS reaches 270 in days, also blue. Triton autotuned reaches 263 and naive Triton 248, both in hours, drawn green as the sweet spot. A hand-written raw CUDA kernel reaches only 165, about 60 percent, after weeks of work, drawn neutral. The takeaway is that the high-level tools reach 90 to 100 percent of peak for a small fraction of the effort, which is why production code uses them and hand-written CUDA is for learning and the rare custom case.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .axis{stroke:var(--ts-ink);stroke-width:1;}
+    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
+    .p{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="44">Triton reaches ~95% of cuBLAS for hours, not weeks (A100, 4096 cubed FP16)</text>
+
+  <g>
+    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
+    <line class="grid" x1="160" y1="333" x2="900" y2="333"/><text class="small" x="152" y="337" text-anchor="end">100</text>
+    <line class="grid" x1="160" y1="227" x2="900" y2="227"/><text class="small" x="152" y="231" text-anchor="end">200</text>
+    <line class="grid" x1="160" y1="120" x2="900" y2="120"/><text class="small" x="152" y="124" text-anchor="end">300</text>
+  </g>
+  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
+  <text class="small" x="80" y="280" transform="rotate(-90 80 280)" text-anchor="middle">throughput (TFLOPS)</text>
+
+  <rect class="p" x="200" y="147" width="100" height="293"/><text class="val" x="250" y="139" text-anchor="middle" fill="var(--ts-primary)">275</text>
+  <text class="label" x="250" y="462" text-anchor="middle">cuBLAS</text><text class="small" x="250" y="480" text-anchor="middle">minutes</text>
+
+  <rect class="p" x="330" y="152" width="100" height="288"/><text class="val" x="380" y="144" text-anchor="middle" fill="var(--ts-primary)">270</text>
+  <text class="label" x="380" y="462" text-anchor="middle">CUTLASS</text><text class="small" x="380" y="480" text-anchor="middle">days</text>
+
+  <rect class="g" x="460" y="159" width="100" height="281"/><text class="val" x="510" y="151" text-anchor="middle" fill="var(--ts-success)">263</text>
+  <text class="label" x="510" y="462" text-anchor="middle">Triton (auto)</text><text class="small" x="510" y="480" text-anchor="middle">hours</text>
+
+  <rect class="g" x="590" y="175" width="100" height="265"/><text class="val" x="640" y="167" text-anchor="middle" fill="var(--ts-success)">248</text>
+  <text class="label" x="640" y="462" text-anchor="middle">Triton (naive)</text><text class="small" x="640" y="480" text-anchor="middle">hours</text>
+
+  <rect class="n" x="720" y="264" width="100" height="176"/><text class="val" x="770" y="256" text-anchor="middle">165</text>
+  <text class="label" x="770" y="462" text-anchor="middle">raw CUDA</text><text class="small" x="770" y="480" text-anchor="middle">weeks · 60%</text>
+
+</svg>

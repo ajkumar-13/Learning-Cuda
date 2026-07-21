@@ -1,0 +1,7 @@
+slug: 19-cutlass-triton
+title: "19 · CUTLASS and Triton — why nobody writes raw CUDA for matmul anymore"
+date: 2026-07-22
+tags: [tensor-attention, cuda, tooling]
+hero: diagrams/01-abstraction-ladder.svg
+reading_time: 14
+part: "Part V — Tensor & Attention"

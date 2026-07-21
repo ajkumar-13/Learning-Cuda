@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
+  <title id="t">The same vector add in raw CUDA at the thread level versus Triton at the block level</title>
+  <desc id="d">Two code panels for the same vector add. On the left, raw CUDA: the kernel computes a global index from blockIdx times blockDim plus threadIdx, guards with if i less than n, and writes one element per thread; you manage threads, blocks, and synchronization yourself. On the right, Triton, highlighted green: the kernel uses tl.program_id to pick a block, tl.arange to build a vector of offsets, a mask for the boundary, and tl.load and tl.store; there is no threadIdx and no syncthreads, because you program at the block level and the Triton compiler generates the coalesced loads, shared-memory staging, and thread mapping. The point is that Triton raises the abstraction from threads to blocks while the compiler handles the low-level details.</desc>
+  <style><![CDATA[
+    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
+    .bg{fill:var(--ts-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
+    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
+    .codeC{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
+    .codeT{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+  ]]></style>
+  <rect class="bg" width="960" height="540"/>
+  <text class="title" x="40" y="40">Same kernel, two mental models: threads vs blocks</text>
+  <text class="small" x="40" y="62">Triton raises the abstraction from one thread to one block; the compiler emits the threads, coalescing, and sync.</text>
+
+  <!-- LEFT: CUDA -->
+  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="60" y="120">Raw CUDA — thread level</text>
+  <rect class="codeC" x="60" y="136" width="390" height="180" rx="6"/>
+  <text class="mono" x="76" y="162">__global__ void add(</text>
+  <text class="mono" x="76" y="182">    float* x, float* y, float* z, int n){</text>
+  <text class="mono" x="76" y="206">  int i = blockIdx.x * blockDim.x</text>
+  <text class="mono" x="76" y="226">        + threadIdx.x;</text>
+  <text class="mono" x="76" y="250">  if (i &lt; n)</text>
+  <text class="mono" x="76" y="270">    z[i] = x[i] + y[i];</text>
+  <text class="mono" x="76" y="294">}</text>
+  <text class="small" x="60" y="350">You compute the global index, choose the</text>
+  <text class="small" x="60" y="370">grid and block, and manage __syncthreads.</text>
+
+  <!-- RIGHT: Triton -->
+  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
+  <text class="label" x="520" y="120" fill="var(--ts-success)">Triton — block level</text>
+  <rect class="codeT" x="520" y="136" width="390" height="200" rx="6"/>
+  <text class="mono" x="536" y="162">@triton.jit</text>
+  <text class="mono" x="536" y="182">def add(X, Y, Z, N, BLOCK: tl.constexpr):</text>
+  <text class="mono" x="536" y="206">  pid  = tl.program_id(0)</text>
+  <text class="mono" x="536" y="226">  offs = pid*BLOCK + tl.arange(0, BLOCK)</text>
+  <text class="mono" x="536" y="250">  mask = offs &lt; N</text>
+  <text class="mono" x="536" y="274">  x = tl.load(X+offs, mask=mask)</text>
+  <text class="mono" x="536" y="294">  y = tl.load(Y+offs, mask=mask)</text>
+  <text class="mono" x="536" y="318">  tl.store(Z+offs, x+y, mask=mask)</text>
+  <text class="small" x="520" y="366" fill="var(--ts-success)">No threadIdx, no __syncthreads, no manual</text>
+  <text class="small" x="520" y="386">shared memory: you think in blocks of data.</text>
+
+</svg>
