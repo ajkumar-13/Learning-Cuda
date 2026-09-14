@@ -57,3 +57,6 @@ install_manifest.txt
 # Keep internal/private documentation local-only (do not push to GitHub)
 SETUP_RESOLUTION.md
 INSTALL_WINDOWS.md
+
+# Kernel visualizer is a separate nested git repository (own history, node_modules, dist)
+kernel-visualizer/

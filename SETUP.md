@@ -12,7 +12,7 @@ Every post ships two runnable companions: a **CPU model** (`*_model.py` or a sma
 |---|---|
 | The CPU models (`*.py`) | Python 3.9+ and NumPy (`pip install numpy`) |
 | The real kernels (`*.cu`) | An NVIDIA GPU + the **CUDA Toolkit 12.x** (provides `nvcc`) + a host C++ compiler |
-| Posts 13–14 (Tensor Cores, FlashAttention) | A **Volta-or-newer** GPU (compute capability ≥ 7.0); `flash_attention.cu` targets `sm_80` (Ampere) |
+| Posts 17–18 (Tensor Cores, FlashAttention) | A **Volta-or-newer** GPU (compute capability ≥ 7.0); `flash_attention.cu` targets `sm_80` (Ampere) |
 
 The host C++ compiler is **MSVC** (`cl.exe`, from Visual Studio) on Windows and **g++/clang** on Linux. `nvcc` drives it for you; you just need it installed.
 

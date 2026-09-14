@@ -2,9 +2,9 @@
 
 # Learning CUDA: From First Kernel to FlashAttention
 
-**A 15-part, from-scratch course in GPU programming — from adding two arrays to writing a memory-linear attention kernel, every idea derived, benchmarked, and drawn.**
+**A 19-part, from-scratch course in GPU programming — from adding two arrays to writing a memory-linear attention kernel, every idea derived, benchmarked, and drawn.**
 
-![Posts](https://img.shields.io/badge/posts-15-blue?style=flat-square) ![Parts](https://img.shields.io/badge/parts-4-green?style=flat-square)
+![Posts](https://img.shields.io/badge/posts-19-blue?style=flat-square) ![Parts](https://img.shields.io/badge/parts-5-green?style=flat-square)
 
 </div>
 
@@ -12,7 +12,7 @@
 
 ## Why this series?
 
-Most CUDA tutorials stop at "here is a kernel." This one builds the whole stack: the execution model, the memory hierarchy, the classic parallel patterns, the system-level tricks, and the modern hardware (Tensor Cores) and algorithms (FlashAttention) that run today's models — finishing at the production tools (CUTLASS, Triton) that most code actually uses.
+Most CUDA tutorials stop at "here is a kernel." This one builds the whole stack: the execution model, the memory hierarchy, the classic parallel patterns and the correctness rules behind them, the performance model that predicts a kernel's ceiling, the system-level tricks, the numerics, and the modern hardware (Tensor Cores) and algorithms (FlashAttention) that run today's models — finishing at the production tools (CUTLASS, Triton) that most code actually uses.
 
 Every concept is derived from first principles, illustrated with original diagrams, and grounded in a runnable companion. Each post ships a faithful **CPU model** (NumPy or plain Python) that reproduces the kernel's logic and prints real, non-invented numbers, so you can follow every result even without a GPU; the real `.cu` kernels are committed alongside and build straight from [examples/](examples/).
 
@@ -22,7 +22,7 @@ Every concept is derived from first principles, illustrated with original diagra
 
 ## How to read it
 
-The series runs in four parts. Each post follows the same rhythm — **picture → intuition → math → code** — and ends with common pitfalls, further reading, and a pointer to what comes next. Every post lives in its own folder:
+The series runs in five parts. Each post follows the same rhythm — **picture → intuition → math → code** — and ends with common pitfalls, further reading, and a pointer to what comes next. Every post lives in its own folder:
 
 ```
 posts/NN-slug/
@@ -34,7 +34,7 @@ posts/NN-slug/
 
 Read sequentially for the full arc, or jump to any post if you have the prerequisites.
 
-**Setup & reference:** [SETUP.md](SETUP.md) (get a GPU machine running, cross-OS) · [RUNNING.md](RUNNING.md) (run any post's code) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (when a build fails) · [CHEATSHEET.md](CHEATSHEET.md) (one-page reference) · [notation_guide.md](notation_guide.md) · [GLOSSARY.md](GLOSSARY.md) · [REFERENCES.md](REFERENCES.md) · [CONTRIBUTING.md](CONTRIBUTING.md) · [LICENSE](LICENSE)
+**Setup & reference:** [SETUP.md](SETUP.md) (get a GPU machine running, cross-OS) · [RUNNING.md](RUNNING.md) (run any post's code) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md) (when a build fails) · [CHEATSHEET.md](CHEATSHEET.md) (one-page reference) · [notation_guide.md](notation_guide.md) · [GLOSSARY.md](GLOSSARY.md) · [REFERENCES.md](REFERENCES.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 **Hands-on code:** [examples/](examples/) holds standalone example kernels, a CMake build, and practice challenges (vector add, ReLU, matrix ops) that go alongside the posts.
 
@@ -52,7 +52,7 @@ Read sequentially for the full arc, or jump to any post if you have the prerequi
 
 ## Part II — Parallel Patterns
 
-*The handful of patterns that almost every GPU algorithm is built from.*
+*The handful of patterns that almost every GPU algorithm is built from, and the rules that make them correct.*
 
 | # | Post | What it teaches |
 |--:|------|-----------------|
@@ -61,27 +61,38 @@ Read sequentially for the full arc, or jump to any post if you have the prerequi
 | 06 | [Matrix transpose](posts/06-matrix-transpose/index.md) | Memory coalescing and shared-memory bank conflicts |
 | 07 | [Convolution](posts/07-convolution/index.md) | Constant memory, shared-memory halos, separable filters |
 | 08 | [Parallel scan](posts/08-parallel-scan/index.md) | Breaking a dependency chain; Blelloch; stream compaction |
+| 09 | [Synchronization & the memory model](posts/09-synchronization/index.md) | Races, barriers, atomics, warp sync, fences, and thread scopes |
 
-## Part III — Systems & Performance
+## Part III — Understanding Performance
+
+*The framework for reasoning about speed, and the tools that measure it.*
+
+| # | Post | What it teaches |
+|--:|------|-----------------|
+| 10 | [Roofline & occupancy](posts/10-roofline/index.md) | Arithmetic intensity, memory- vs compute-bound, the occupancy limiters |
+| 11 | [Profiling & debugging](posts/11-profiling-debugging/index.md) | Nsight, compute-sanitizer, and the occupancy you can measure |
+
+## Part IV — Systems & Execution
 
 *Moving from one kernel to the whole machine.*
 
 | # | Post | What it teaches |
 |--:|------|-----------------|
-| 09 | [Profiling and debugging](posts/09-profiling-debugging/index.md) | Nsight, compute-sanitizer, and the occupancy you can measure |
-| 10 | [CUDA streams](posts/10-cuda-streams/index.md) | Overlapping copy and compute; pinned memory; the pipeline |
-| 11 | [Kernel fusion](posts/11-kernel-fusion/index.md) | Removing intermediate memory traffic; the free-op insight |
-| 12 | [Async copy & pipelining](posts/12-async-copy-pipelining/index.md) | cp.async, double buffering, hiding memory latency |
+| 12 | [CUDA streams](posts/12-cuda-streams/index.md) | Overlapping copy and compute; pinned memory; the pipeline |
+| 13 | [CUDA Graphs & allocation](posts/13-cuda-graphs/index.md) | Cutting launch overhead; stream capture and replay; stream-ordered memory pools |
+| 14 | [Kernel fusion](posts/14-kernel-fusion/index.md) | Removing intermediate memory traffic; the free-op insight |
+| 15 | [Async copy & pipelining](posts/15-async-copy-pipelining/index.md) | cp.async, double buffering, hiding memory latency |
 
-## Part IV — Tensor & Attention
+## Part V — Tensor & Attention
 
-*The hardware and algorithms behind modern AI, and the tools that ship them.*
+*The numerics, hardware, and algorithms behind modern AI, and the tools that ship them.*
 
 | # | Post | What it teaches |
 |--:|------|-----------------|
-| 13 | [Tensor cores](posts/13-tensor-cores/index.md) | Matrix-at-once hardware (WMMA) and mixed precision |
-| 14 | [FlashAttention](posts/14-flash-attention/index.md) | Tiling and online softmax for memory-linear attention |
-| 15 | [CUTLASS and Triton](posts/15-cutlass-triton/index.md) | The production tools, and why you learned raw CUDA first |
+| 16 | [Floating-point precision](posts/16-numerical-precision/index.md) | FP32/FP16/BF16/TF32, non-associativity, stable softmax, mixed precision |
+| 17 | [Tensor cores](posts/17-tensor-cores/index.md) | Matrix-at-once hardware (WMMA) and mixed precision |
+| 18 | [FlashAttention](posts/18-flash-attention/index.md) | Tiling and online softmax for memory-linear attention |
+| 19 | [CUTLASS and Triton](posts/19-cutlass-triton/index.md) | The production tools, and why you learned raw CUDA first |
 
 ---
 

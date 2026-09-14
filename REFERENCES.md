@@ -116,7 +116,35 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 09 — Profiling and debugging
+## Post 09 — Synchronization and the memory model
+
+- NVIDIA. *"CUDA C++ Programming Guide — Memory Fence Functions and Atomic Functions."* (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#memory-fence-functions>
+- NVIDIA. *"CUDA C++ Programming Guide — Independent Thread Scheduling."* (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#independent-thread-scheduling>
+- Lin, Y. & Grover, V. *"Using CUDA Warp-Level Primitives."* NVIDIA Developer Blog, 2018.
+  <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
+- Sorensen, T., Donaldson, A. F., Batty, M., Gopalakrishnan, G., & Rakamarić, Z.
+  *"Portable Inter-Workgroup Barrier Synchronisation for GPUs."* OOPSLA, 2016.
+- Boehm, H. & Adve, S. V. *"Foundations of the C++ Concurrency Memory Model."*
+  PLDI, 2008. <https://dl.acm.org/doi/10.1145/1375581.1375591>
+
+---
+
+## Post 10 — Roofline and occupancy
+
+- Williams, S., Waterman, A., & Patterson, D. *"Roofline: An Insightful Visual
+  Performance Model for Multicore Architectures."* Communications of the ACM,
+  52(4), 2009.
+- NVIDIA. *"CUDA C++ Best Practices Guide."* (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/>
+- NVIDIA. *"CUDA C++ Programming Guide — Occupancy Calculator API."* (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#occupancy-calculator>
+- Volkov, V. *"Better Performance at Lower Occupancy."* GPU Technology Conference, 2010.
+
+---
+
+## Post 11 — Profiling and debugging
 
 - NVIDIA. *"Nsight Compute Documentation."* (current release).
   <https://docs.nvidia.com/nsight-compute/>
@@ -132,7 +160,7 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 10 — CUDA streams
+## Post 12 — CUDA streams
 
 - Harris, M. *"How to Overlap Data Transfers in CUDA C/C++."* NVIDIA Developer
   Blog, 2012.
@@ -146,7 +174,22 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 11 — Kernel fusion
+## Post 13 — CUDA Graphs and stream-ordered allocation
+
+- NVIDIA. *"CUDA C++ Programming Guide — CUDA Graphs."* (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-graphs>
+- NVIDIA. *"Getting Started with CUDA Graphs."* NVIDIA Developer Blog, 2019.
+  <https://developer.nvidia.com/blog/cuda-graphs/>
+- NVIDIA. *"Using the NVIDIA CUDA Stream-Ordered Memory Allocator."* NVIDIA
+  Developer Blog, 2021.
+  <https://developer.nvidia.com/blog/using-cuda-stream-ordered-memory-allocator-part-1/>
+- NVIDIA. *"CUDA C++ Programming Guide — Stream Ordered Memory Allocator."*
+  (current release).
+  <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#stream-ordered-memory-allocator>
+
+---
+
+## Post 14 — Kernel fusion
 
 - Dao, T., Fu, D. Y., Ermon, S., Rudra, A., & Ré, C. *"FlashAttention: Fast and
   Memory-Efficient Exact Attention with IO-Awareness."* NeurIPS, 2022.
@@ -161,7 +204,7 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 12 — Asynchronous copy and software pipelining
+## Post 15 — Asynchronous copy and software pipelining
 
 - NVIDIA. *"CUDA C++ Programming Guide — Asynchronous Data Copies."* (current release).
   <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-data-copies>
@@ -174,7 +217,23 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 13 — Tensor cores
+## Post 16 — Floating-point precision and numerical stability
+
+- Goldberg, D. *"What Every Computer Scientist Should Know About Floating-Point
+  Arithmetic."* ACM Computing Surveys, 23(1), 1991.
+  <https://dl.acm.org/doi/10.1145/103162.103163>
+- IEEE. *"IEEE Standard for Floating-Point Arithmetic (IEEE 754-2019)."*
+  <https://standards.ieee.org/ieee/754/6210/>
+- Micikevicius, P. et al. *"Mixed Precision Training."* ICLR, 2018.
+  <https://arxiv.org/abs/1710.03740>
+- Higham, N. J. *Accuracy and Stability of Numerical Algorithms.* 2nd ed., SIAM, 2002
+  (compensated and pairwise summation).
+- NVIDIA. *"Train With Mixed Precision."* (current release).
+  <https://docs.nvidia.com/deeplearning/performance/mixed-precision-training/>
+
+---
+
+## Post 17 — Tensor cores
 
 - NVIDIA. *"CUDA C++ Programming Guide — Warp Matrix Functions."* (current release).
   <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#wmma>
@@ -188,7 +247,7 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 14 — FlashAttention
+## Post 18 — FlashAttention
 
 - Dao, T., Fu, D. Y., Ermon, S., Rudra, A., & Ré, C. *"FlashAttention: Fast and
   Memory-Efficient Exact Attention with IO-Awareness."* NeurIPS, 2022.
@@ -202,7 +261,7 @@ section lists a short form; the complete reference is here.
 
 ---
 
-## Post 15 — CUTLASS and Triton
+## Post 19 — CUTLASS and Triton
 
 - Tillet, P., Kung, H. T., & Cox, D. *"Triton: An Intermediate Language and
   Compiler for Tiled Neural Network Computations."* MAPL, 2019.

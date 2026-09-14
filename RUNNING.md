@@ -9,30 +9,32 @@ Every post ships two companions in its `snippets/` folder: a **CPU model** (`.py
 | Part | Posts | You need |
 |---|---|---|
 | I — First Kernels | 01–03 | Python 3.9+, NumPy; an NVIDIA GPU + CUDA Toolkit 12+ for the `.cu` files |
-| II — Parallel Patterns | 04–08 | as above |
-| III — Systems & Performance | 09–12 | as above; the async-copy kernel (post 12) needs an Ampere GPU (`sm_80`+) |
-| IV — Tensor & Attention | 13–15 | a Volta-or-newer GPU (compute capability ≥ 7.0); `flash_attention.cu` (post 14) targets `sm_80`; post 15 also uses Triton (`pip install triton`, Linux) |
+| II — Parallel Patterns | 04–09 | as above |
+| III — Understanding Performance | 10–11 | as above; the profiling post uses Nsight and `compute-sanitizer`, which ship with the CUDA 12.x toolkit |
+| IV — Systems & Execution | 12–15 | as above; CUDA Graphs (post 13) need CUDA 11+; the async-copy kernel (post 15) needs an Ampere GPU (`sm_80`+) |
+| V — Tensor & Attention | 16–19 | a Volta-or-newer GPU (compute capability ≥ 7.0); `flash_attention.cu` (post 18) targets `sm_80`; post 19 also uses Triton (`pip install triton`, Linux) |
 
 ## The two commands
 
 Run any post's CPU model with Python and NumPy:
 
 ```bash
-python blog/posts/04-reduction/snippets/reduction_model.py
+python posts/04-reduction/snippets/reduction_model.py
 ```
 
 Build and run its real kernel with one `nvcc` line — use the `-arch` for your GPU (each `.cu` header states the one it was measured with; see the [arch table](SETUP.md#step-3--pick-your--arch-flag)):
 
 ```bash
-nvcc -O3 -arch=sm_75 blog/posts/04-reduction/snippets/reduction.cu -o reduction && ./reduction
+nvcc -O3 -arch=sm_75 posts/04-reduction/snippets/reduction.cu -o reduction && ./reduction
 ```
 
 On Windows the executable is `reduction.exe`; if `nvcc` can't find `cl.exe`, add `-ccbin` (see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#cannot-find-compiler-clexe)).
 
-## A note on two posts
+## Posts whose companion is Python-only or an excerpt
 
-- **Post 14 (FlashAttention)** ships an *illustrative* kernel excerpt that shows the tile loop and online-softmax update; its CPU model (`flash_attention.py`) is the runnable, verified artifact. The post says so where the code appears.
-- **Post 15 (CUTLASS and Triton)** is a tooling survey and ships Python companions (`triton_matmul.py`, `tools_model.py`) rather than a `.cu`; the post points you to posts 03 and 13 for the hand-written CUDA baselines it compares against.
+- **Post 10 (Roofline & occupancy)** and **Post 16 (Floating-point precision)** are modeling posts: their `.py` model *is* the verified artifact, printing derived numbers that need no GPU. Post 16 also ships a small `.cu` contrast for reading.
+- **Post 18 (FlashAttention)** ships an *illustrative* kernel excerpt that shows the tile loop and online-softmax update; its CPU model (`flash_attention.py`) is the runnable, verified artifact. The post says so where the code appears.
+- **Post 19 (CUTLASS and Triton)** is a tooling survey and ships Python companions (`triton_matmul.py`, `tools_model.py`) rather than a `.cu`; the post points you to posts 03 and 17 for the hand-written CUDA baselines it compares against.
 
 ## Reproducing the numbers
 
