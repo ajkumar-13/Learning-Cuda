@@ -90,7 +90,7 @@ int main()
 
     if (ok)
     {
-        std::printf("multiply.cu: PASS\n");
+        std::printf("Multiply: [Success] All elements computed correctly\n");
     }
     else
     {

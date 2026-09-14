@@ -10,7 +10,7 @@ Common errors and quick fixes when compiling CUDA code on Windows.
 
 **Fix:**
 1. Verify CUDA is installed: `Test-Path "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe"`
-2. If False, install CUDA Toolkit (see [SETUP.md](SETUP.md))
+2. If False, install CUDA Toolkit (see [WINDOWS-SETUP.md](WINDOWS-SETUP.md))
 3. If True, add to PATH:
    ```powershell
    $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin"
@@ -186,7 +186,7 @@ error: unresolved external symbol cudaMemcpy
 
 ## Still stuck?
 
-- Check [SETUP.md](SETUP.md) for full setup instructions
+- Check [WINDOWS-SETUP.md](WINDOWS-SETUP.md) for full setup instructions
 - Verify `nvidia-smi` and `nvcc --version` work
 - Verify `cl.exe` location and VS installation
 - Search the NVIDIA forums: https://forums.developer.nvidia.com/

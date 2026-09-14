@@ -151,14 +151,14 @@ nvcc -O3 -arch=sm_75 snippets/device_query.cu -o device_query && ./device_query
 On the GTX 1650 used throughout, it reports:
 
 ```text
-Device 0: NVIDIA GeForce GTX 1650
+Device 0: NVIDIA GeForce GTX 1650 with Max-Q Design
   compute capability   : 7.5
   streaming multiproc. : 14 SMs
   warp size            : 32 threads
   max threads / block  : 1024
   shared mem / block   : 48 KB
-  global memory        : 4.0 GB
-  peak bandwidth       : ~192 GB/s
+  global memory        : 4.3 GB
+  peak bandwidth       : 160 GB/s
 ```
 
 Those seven numbers (and especially the warp size of 32, the 1024-thread block limit, and the bandwidth) are the constraints every later kernel is tuned against.

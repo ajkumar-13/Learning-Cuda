@@ -94,7 +94,7 @@ cudaMemcpy(d_A, h_A, bytes, cudaMemcpyHostToDevice);                          //
 cudaMemcpy(d_B, h_B, bytes, cudaMemcpyHostToDevice);
 
 vectorAdd<<<blocksPerGrid, blockSize>>>(d_A, d_B, d_C, N);                    // 3
-cudaDeviceSynchronize();                                                     // 4
+cudaDeviceSynchronize();                                                      // 4
 
 cudaMemcpy(h_C, d_C, bytes, cudaMemcpyDeviceToHost);                          // 5
 cudaFree(d_A);  cudaFree(d_B);  cudaFree(d_C);                                // 6
@@ -161,7 +161,7 @@ These numbers were measured on one laptop; treat the shape, not the digits, as t
 
 | Component | Detail |
 |---|---|
-| GPU | NVIDIA GeForce GTX 1650 (14 SMs, compute capability 7.5, ~192 GB/s) |
+| GPU | NVIDIA GeForce GTX 1650 (Max-Q, 14 SMs, compute capability 7.5, ~160 GB/s) |
 | CPU | Intel Core i7-9750H (6 cores / 12 threads), 16 GB DDR4 (~40 GB/s) |
 | Toolchain | CUDA 12.6, driver 560.94, `nvcc -O2`, OpenMP 12 threads, PCIe Gen3 x16 |
 
@@ -183,7 +183,7 @@ Reading the curves:
 - **Medium `N` (around 1M): it is close.** Multi-threaded OpenMP is competitive because the data fits in cache and the CPU boosts aggressively.
 - **Large `N` (10M and up): the GPU pulls away.** At 100M elements the kernel alone is about **17× faster** than the single-threaded CPU, and even with transfers the GPU stays ahead.
 
-> **The key insight: this kernel is memory-bandwidth bound, not compute bound.** Each element costs two reads and one write (12 bytes) for a single addition, an arithmetic intensity of about `1 / 12 = 0.083` FLOP/byte. A modern CPU could do the additions in microseconds, but moving 100M elements (1.2 GB) at ~40 GB/s takes tens of milliseconds, and that wait is the runtime. The GPU wins not because it adds faster but because its DRAM delivers ~192 GB/s, roughly five times more. And the kernel genuinely reaches that ceiling: at 100M elements it moves 1.2 GB in 8.28 ms, about **145 GB/s — roughly 76% of the ~192 GB/s peak**. Both machines are waiting on memory; the GPU just waits less.
+> **The key insight: this kernel is memory-bandwidth bound, not compute bound.** Each element costs two reads and one write (12 bytes) for a single addition, an arithmetic intensity of about `1 / 12 = 0.083` FLOP/byte. A modern CPU could do the additions in microseconds, but moving 100M elements (1.2 GB) at ~40 GB/s takes tens of milliseconds, and that wait is the runtime. The GPU wins not because it adds faster but because its DRAM delivers ~160 GB/s, roughly four times more. And the kernel genuinely reaches that ceiling: at 100M elements it moves 1.2 GB in 8.28 ms, about **145 GB/s, roughly 91% of the ~160 GB/s peak**. Both machines are waiting on memory; the GPU just waits less.
 
 ## 6. When it bites: one-off work versus a pipeline
 

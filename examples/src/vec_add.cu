@@ -32,7 +32,7 @@ int main(){
     for (int i=0;i<10;i++){
         if (hC[i] != 3.0f) { ok=false; break; }
     }
-    std::cout << (ok ? "PASS" : "FAIL") << std::endl;
+    std::cout << (ok ? "Vector Addition: [Success] Computed values match" : "FAIL") << std::endl;
 
     cudaFree(dA); cudaFree(dB); cudaFree(dC);
     return ok ? 0 : 1;

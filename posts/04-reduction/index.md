@@ -88,15 +88,15 @@ nvcc -O3 -arch=sm_75 snippets/reduction.cu -o reduction && ./reduction
 
 ## 6. The numbers
 
-On a GTX 1650 (compute capability 7.5, theoretical peak ~192 GB/s for its 128-bit GDDR6) summing 16M floats, the three approaches span more than three orders of magnitude. The shipped `reduction.cu` runs the three kernels and prints each time and bandwidth (`bytes / ms / 1e6` over the 64 MB input); the values below were measured separately on the GTX 1650 and the bandwidth in each row is just `64 MB / time`:
+On a GTX 1650 (compute capability 7.5, theoretical peak ~160 GB/s for its 128-bit GDDR6) summing 16M floats, the three approaches span more than three orders of magnitude. The shipped `reduction.cu` runs the three kernels and prints each time and bandwidth (`bytes / ms / 1e6` over the 64 MB input); the values below were measured separately on the GTX 1650 and the bandwidth in each row is just `64 MB / time`:
 
 | Implementation | Time | Bandwidth | % of peak |
 |---|---|---|---|
-| naive atomic | 847.3 ms | 0.08 GB/s | 0.04% |
-| shared memory | 0.62 ms | 108 GB/s | 56% |
-| warp shuffle | 0.51 ms | 132 GB/s | 69% |
+| naive atomic | 847.3 ms | 0.08 GB/s | 0.05% |
+| shared memory | 0.62 ms | 108 GB/s | 68% |
+| warp shuffle | 0.51 ms | 132 GB/s | 82% |
 
-![A bandwidth bar chart: naive atomic 0.08 GB/s in red, shared memory 108, warp shuffle 132 in green, against the 192 GB/s peak line.](diagrams/04-reduction-perf.svg)
+![A bandwidth bar chart: naive atomic 0.08 GB/s in red, shared memory 108, warp shuffle 132 in green, against the 160 GB/s peak line.](diagrams/04-reduction-perf.svg)
 *The warp-shuffle kernel reaches ~69% of peak bandwidth: the algorithm is no longer the bottleneck, only the memory system is.*
 
 The naive atomic is **slower than the CPU**, a vivid lesson in what serialization costs. The warp-shuffle kernel reaches about **69% of peak bandwidth**, which is the real goal of a reduction: make the arithmetic free and become **memory bound**, limited only by how fast you can read the input once.

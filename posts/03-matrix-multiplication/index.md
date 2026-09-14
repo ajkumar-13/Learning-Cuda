@@ -114,7 +114,7 @@ Three details carry the whole kernel. The **two `__syncthreads()`** are not opti
 
 ## 5. The numbers: naive, tiled, and cuBLAS
 
-On a GTX 1650 (14 SMs, compute capability 7.5, ~192 GB/s) the tiling pays off, and a glance at NVIDIA's own library shows how far there is still to go. To turn a time into a rate, count the work: a multiply of `[M,K]` by `[K,N]` does `2*M*N*K` floating-point operations (one multiply and one add per inner step), so `GFLOPS = 2*M*N*K / time`. For the `1024³` case that is `2 x 1024^3 ~= 2.1 GFLOP` per call. The shipped [matmul.cu](snippets/matmul.cu) checks correctness only; the naive, tiled, and cuBLAS times below were measured separately on a GTX 1650 (compute capability 7.5).
+On a GTX 1650 (14 SMs, compute capability 7.5, ~160 GB/s) the tiling pays off, and a glance at NVIDIA's own library shows how far there is still to go. To turn a time into a rate, count the work: a multiply of `[M,K]` by `[K,N]` does `2*M*N*K` floating-point operations (one multiply and one add per inner step), so `GFLOPS = 2*M*N*K / time`. For the `1024³` case that is `2 x 1024^3 ~= 2.1 GFLOP` per call. The shipped [matmul.cu](snippets/matmul.cu) checks correctness only; the naive, tiled, and cuBLAS times below were measured separately on a GTX 1650 (compute capability 7.5).
 
 | Implementation | Time (1024³) | GFLOPS | Speedup |
 |---|---|---|---|

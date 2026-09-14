@@ -1,327 +1,86 @@
-# Learning CUDA
+# Examples and exercises
 
-A **comprehensive, hands-on guide to CUDA programming** on Windows. This repository contains step-by-step tutorials, practical challenges, and working examples to help you master GPU computing from the ground up.
+Hands-on CUDA code that accompanies the **[Learning CUDA series](../README.md)**. Where the
+series posts each ship a focused snippet, this folder holds standalone example kernels, a
+CMake build, and a set of practice challenges to solve.
 
-**What is CUDA?** CUDA (Compute Unified Device Architecture) is NVIDIA's parallel computing platform that lets you harness GPUs for general-purpose computing, powering everything from AI/deep learning to scientific simulations.
+> **Setup.** For installing a GPU toolchain on any OS, see the series'
+> [SETUP.md](../SETUP.md) and [TROUBLESHOOTING.md](../TROUBLESHOOTING.md). The
+> Windows-with-Visual-Studio specifics (the `-ccbin` dance, CMake generators) live here in
+> [WINDOWS-SETUP.md](WINDOWS-SETUP.md) and [WINDOWS-TROUBLESHOOTING.md](WINDOWS-TROUBLESHOOTING.md).
 
----
-
-## 📋 Table of Contents
-
-- [Quick Start (2 minutes)](#-quick-start)
-- [Repository Structure](#-repository-structure)
-- [Setup & Installation](#-setup--installation)
-- [Documentation](#-documentation)
-- [Learning Path](#-learning-path)
-- [Build & Run Examples](#-build--run-examples)
-- [Challenges & Exercises](#-challenges--exercises)
-- [Troubleshooting](#-troubleshooting)
-- [Resources](#-resources)
-
----
-
-## ⚡ Quick Start
-
-### 1. Check Prerequisites
-
-```powershell
-# Verify NVIDIA GPU driver
-nvidia-smi
-
-# Check CUDA compiler
-nvcc --version
-
-# Check build tools
-cmake --version
-```
-
-### 2. Build Examples
-
-```powershell
-cd "C:\Users\admin\Desktop\Learning Cuda"
-
-# Configure with CMake (Visual Studio Generator recommended)
-cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
-
-# Build all targets
-cmake --build build_vs --config Release
-```
-
-### 3. Run Examples
-
-```powershell
-# Run vector addition
-.\build_vs\vecadd_nvcc.exe
-
-# Run element-wise multiply
-.\build_vs\multiply_nvcc.exe
-```
-
-**Expected Output:**
-```
-Vector Addition: [Success] Computed values match
-Multiply: [Success] All elements computed correctly
-```
-
-> **First time setup?** See [SETUP.md](SETUP.md) for complete Windows CUDA installation guide.
-
----
-
-## 📁 Repository Structure
+## What's here
 
 ```
-Learning Cuda/
-├── README.md                          # This file
-├── SETUP.md                           # 📖 Complete Windows setup guide
-├── TROUBLESHOOTING.md                 # 🔧 Common errors & fixes
-├── CMakeLists.txt                     # Build configuration
-├── CMakeLists_explained.md            # CMake internals
-│
-├── blog/                              # 📚 Learning tutorials
-│   ├── introduction/
-│   │   ├── 00_introduction_to_cuda.md # Start here!
-│   │   └── images/                    # Architecture diagrams
-│   ├── vector_addition/
-│   ├── matrix_multiplication/
-│   └── [more advanced topics]
-│
-├── src/                               # 💻 Code examples & challenges
-│   ├── vec_add.cu                     # Simple vector add example
-│   ├── multiply.cu                    # Element-wise multiply
-│   ├── vec_add_cpu.cpp                # CPU-only fallback
-│   │
-│   ├── vector_addition/               # Challenge: Vector operations
-│   │   ├── question.md                # Problem statement
-│   │   ├── solution.cu                # GPU implementation
-│   │   └── test_solution.cu           # Test harness
-│   │
-│   ├── relu/                          # Challenge: ReLU activation
-│   ├── matrix_addition/               # Challenge: Matrix ops
-│   └── matrix_transpose/              # Challenge: Transpose kernel
-│
-├── build_vs/                          # Build output (Visual Studio)
-├── build_ninja/                       # Build output (Ninja)
-└── .gitignore                         # Git excludes
+examples/
+├── src/                       # example kernels + challenge folders
+│   ├── vec_add.cu             # vector addition
+│   ├── multiply.cu            # element-wise multiply
+│   ├── vec_add_cpu.cpp        # CPU-only reference
+│   ├── benchmark_vector_add.cu
+│   ├── vector_addition/       # challenge: question.md + solution.cu + test_solution.cu
+│   ├── relu/                  # challenge: ReLU activation
+│   ├── matrix_addition/       # challenge: matrix addition
+│   ├── matrix_transpose/      # challenge: transpose kernel
+│   └── reverse_array/         # challenge: reverse an array
+├── CMakeLists.txt             # builds the example kernels with nvcc
+├── test_cuda.cu               # minimal hello-from-GPU sanity check
+└── NewCudaScripts.md          # how to add and compile a new .cu
 ```
 
----
+## Build and run
 
-## 🔧 Setup & Installation
+With CMake (from this folder):
 
-### Option 1: Complete Setup (Recommended)
-
-Follow the **[SETUP.md](SETUP.md)** guide for:
-- GPU driver installation
-- Visual Studio C++ tools setup
-- CUDA Toolkit installation
-- Environment variable configuration
-- Compiler verification
-
-**Time estimate:** 30-45 minutes (mostly downloads/installation)
-
-### Option 2: Quick Check
-
-If you already have CUDA/VS installed:
-
-```powershell
-# Verify everything is ready
-Test-Path "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\bin\nvcc.exe"
-Get-Command cl.exe
-cmake --version
+```bash
+cmake -S . -B build && cmake --build build --config Release
+./build/vecadd_nvcc        # Windows: .\build\vecadd_nvcc.exe
 ```
 
-If all return `True` or version info, you're ready to build!
+Or compile any single file directly with `nvcc` (match `-arch` to your GPU; see the
+[arch table](../SETUP.md#step-3--pick-your--arch-flag)):
 
----
-
-## 📖 Documentation
-
-| File | Purpose |
-|------|---------|
-| **[SETUP.md](SETUP.md)** | Complete Windows setup guide for CUDA, VS, drivers |
-| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solutions to common compilation & runtime errors |
-| **[CMakeLists_explained.md](CMakeLists_explained.md)** | Deep dive into build configuration |
-| **[blog/introduction/00_introduction_to_cuda.md](blog/introduction/00_introduction_to_cuda.md)** | Foundational concepts: threads, blocks, memory hierarchy |
-
----
-
-## 🎓 Learning Path
-
-### **Current Content (Published)**
-
-#### Blog Posts
-- **[📖 Unlocking Supercomputing: An Introduction to CUDA](blog/introduction/00_introduction_to_cuda.md)** ← **Start here!**
-  - GPU vs CPU architecture
-  - Thread hierarchy (threads, blocks, grids)
-  - Heterogeneous computing model
-  - Memory hierarchy and optimization
-  - Warp execution and divergence
-  - CUDA compilation pipeline
-
-- **[🚀 Stop Looping. Start Launching: Vector Addition on the GPU](blog/vector_addition/vector_addition_medium_blog.md)**
-  - Writing your first CUDA kernel
-  - Memory management (cudaMalloc, cudaMemcpy, cudaFree)
-  - Kernel launch syntax and thread indexing
-  - CPU vs GPU performance comparison
-  - Proper GPU benchmarking techniques
-  - Error handling and debugging
-
-#### Examples
-- `src/vec_add.cu` – Vector addition kernel
-- `src/multiply.cu` – Element-wise multiplication
-
-#### Challenges (Ready to solve)
-- `src/vector_addition/` – Vector operations challenge
-- `src/relu/` – ReLU activation challenge
-- `src/matrix_addition/` – Matrix addition challenge
-- `src/matrix_transpose/` – Matrix transpose challenge
-
-### **In Progress**
-- 🗓️ **Matrix Multiplication Deep Dive** - Tiled algorithms, shared memory optimization
-
-### **Upcoming Content**
-- Matrix Operations Fundamentals (2D indexing, transpose)
-- Reduction patterns
-- Scan algorithms  
-- Tensor core operations
-- Advanced optimization techniques
-
-*See [PLAN.md](PLAN.md) for the complete 14-blog series roadmap.*
-
----
-
-## Build & Run Examples
-
-### Using Visual Studio Generator (Recommended)
-
-```powershell
-cd "C:\Users\admin\Desktop\Learning Cuda"
-
-# Configure
-cmake -S . -B build_vs -G "Visual Studio 16 2019" -A x64
-
-# Build (Release mode)
-cmake --build build_vs --config Release
-
-# Run examples
-.\build_vs\vecadd_nvcc.exe
-.\build_vs\multiply_nvcc.exe
+```bash
+nvcc -O2 src/vec_add.cu -o vec_add && ./vec_add
 ```
 
-✅ **Advantages:** Fast, automatic MSVC environment setup, IDE integration
+On Windows, if `nvcc` cannot find `cl.exe`, add `-ccbin` with your MSVC path; see
+[WINDOWS-SETUP.md](WINDOWS-SETUP.md) and [CMakeLists_explained.md](CMakeLists_explained.md).
 
-### Using Ninja Generator (Faster builds)
+## Run the series kernels
 
-```powershell
-# Run entire build chain inside cmd.exe (required for vcvars64.bat to work)
-cmd.exe /c """C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"" && cmake -S . -B build_ninja -G Ninja && cmake --build build_ninja"
+The build also compiles every runnable kernel from the [series posts](../README.md) — one
+executable per post, built straight from the post's own `snippets/*.cu` (no copies, so they
+never drift from what the posts teach). After `cmake --build build`:
+
+```bash
+./build/reduction      # post 04   (Windows: .\build\reduction.exe)
+./build/transpose      # post 06
+./build/streams        # post 12
+# ...also device_query, vector_add, matmul, histogram, convolution, scan,
+#    synchronization, occupancy_demo, cuda_graphs, fusion, async_pipeline,
+#    precision, tensor_core
 ```
 
-**Alternative:** Open "Developer PowerShell for VS 2019" from Start Menu, then:
-```powershell
-cmake -S . -B build_ninja -G Ninja
-cmake --build build_ninja
+Two need specific hardware to **run** (they still compile on a CUDA 11+ toolkit):
+`async_pipeline` (post 15) needs an Ampere GPU (`sm_80`+), and `tensor_core` (post 17) needs a
+Tensor-Core GPU (Volta+, i.e. RTX not GTX). Post 18's FlashAttention ships an illustrative
+excerpt (its Python model is the runnable artifact) and post 19 is Python/Triton-only, so
+neither is a build target here.
+
+## Challenges
+
+Each challenge folder has a `question.md` (the problem), a `solution.cu` (your kernel goes
+here), and a `test_solution.cu` (a harness that checks it):
+
+```bash
+nvcc -O2 src/vector_addition/solution.cu src/vector_addition/test_solution.cu -o test && ./test
 ```
 
-### Direct nvcc Compilation
+Available: `vector_addition`, `relu`, `matrix_addition`, `matrix_transpose`, `reverse_array`.
 
-For quick one-off experiments:
+## Where to learn the concepts
 
-```powershell
-nvcc -o .\build\test.exe .\src\vec_add.cu `
-  -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe" `
-  -O2
-
-.\build\test.exe
-```
-
-**Note:** Replace MSVC path with your installed version. See [SETUP.md](SETUP.md) for path discovery.
-
----
-
-## 🎯 Challenges & Exercises
-
-Each challenge has three components:
-
-- **`question.md`** – Problem description and hints
-- **`solution.cu`** – Your GPU kernel implementation goes here
-- **`test_solution.cu`** – Test harness to verify correctness
-
-### Vector Addition
-```powershell
-# Read the challenge
-cat .\src\vector_addition\question.md
-
-# Implement your solution in: .\src\vector_addition\solution.cu
-
-# Compile and test
-nvcc -o .\build\test_vecadd.exe `
-  .\src\vector_addition\solution.cu `
-  .\src\vector_addition\test_solution.cu `
-  -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe" `
-  -O2
-
-.\build\test_vecadd.exe
-```
-
-### ReLU Activation
-```powershell
-cat .\src\relu\question.md
-# Edit .\src\relu\solution.cu
-# Run tests (same compilation pattern as above)
-```
-
-### Matrix Operations
-- Matrix Addition: `.\src\matrix_addition\question.md`
-- Matrix Transpose: `.\src\matrix_transpose\question.md`
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-| Problem | Solution |
-|---------|----------|
-| `nvcc is not recognized` | See [SETUP.md § nvcc not recognized](SETUP.md#nvcc-is-not-recognized) |
-| `Cannot find compiler 'cl.exe'` | See [SETUP.md § cl.exe not found](SETUP.md#nvcc-fatal-cannot-find-compiler-clexe) |
-| `ACCESS_VIOLATION` | See [SETUP.md § ACCESS_VIOLATION](SETUP.md#nvcc-error-cudafe-died-with-status-0xc0000005-access_violation) |
-| `No CMAKE_CXX_COMPILER` | Use `vcvars64.bat` before CMake, see [SETUP.md § CMake errors](SETUP.md#cmake-generator-verification-windows) |
-| Images not rendering in GitHub | All images use forward slashes (`images/file.png`), should work now |
-
-**→ Full troubleshooting guide:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
----
-
-## 📚 Resources
-
-### Official Documentation
-- [NVIDIA CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
-- [NVIDIA CUDA Toolkit Documentation](https://docs.nvidia.com/cuda/)
-- [CUDA Samples (GitHub)](https://github.com/NVIDIA/cuda-samples)
-
-### Community & Forums
-- [NVIDIA Developer Forums](https://forums.developer.nvidia.com/c/gpu-accelerated-libraries/cuda/)
-- [Stack Overflow - CUDA tag](https://stackoverflow.com/questions/tagged/cuda)
-
----
-
-## 📝 License
-
-This repository is for educational purposes. Feel free to use and modify for learning.
-
----
-
-## 🤝 Contributing
-
-Have improvements or new examples? PRs welcome!
-
-To add a new challenge:
-1. Create `src/my_challenge/` folder
-2. Add `question.md` (problem statement)
-3. Add `solution.cu` (template) and `test_solution.cu` (tests)
-4. Update this README with a link
-
----
-
-**Happy learning!** 🎓 Start with the [Introduction blog post](blog/introduction/00_introduction_to_cuda.md) or jump to a [Challenge](#-challenges--exercises).
+The hands-on code here mirrors the series posts. Start with
+[Post 01 — Introduction to CUDA](../posts/01-introduction-to-cuda/index.md) and
+[Post 02 — Vector addition](../posts/02-vector-addition/index.md), then work the challenges.
