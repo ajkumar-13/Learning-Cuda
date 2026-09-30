@@ -1,0 +1,39 @@
+# Series manifest, family standard 2.2.0 (STANDARD.md Section 5).
+# parts[].posts is the whole locked curriculum in reading order, drafted or not; a post without a
+# directory has an entry under planned. Ids are allocated from next_post_ordinal and never reused.
+# 19 locked posts in 5 parts; generated from plan.md Section 5 by tools/plan_to_manifest.py.
+standard: "2.2.0"
+key: cuda
+code: cuda
+title: 'Learning CUDA: From First Kernel to FlashAttention'
+status: complete
+author: Ajay
+library: null
+slug_patterns:
+  core: ^[0-9]{2,3}-[a-z0-9-]+$
+next_post_ordinal: 20
+next_project_ordinal: 1
+projects: []
+levels_used: [beginner, intermediate, advanced]
+vocab:
+  compute: [cpu, gpu-small]
+  hardware: [gtx-1650, rtx-3080, a100]
+question_policy: {}
+parts:
+- number: 1
+  title: Part I - First Kernels
+  posts: [cuda-001, cuda-002, cuda-003]
+- number: 2
+  title: Part II - Parallel Patterns
+  posts: [cuda-004, cuda-005, cuda-006, cuda-007, cuda-008, cuda-009]
+- number: 3
+  title: Part III - Understanding Performance
+  posts: [cuda-010, cuda-011]
+- number: 4
+  title: Part IV - Systems & Execution
+  posts: [cuda-012, cuda-013, cuda-014, cuda-015]
+- number: 5
+  title: Part V - Tensor & Attention
+  posts: [cuda-016, cuda-017, cuda-018, cuda-019]
+retired: []
+gates: []
