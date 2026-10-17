@@ -1,38 +1,82 @@
-"""histogram_model.py — a CPU model of why privatization beats global atomics.
+"""histogram_model.py: a CPU model of the two histogram kernels of post 05, and of the race between them.
 
-CUDA cannot run in this blog's test environment, so this model reproduces the
-two strategies and counts the contention on the hottest bin under the worst
-case: a "solid color" input where every element is the same value, so every
-thread targets one bin.
+It counts what the GPU timing cannot show: how many increments land on the single most contended address
+under each strategy, for the two inputs that histogram.cu times (N = 16,777,216 values into 256 bins, a
+launch of 256 blocks of 256 threads with a grid-stride loop):
 
-Global atomics put all N increments on one global address: N-way contention.
-Privatization counts inside each block's shared histogram (contention bounded by
-the block), then each block merges with one atomic per bin: the global hot bin
-now sees only gridDim increments. It also checks a privatized count equals the
-reference histogram. Run: python histogram_model.py  (needs NumPy)
+- random: values drawn uniformly from 0 to 255 (NumPy, seed 0; histogram.cu uses its own generator, so
+  the counts agree in size, not digit for digit);
+- solid: every value is 128, a solid-color image, the worst case.
+
+histGlobal sends every increment to global memory, so the hottest global bin receives every element with
+its value. histShared counts each block's elements in a private shared-memory histogram, so the hottest
+address inside a block receives at most that block's 65,536 elements, and then merges with one global
+atomic per bin per block, so the hottest global bin receives 256 merges whatever the data. The model also
+checks that the privatized count equals the reference histogram, and replays the lost update of a plain
+`bins[v]++` for two threads. Run from the series root:
+
+    uv run python posts/05-histogram/snippets/histogram_model.py
 """
 import numpy as np
 
 N = 16 * 1024 * 1024
-BINS, block, grid = 256, 256, 256
-data = np.full(N, 128, dtype=np.int64)        # solid color: worst case
-ref = np.bincount(data, minlength=BINS)
+BINS, BLOCK, GRID = 256, 256, 256
+THREADS = BLOCK * GRID                      # 65,536 threads; thread t handles i = t, t + 65,536, ...
 
-# privatized simulation: split into `grid` chunks, count each, then merge
-chunks = np.array_split(data, grid)
-priv = np.zeros(BINS, dtype=np.int64)
-for c in chunks:
-    priv += np.bincount(c, minlength=BINS)    # per-block shared histogram, then merge
 
-global_hot = N                                # all N increments hit one global bin
-shared_hot_per_block = max(len(c) for c in chunks)   # contention inside a block (shared)
-global_merge = grid * BINS                    # one global atomic per bin per block
-global_hot_after = grid                       # the hot global bin now sees grid adds
+def lost_update(start=5):
+    """Two threads increment one counter with a plain read, add, write: serially, then interleaved."""
+    serial = start
+    for _ in range(2):
+        old = serial
+        serial = old + 1                    # each thread reads the other's result
+    read_a = read_b = start                 # both threads read the old count before either writes
+    interleaved = read_a + 1                # thread a writes 6
+    interleaved = read_b + 1                # thread b also writes 6: thread a's increment is lost
+    return serial, interleaved
 
-print("histogram model (solid-color worst case)")
-print(f"  N                       = {N:,} elements, all value 128")
-print(f"  privatized == reference : {bool(np.array_equal(priv, ref))}")
-print(f"  global atomics on bin128 : {global_hot:,}  (all serialize on one address)")
-print(f"  shared atomics / block   : {shared_hot_per_block:,}  (fast, ~20 cycles, stays local)")
-print(f"  global merge atomics     : {global_merge:,}  ({grid} blocks x {BINS} bins)")
-print(f"  global contention on bin128 drops from {global_hot:,} to {global_hot_after}")
+
+def privatized(data):
+    """histShared on the CPU: one private histogram per block, then one merge per bin per block."""
+    t = np.arange(N) % THREADS              # the grid-stride loop: element i belongs to thread i % 65,536
+    block = t // BLOCK
+    per_block = np.zeros((GRID, BINS), dtype=np.int64)
+    np.add.at(per_block, (block, data), 1)  # phase 2: each block counts into its own bins
+    return per_block, per_block.sum(axis=0) # phase 3: the merge adds every block's bins
+
+
+inputs = {
+    "random": np.random.default_rng(0).integers(0, BINS, N),
+    "solid": np.full(N, 128, dtype=np.int64),
+}
+
+rows = {}
+for name, data in inputs.items():
+    ref = np.bincount(data, minlength=BINS)
+    per_block, merged = privatized(data)
+    rows[name] = {
+        "equal": bool(np.array_equal(merged, ref)),
+        "global_hot": int(ref.max()),                # histGlobal: increments on the hottest global bin
+        "shared_hot": int(per_block.max()),          # histShared: increments on the hottest shared bin of a block
+        "merge_hot": GRID,                           # histShared: merges on any one global bin
+        "merge_all": GRID * BINS,                    # histShared: every global atomic of the merge
+    }
+
+serial, interleaved = lost_update()
+print("1. the race: two threads run bins[v]++ on a count of 5")
+print(f"  one after the other        : {serial}")
+print(f"  both read, then both write : {interleaved}  (one increment lost)")
+print()
+print(f"2. N = {N:,} values into {BINS} bins, <<<{GRID}, {BLOCK}>>>, {N // THREADS} elements per thread")
+print(f"  {'':<40} {'random':>10} {'solid':>11}")
+print(f"  {'privatized count equals the reference':<40} {rows['random']['equal']!s:>10} {rows['solid']['equal']!s:>11}")
+for key, label in [("global_hot", "histGlobal: atomics on the hottest bin"),
+                   ("shared_hot", "histShared: hottest shared bin, 1 block"),
+                   ("merge_hot", "histShared: merges on any global bin"),
+                   ("merge_all", "histShared: merge atomics in all")]:
+    print(f"  {label:<40} {rows['random'][key]:>10,} {rows['solid'][key]:>11,}")
+print()
+print("3. the private histogram's size in shared memory (4-byte int bins; 48 KB per block on the GTX 1650)")
+for bins in (256, 4096, 65536):
+    kb = bins * 4 // 1024
+    print(f"  {bins:>6,} bins = {kb:>3} KB  {'fits' if kb <= 48 else 'does not fit'}")

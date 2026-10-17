@@ -1,54 +1,226 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Privatization gives each block its own histogram in shared memory, counted locally then merged once into global memory</title>
-  <desc id="d">Three blocks across the top, each holding a private histogram in shared memory, drawn green. Each block's threads count their elements into that private histogram using fast shared-memory atomics, so contention stays inside the block. Then each block merges its private histogram into the single global bins array at the bottom with one atomic per bin, shown as green arrows converging downward. The note explains that for the solid-colour worst case the contention on the hottest global bin drops from 16,777,216 down to just 256, one increment per block, while the heavy counting happens in fast shared memory.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
-    .block{fill:none;stroke:var(--cuda-border);stroke-width:1;}
-    .priv{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .gbin{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .merge{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Privatization: a private histogram per block, merged once</text>
-  <text class="small" x="40" y="66">Each block counts into fast shared memory, so contention stays local; only the merge touches global memory.</text>
-
-  <defs>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
-  </defs>
-
-  <!-- three blocks with private shared histograms -->
-  <g>
-    <rect class="block" x="56"  y="100" width="270" height="150" rx="10"/>
-    <text class="label" x="76" y="126">Block 0</text><text class="small" x="76" y="144">counts into its own shared histogram</text>
-    <rect class="priv" x="76" y="156" width="34" height="74" rx="3"/><rect class="priv" x="116" y="186" width="34" height="44" rx="3"/><rect class="priv" x="156" y="170" width="34" height="60" rx="3"/><rect class="priv" x="196" y="196" width="34" height="34" rx="3"/><rect class="priv" x="236" y="178" width="34" height="52" rx="3"/><rect class="priv" x="276" y="200" width="34" height="30" rx="3"/>
-  </g>
-  <g>
-    <rect class="block" x="346" y="100" width="270" height="150" rx="10"/>
-    <text class="label" x="366" y="126">Block 1</text><text class="small" x="366" y="144">counts into its own shared histogram</text>
-    <rect class="priv" x="366" y="170" width="34" height="60" rx="3"/><rect class="priv" x="406" y="194" width="34" height="36" rx="3"/><rect class="priv" x="446" y="160" width="34" height="70" rx="3"/><rect class="priv" x="486" y="188" width="34" height="42" rx="3"/><rect class="priv" x="526" y="200" width="34" height="30" rx="3"/><rect class="priv" x="566" y="180" width="34" height="50" rx="3"/>
-  </g>
-  <g>
-    <rect class="block" x="636" y="100" width="270" height="150" rx="10"/>
-    <text class="label" x="656" y="126">Block 2</text><text class="small" x="656" y="144">counts into its own shared histogram</text>
-    <rect class="priv" x="656" y="192" width="34" height="38" rx="3"/><rect class="priv" x="696" y="166" width="34" height="64" rx="3"/><rect class="priv" x="736" y="184" width="34" height="46" rx="3"/><rect class="priv" x="776" y="200" width="34" height="30" rx="3"/><rect class="priv" x="816" y="172" width="34" height="58" rx="3"/><rect class="priv" x="856" y="190" width="34" height="40" rx="3"/>
-  </g>
-  <text class="small" x="56" y="276">phase 1 — count locally with fast shared-memory atomics (contention bounded by one block)</text>
-
-  <!-- merge to global -->
-  <g class="merge">
-    <path d="M191,308 L450,396" marker-end="url(#aS)"/>
-    <path d="M481,308 L480,396" marker-end="url(#aS)"/>
-    <path d="M771,308 L510,396" marker-end="url(#aS)"/>
-  </g>
-  <text class="small" x="600" y="350">phase 2 — merge: one atomic per bin per block</text>
-
-  <!-- global bins -->
-  <rect class="gbin" x="300" y="398" width="360" height="50" rx="8"/>
-  <text class="mono" x="480" y="428" text-anchor="middle">global bins[256]</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="cuda-02-privatization-title" aria-describedby="cuda-02-privatization-desc">
+<title id="cuda-02-privatization-title">Count in shared memory, then merge once per bin</title>
+<desc id="cuda-02-privatization-desc">The privatized kernel on 16,777,216 solid-color values, drawn for two of its 256 blocks, block 0 and block 255, and three of the 256 bins, 0, 128 and 255. Phase 1: each block's threads zero its private shared array s. A purple barrier per block. Phase 2: each block counts its 65,536 values into s, so s[128] holds 65,536. A second barrier. Phase 3: each block adds its bins to the global bins with one atomic per bin; global bins[128] receives 256 merges and ends at 16,777,216.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-purple { fill: var(--cuda-purple); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-purple { stroke: var(--cuda-purple); }
+</style>
+<defs>
+<marker id="cuda-02-privatization-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-02-privatization-arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-purple"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="720"/>
+<text x="40" y="48" class="t-title" data-w="611">Count in shared memory, then merge once per bin</text>
+<text x="40" y="76" class="t-subtitle" data-w="771">Two of 256 blocks and three of 256 bins, solid-color input; counts derived by snippets/histogram_model.py.</text>
+<text x="312" y="144" text-anchor="middle" class="t-head" data-w="164">block 0, 256 threads</text>
+<text x="728" y="144" text-anchor="middle" class="t-head" data-w="183">block 255, 256 threads</text>
+<rect x="168" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="264" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="360" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="168" y="192" width="288" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="216" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="312" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="408" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<g data-grid="skip">
+<text x="216" y="184" text-anchor="middle" class="t-tick" data-w="23">s[0]</text>
+<text x="312" y="184" text-anchor="middle" class="t-tick" data-w="38">s[128]</text>
+<text x="408" y="184" text-anchor="middle" class="t-tick" data-w="38">s[255]</text>
+</g>
+<rect x="584" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="680" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="776" y="192" width="96" height="40" class="cell f-green-soft"/>
+<rect x="584" y="192" width="288" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="632" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="728" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="824" y="218" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<g data-grid="skip">
+<text x="632" y="184" text-anchor="middle" class="t-tick" data-w="23">s[0]</text>
+<text x="728" y="184" text-anchor="middle" class="t-tick" data-w="38">s[128]</text>
+<text x="824" y="184" text-anchor="middle" class="t-tick" data-w="38">s[255]</text>
+</g>
+<text x="40" y="216" class="t-head" data-w="68">1. zero s</text>
+<rect x="168" y="256" width="288" height="8" class="f-purple"/>
+<rect x="584" y="256" width="288" height="8" class="f-purple"/>
+<text x="40" y="264" class="t-code" data-w="129">__syncthreads()</text>
+<rect x="168" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="264" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="360" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="168" y="288" width="288" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="216" y="314" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="312" y="314" text-anchor="middle" class="t-cell16" data-w="52">65,536</text>
+<text x="408" y="314" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<rect x="584" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="680" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="776" y="288" width="96" height="40" class="cell f-green-soft"/>
+<rect x="584" y="288" width="288" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="632" y="314" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="728" y="314" text-anchor="middle" class="t-cell16" data-w="52">65,536</text>
+<text x="824" y="314" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<text x="40" y="312" class="t-head" data-w="66">2. count</text>
+<text x="520" y="216" text-anchor="middle" class="t-head" data-w="15">...</text>
+<text x="520" y="312" text-anchor="middle" class="t-head" data-w="15">...</text>
+<text x="168" y="352" class="t-note" data-w="298">each block: 65,536 shared atomics on s[128]</text>
+<rect x="168" y="376" width="288" height="8" class="f-purple"/>
+<rect x="584" y="376" width="288" height="8" class="f-purple"/>
+<text x="40" y="384" class="t-code" data-w="129">__syncthreads()</text>
+<rect x="352" y="480" width="112" height="40" class="cell f-green-soft"/>
+<rect x="464" y="480" width="112" height="40" class="cell f-green-soft"/>
+<rect x="576" y="480" width="112" height="40" class="cell f-green-soft"/>
+<rect x="352" y="480" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="408" y="506" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="520" y="506" text-anchor="middle" class="t-cell16" data-w="85">16,777,216</text>
+<text x="632" y="506" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<g data-grid="skip">
+<text x="408" y="540" text-anchor="middle" class="t-tick" data-w="42">bins[0]</text>
+<text x="520" y="540" text-anchor="middle" class="t-tick" data-w="57">bins[128]</text>
+<text x="632" y="540" text-anchor="middle" class="t-tick" data-w="57">bins[255]</text>
+</g>
+<rect x="464" y="480" width="112" height="40" class="emph s-green" data-fit="skip"/>
+<text x="40" y="436" class="t-head" data-w="71">3. merge</text>
+<text x="40" y="504" class="t-head" data-w="90">global bins</text>
+<path d="M312,392 L493.29,478.71" class="s-purple w15 nofill" marker-end="url(#cuda-02-privatization-arrow-purple)"/>
+<path d="M728,392 L546.71,478.71" class="s-purple w15 nofill" marker-end="url(#cuda-02-privatization-arrow-purple)"/>
+<text x="520" y="584" text-anchor="middle" class="t-label" data-w="427">one atomic per bin per block, so bins[128] receives 256 merges:</text>
+<text x="520" y="604" text-anchor="middle" class="t-label" data-w="180">256 × 65,536 = 16,777,216</text>
+<rect x="40" y="628" width="16" height="16" class="f-green-soft s-green w1"/>
+<text x="72" y="640" class="t-label" data-w="217">histogram bins, shared or global</text>
+<rect x="320" y="628" width="16" height="16" class="f-purple s-purple w1"/>
+<text x="352" y="640" class="t-label" data-w="117">barrier, one block</text>
+<path d="M496,636 H520" class="s-purple w15 nofill"/>
+<text x="528" y="640" class="t-label" data-w="93">atomic merge</text>
+<text x="40" y="684" class="t-note" data-w="603">The long queue stays inside each block; global memory sees one merge per bin per block.</text>
 </svg>

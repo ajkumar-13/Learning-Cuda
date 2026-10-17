@@ -1,8 +1,27 @@
 id: cuda-005
 slug: 05-histogram
-title: "05 · Histogram — beating atomic contention with privatization"
+title: "05 - Histogram: beating atomic contention with privatization"
+summary: "Why a histogram's atomic increments are correct but serialize threads that hit one bin, and how a private histogram per block in shared memory, merged once per bin, makes the count 6.5 to 8.7 times faster."
 date: 2026-07-06
-tags: [parallel-patterns, cuda, atomics]
-hero: diagrams/01-contention.svg
-reading_time: 14
+updated: 2026-10-17
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 14
+tags: [cuda, histogram, atomics, privatization, shared-memory, parallel-patterns]
+hero: diagrams/01-contention.svg
+prerequisites: [cuda-004]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain the lost-update race of a plain increment, and why `atomicAdd` is correct but makes threads that hit one address take turns."
+  - id: o2
+    text: "Predict from the data distribution how many increments queue on the hottest address under global atomics and under privatization."
+  - id: o3
+    text: "Write a privatized histogram with a per-block shared array in three phases: zero, count, merge."
+  - id: o4
+    text: "Place the two `__syncthreads()` barriers of the privatized kernel and say what each one protects."
+  - id: o5
+    text: "Say when a private histogram no longer fits in shared memory, and name the two ways around it: multiple passes and warp aggregation."
+compute: gpu-small
+hardware: gtx-1650

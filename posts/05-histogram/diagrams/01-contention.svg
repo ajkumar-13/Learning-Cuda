@@ -1,60 +1,282 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">When many threads atomically increment the same histogram bin, the atomics serialize into a single-lane queue</title>
-  <desc id="d">Eight threads across the top all read the same value, 128, as happens for a flat white-wall image. Every one of them issues an atomicAdd to the same global bin, bins at 128, drawn in red, so eight red arrows converge on that one address. Because an atomic is a read-modify-write that cannot be interrupted, the increments happen one at a time, shown as a serialized queue. The other bins sit idle. The note explains that for 16 million identical elements that is 16,777,216 atomics serializing on one address, dropping throughput to about 0.8 gigabytes per second, slower than a CPU. Atomics fix the lost-update race but turn the parallel kernel into a single-lane checkout under contention.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
-    .th{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .bin{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .hot{fill:var(--cuda-surface);stroke:var(--cuda-alert);stroke-width:1.5;}
-    .contend{stroke:var(--cuda-alert);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Atomics fix the race, but contention serializes them</text>
-  <text class="small" x="40" y="66">On a flat image every pixel is the same value, so every thread targets the same bin.</text>
-
-  <defs>
-    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-alert)"/></marker>
-  </defs>
-
-  <text class="small" x="40" y="104">8 threads, all reading value 128</text>
-  <g>
-    <rect class="th" x="80"  y="116" width="80" height="40" rx="5"/><text class="mono" x="120" y="141" text-anchor="middle">t0</text>
-    <rect class="th" x="180" y="116" width="80" height="40" rx="5"/><text class="mono" x="220" y="141" text-anchor="middle">t1</text>
-    <rect class="th" x="280" y="116" width="80" height="40" rx="5"/><text class="mono" x="320" y="141" text-anchor="middle">t2</text>
-    <rect class="th" x="380" y="116" width="80" height="40" rx="5"/><text class="mono" x="420" y="141" text-anchor="middle">t3</text>
-    <rect class="th" x="480" y="116" width="80" height="40" rx="5"/><text class="mono" x="520" y="141" text-anchor="middle">t4</text>
-    <rect class="th" x="580" y="116" width="80" height="40" rx="5"/><text class="mono" x="620" y="141" text-anchor="middle">t5</text>
-    <rect class="th" x="680" y="116" width="80" height="40" rx="5"/><text class="mono" x="720" y="141" text-anchor="middle">t6</text>
-    <rect class="th" x="780" y="116" width="80" height="40" rx="5"/><text class="mono" x="820" y="141" text-anchor="middle">t7</text>
-  </g>
-
-  <!-- all converge on one bin -->
-  <g class="contend">
-    <path d="M120,158 L470,300" marker-end="url(#ab)"/>
-    <path d="M220,158 L478,300" marker-end="url(#ab)"/>
-    <path d="M320,158 L486,300" marker-end="url(#ab)"/>
-    <path d="M420,158 L490,300" marker-end="url(#ab)"/>
-    <path d="M520,158 L494,300" marker-end="url(#ab)"/>
-    <path d="M620,158 L498,300" marker-end="url(#ab)"/>
-    <path d="M720,158 L506,300" marker-end="url(#ab)"/>
-    <path d="M820,158 L514,300" marker-end="url(#ab)"/>
-  </g>
-  <text class="small" x="600" y="250" fill="var(--cuda-alert)">one address, one at a time</text>
-
-  <!-- bins -->
-  <text class="small" x="300" y="318">global bins[256]</text>
-  <g>
-    <rect class="bin" x="300" y="302" width="56" height="40"/><text class="small" x="328" y="327" text-anchor="middle">126</text>
-    <rect class="bin" x="356" y="302" width="56" height="40"/><text class="small" x="384" y="327" text-anchor="middle">127</text>
-    <rect class="hot" x="412" y="302" width="56" height="40"/><text class="mono" x="440" y="327" text-anchor="middle">128</text>
-    <rect class="bin" x="468" y="302" width="56" height="40"/><text class="small" x="496" y="327" text-anchor="middle">129</text>
-    <rect class="bin" x="524" y="302" width="56" height="40"/><text class="small" x="552" y="327" text-anchor="middle">130</text>
-  </g>
-  <text class="small" x="440" y="364" text-anchor="middle" fill="var(--cuda-alert)">the one hot bin</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-contention-title" aria-describedby="cuda-01-contention-desc">
+<title id="cuda-01-contention-title">Atomics on one bin take turns</title>
+<desc id="cuda-01-contention-desc">Left: eight threads, 0 to 7, each issue one atomicAdd on the same global bin, bins[128], over eight illustrative time slots. Thread k waits in red for k slots, adds in purple in slot k, and the bin's count steps from 1 to 8. Right: a table of the model's counts for 16,777,216 solid-color values: 16,777,216 atomics on the hottest global bin with global atomics; with privatization, 65,536 on one block's shared bin and 256 merges on the global bin.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-purple { fill: var(--cuda-purple); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-purple { stroke: var(--cuda-purple); }
+  .s-red { stroke: var(--cuda-red); }
+</style>
+<defs>
+<marker id="cuda-01-contention-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="368">Atomics on one bin take turns</text>
+<text x="40" y="76" class="t-subtitle" data-w="696">Left: one illustrative time slot per atomic. Right: counts derived by snippets/histogram_model.py.</text>
+<text x="40" y="120" class="t-head" data-w="358">8 threads, one atomicAdd each on bins[128]</text>
+<rect x="136" y="136" width="48" height="28" class="cell f-purple"/>
+<rect x="184" y="136" width="48" height="28" class="cell"/>
+<rect x="232" y="136" width="48" height="28" class="cell"/>
+<rect x="280" y="136" width="48" height="28" class="cell"/>
+<rect x="328" y="136" width="48" height="28" class="cell"/>
+<rect x="376" y="136" width="48" height="28" class="cell"/>
+<rect x="424" y="136" width="48" height="28" class="cell"/>
+<rect x="472" y="136" width="48" height="28" class="cell"/>
+<rect x="136" y="164" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="164" width="48" height="28" class="cell f-purple"/>
+<rect x="232" y="164" width="48" height="28" class="cell"/>
+<rect x="280" y="164" width="48" height="28" class="cell"/>
+<rect x="328" y="164" width="48" height="28" class="cell"/>
+<rect x="376" y="164" width="48" height="28" class="cell"/>
+<rect x="424" y="164" width="48" height="28" class="cell"/>
+<rect x="472" y="164" width="48" height="28" class="cell"/>
+<rect x="136" y="192" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="192" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="192" width="48" height="28" class="cell f-purple"/>
+<rect x="280" y="192" width="48" height="28" class="cell"/>
+<rect x="328" y="192" width="48" height="28" class="cell"/>
+<rect x="376" y="192" width="48" height="28" class="cell"/>
+<rect x="424" y="192" width="48" height="28" class="cell"/>
+<rect x="472" y="192" width="48" height="28" class="cell"/>
+<rect x="136" y="220" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="220" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="220" width="48" height="28" class="cell f-red-soft"/>
+<rect x="280" y="220" width="48" height="28" class="cell f-purple"/>
+<rect x="328" y="220" width="48" height="28" class="cell"/>
+<rect x="376" y="220" width="48" height="28" class="cell"/>
+<rect x="424" y="220" width="48" height="28" class="cell"/>
+<rect x="472" y="220" width="48" height="28" class="cell"/>
+<rect x="136" y="248" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="248" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="248" width="48" height="28" class="cell f-red-soft"/>
+<rect x="280" y="248" width="48" height="28" class="cell f-red-soft"/>
+<rect x="328" y="248" width="48" height="28" class="cell f-purple"/>
+<rect x="376" y="248" width="48" height="28" class="cell"/>
+<rect x="424" y="248" width="48" height="28" class="cell"/>
+<rect x="472" y="248" width="48" height="28" class="cell"/>
+<rect x="136" y="276" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="276" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="276" width="48" height="28" class="cell f-red-soft"/>
+<rect x="280" y="276" width="48" height="28" class="cell f-red-soft"/>
+<rect x="328" y="276" width="48" height="28" class="cell f-red-soft"/>
+<rect x="376" y="276" width="48" height="28" class="cell f-purple"/>
+<rect x="424" y="276" width="48" height="28" class="cell"/>
+<rect x="472" y="276" width="48" height="28" class="cell"/>
+<rect x="136" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="280" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="328" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="376" y="304" width="48" height="28" class="cell f-red-soft"/>
+<rect x="424" y="304" width="48" height="28" class="cell f-purple"/>
+<rect x="472" y="304" width="48" height="28" class="cell"/>
+<rect x="136" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="184" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="232" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="280" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="328" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="376" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="424" y="332" width="48" height="28" class="cell f-red-soft"/>
+<rect x="472" y="332" width="48" height="28" class="cell f-purple"/>
+<rect x="136" y="136" width="384" height="224" class="frame" data-fit="skip"/>
+<text x="40" y="156" class="t-label" data-w="56">thread 0</text>
+<text x="40" y="184" class="t-label" data-w="56">thread 1</text>
+<text x="40" y="212" class="t-label" data-w="56">thread 2</text>
+<text x="40" y="240" class="t-label" data-w="56">thread 3</text>
+<text x="40" y="268" class="t-label" data-w="56">thread 4</text>
+<text x="40" y="296" class="t-label" data-w="56">thread 5</text>
+<text x="40" y="324" class="t-label" data-w="56">thread 6</text>
+<text x="40" y="352" class="t-label" data-w="56">thread 7</text>
+<rect x="136" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="184" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="232" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="280" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="328" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="376" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="424" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="472" y="368" width="48" height="28" class="cell f-green-soft"/>
+<rect x="136" y="368" width="384" height="28" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="160" y="388" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="208" y="388" text-anchor="middle" class="t-cell16" data-w="10">2</text>
+<text x="256" y="388" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="304" y="388" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="352" y="388" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="400" y="388" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="448" y="388" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="496" y="388" text-anchor="middle" class="t-cell16" data-w="10">8</text>
+</g>
+<text x="40" y="388" class="t-code" data-w="77">bins[128]</text>
+<g data-grid="skip">
+<text x="160" y="416" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="208" y="416" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="256" y="416" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="304" y="416" text-anchor="middle" class="t-tick" data-w="8">4</text>
+<text x="352" y="416" text-anchor="middle" class="t-tick" data-w="8">5</text>
+<text x="400" y="416" text-anchor="middle" class="t-tick" data-w="8">6</text>
+<text x="448" y="416" text-anchor="middle" class="t-tick" data-w="8">7</text>
+<text x="496" y="416" text-anchor="middle" class="t-tick" data-w="8">8</text>
+</g>
+<text x="40" y="416" class="t-tick" data-w="54">time slot</text>
+<rect x="136" y="432" width="16" height="16" class="f-purple s-purple w1"/>
+<text x="168" y="444" class="t-label" data-w="75">atomic add</text>
+<rect x="272" y="432" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="304" y="444" class="t-label" data-w="86">waits its turn</text>
+<rect x="424" y="432" width="16" height="16" class="f-green-soft s-green w1"/>
+<text x="456" y="444" class="t-label" data-w="127">count after the slot</text>
+<text x="584" y="120" class="t-head" data-w="237">16,777,216 solid-color values</text>
+<rect x="584" y="168" width="336" height="32" class="f-red-soft" data-fit="skip"/>
+<rect x="584" y="136" width="104" height="32" class="nofill"/>
+<rect x="688" y="136" width="152" height="32" class="nofill"/>
+<rect x="840" y="136" width="80" height="32" class="nofill"/>
+<rect x="584" y="168" width="104" height="32" class="nofill"/>
+<rect x="688" y="168" width="152" height="32" class="nofill"/>
+<rect x="840" y="168" width="80" height="32" class="nofill"/>
+<rect x="584" y="200" width="104" height="32" class="nofill"/>
+<rect x="688" y="200" width="152" height="32" class="nofill"/>
+<rect x="840" y="200" width="80" height="32" class="nofill"/>
+<rect x="584" y="232" width="104" height="32" class="nofill"/>
+<rect x="688" y="232" width="152" height="32" class="nofill"/>
+<rect x="840" y="232" width="80" height="32" class="nofill"/>
+<path d="M584,136H920M584,264H920" class="axis"/>
+<path d="M584,168H920" class="rule1"/>
+<text x="592" y="156" class="t-head" data-w="50">kernel</text>
+<text x="696" y="156" class="t-head" data-w="129">hottest address</text>
+<text x="912" y="156" text-anchor="end" class="t-head" data-w="65">atomics</text>
+<text x="592" y="188" class="t-label" data-w="69">histGlobal</text>
+<text x="696" y="188" class="t-label" data-w="62">bins[128]</text>
+<text x="912" y="188" text-anchor="end" class="t-label" data-w="74">16,777,216</text>
+<text x="592" y="220" class="t-label" data-w="73">histShared</text>
+<text x="696" y="220" class="t-label" data-w="111">s[128], per block</text>
+<text x="912" y="220" text-anchor="end" class="t-label" data-w="45">65,536</text>
+<text x="592" y="252" class="t-label" data-w="73">histShared</text>
+<text x="696" y="252" class="t-label" data-w="120">bins[128], merges</text>
+<text x="912" y="252" text-anchor="end" class="t-label" data-w="25">256</text>
+<text x="584" y="292" class="t-note" data-w="280">The global queue is one turn per element;</text>
+<text x="584" y="312" class="t-note" data-w="320">privatized, 256 shorter queues and 256 merges.</text>
+<text x="40" y="504" class="t-note" data-w="547">Every increment counts, but on one address the threads are served one at a time.</text>
 </svg>

@@ -1,0 +1,814 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-005",
+  "next_ordinal": 19,
+  "questions": [
+    {
+      "id": "cuda-005-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "race",
+        "lost-update"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Two threads run `bins[v]++` on the same bin, whose count is 5. The final count is sometimes 6 instead of 7. What happened?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Both threads read 5 before either wrote, so both wrote 6 and one increment was lost.",
+          "correct": true,
+          "feedback": "Yes. The increment is a read, an add and a write; when the two threads interleave them, both read the old count and the second write overwrites the first."
+        },
+        {
+          "key": "b",
+          "text": "The two threads belong to one warp, so the hardware merged their two increments into one.",
+          "correct": false,
+          "feedback": "Lanes of a warp do not merge plain stores into a sum; the loss comes from two read-modify-writes overlapping, which happens between warps too."
+        },
+        {
+          "key": "c",
+          "text": "One thread's increment is still in its registers and will reach memory when the kernel ends.",
+          "correct": false,
+          "feedback": "Every write reaches memory before the kernel finishes; a later flush does not restore a lost increment."
+        },
+        {
+          "key": "d",
+          "text": "The count wrapped around because a 32-bit bin cannot hold the sum of two increments.",
+          "correct": false,
+          "feedback": "Overflow needs more than 2,147,483,647 counts in a signed bin; adding 2 to 5 is nowhere near it."
+        }
+      ],
+      "explanation": "Section 1: `bins[v]++` is three steps, read, add 1, write back. When two threads both read 5 before either writes, both compute 6 and write 6, so one increment is lost, which is the model's 'both read, then both write' line.",
+      "hints": [
+        "Write `bins[v]++` out as the separate steps the hardware performs."
+      ]
+    },
+    {
+      "id": "cuda-005-q02",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "atomics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Which CUDA function makes the read, add and write of a histogram increment one indivisible step, so that no update is lost?",
+      "answer": {
+        "model": "`atomicAdd`, for example `atomicAdd(&bins[v], 1)`.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|instead of|rather than|without)\\s+(an?\\s+|the\\s+)?`?atomic_?add\\b)(?![\\s\\S]*\\bor\\s+`?(atomicsub|atomiccas|atomicexch|__syncthreads|syncthreads)\\b)(?![\\s\\S]*\\band\\s+`?(atomicsub|atomiccas|atomicexch|__syncthreads|syncthreads)\\b)(?![\\s\\S]*(?<!\\bnot )(?<!\\bnot the )(?<!\\bthan )(?<!\\bthan the )(?<!\\bof )(?<!\\bof the )(?<!\\binto )(?<!\\binto the )(?<!\\bto )(?<!\\bto the )(?<!\\bfrom )(?<!\\bfrom the )(?<!\\bno )(?<!\\bno the )(?<![\\w`])`?(__syncthreads|syncthreads|atomiccas|atomicexch|atomicsub)\\b(?![^.;\\n]*\\b(would not|will not|does not|doesn't|won't|wouldn't|cannot|can't)\\b))[\\s\\S]*\\b`?atomic_?add\\b"
+        ]
+      },
+      "explanation": "Section 1: `atomicAdd(&bins[v], 1)` performs the read-modify-write indivisibly, so concurrent increments to one bin are all counted. It is correct but serializes the threads that hit one address.",
+      "hints": [
+        "It is the atomic counterpart of `+=`."
+      ]
+    },
+    {
+      "id": "cuda-005-q03",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "atomics",
+        "contention"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A histogram kernel uses `atomicAdd` and its counts are exactly right, yet it is slow when most values land in one bin. Why?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Atomics on one address cannot overlap, so the threads that hit that bin are served one after another.",
+          "correct": true,
+          "feedback": "Yes. Indivisibility means the updates to one address are applied one at a time, so a hot bin turns parallel threads into a queue."
+        },
+        {
+          "key": "b",
+          "text": "An `atomicAdd` must retry until no other thread has touched the bin, and most of its retries fail under load.",
+          "correct": false,
+          "feedback": "That describes a loop built on `atomicCAS`. `atomicAdd` does not fail and retry; it is applied in turn."
+        },
+        {
+          "key": "c",
+          "text": "Each `atomicAdd` waits at a barrier for all the other threads of the block before it is applied.",
+          "correct": false,
+          "feedback": "An atomic is not a barrier; it orders only the updates to its own address, not the threads of a block."
+        },
+        {
+          "key": "d",
+          "text": "The atomics bypass the caches and write to off-chip memory, which every other kind of store avoids.",
+          "correct": false,
+          "feedback": "The post makes no such claim and the cost does not come from bypassing caches; the slowdown is the queue on one address."
+        }
+      ],
+      "explanation": "Section 1: two atomics on one address cannot overlap, so threads that hit it take turns, as the hero figure draws for eight threads. Correctness and speed are separate questions.",
+      "hints": [
+        "What does 'indivisible' force two updates of the same address to do?"
+      ]
+    },
+    {
+      "id": "cuda-005-q04",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "contention",
+        "data-distribution"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A `histGlobal` launch counts $N = 1{,}048{,}576$ 8-bit values into 256 bins. (a) If the values are uniformly random, about how many increments does each global bin receive? (b) If the image is a solid color, how many increments does the hottest global bin receive?",
+      "answer": {
+        "parts": [
+          {
+            "label": "increments per bin, random data",
+            "value": 4096,
+            "tolerance": 0,
+            "unit": "increments"
+          },
+          {
+            "label": "increments on the hottest bin, solid color",
+            "value": 1048576,
+            "tolerance": 0,
+            "unit": "increments"
+          }
+        ]
+      },
+      "precision_note": "Random: N / 256 = 1,048,576 / 256 = 4,096 per bin on average (the post's 65,536 for 16,777,216 values, scaled). Solid: every value is the same, so all N = 1,048,576 increments hit one bin. Dividing by the 256 blocks of the post's launch instead of by the bins is the wrong method.",
+      "explanation": "Section 2: with uniform values each of the 256 bins gets about $N / 256$ increments; with a solid color every increment lands on one bin, so the queue on that address is all $N$ long.",
+      "hints": [
+        "For random data, share the increments equally among the bins.",
+        "For a solid color, ask how many distinct values there are."
+      ]
+    },
+    {
+      "id": "cuda-005-q05",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 5,
+      "tags": [
+        "privatization",
+        "merge"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`histShared` (256 bins) is launched with 128 blocks of 256 threads and a grid-stride loop over $N = 8{,}388{,}608$ solid-color values. Give (a) the increments on the hottest shared bin of one block, (b) the merge atomics that reach the hottest global bin, and (c) the global merge atomics of the whole launch.",
+      "answer": {
+        "parts": [
+          {
+            "label": "hottest shared bin, one block",
+            "value": 65536,
+            "tolerance": 0,
+            "unit": "increments"
+          },
+          {
+            "label": "merges on the hottest global bin",
+            "value": 128,
+            "tolerance": 0,
+            "unit": "atomics"
+          },
+          {
+            "label": "merge atomics in all",
+            "value": 32768,
+            "tolerance": 0,
+            "unit": "atomics"
+          }
+        ]
+      },
+      "precision_note": "128 x 256 = 32,768 threads; each block handles 8,388,608 / 128 = 65,536 elements, all value 128, so its s[128] gets 65,536. Each block merges every bin once: 128 merges on any global bin, 128 x 256 = 32,768 in all. The model's privatized() with GRID = 128 prints the same. Counting only nonzero bins (128 merges in all) misreads the kernel, which merges all 256 bins.",
+      "explanation": "Section 3: a block's private histogram receives only its own elements, $N / 128 = 65{,}536$ here, and phase 3 issues one global atomic per bin per block whatever the data, so the hottest global bin sees one merge per block, 128, and the launch issues $128 \\times 256 = 32{,}768$ merges.",
+      "hints": [
+        "Split the N elements equally over the blocks.",
+        "Phase 3 loops over all 256 bins in every block, zero or not."
+      ]
+    },
+    {
+      "id": "cuda-005-q06",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "measurement",
+        "contention"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "On the author's GTX 1650, `histGlobal` took 4.967 ms on random data and 10.193 ms on a solid color, and `histShared` 0.573 ms and 1.557 ms. Which reading of these measurements is right?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Global atomics were slow on both inputs, and the solid color made them only about twice as slow.",
+          "correct": true,
+          "feedback": "Yes. 10.193 / 4.967 = 2.1; both rows run at 4% to 8% of the 160 GB/s peak, so spreading the atomics over 256 neighboring bins made them only about twice as fast as on one address."
+        },
+        {
+          "key": "b",
+          "text": "Global atomics collapsed on the solid color, running about 50 times slower than on random data.",
+          "correct": false,
+          "feedback": "That was the old table's claim; on this card the solid color costs `histGlobal` 2.1 times the random-data time, not 50."
+        },
+        {
+          "key": "c",
+          "text": "Privatization helped only on the solid color; on random data the two kernels ran at about the same speed.",
+          "correct": false,
+          "feedback": "On random data the private kernel was 4.967 / 0.573 = 8.7 times faster, the larger of the two gains."
+        },
+        {
+          "key": "d",
+          "text": "The private kernel ran the same on both inputs, because shared-memory atomics never contend.",
+          "correct": false,
+          "feedback": "It took 2.7 times as long on the solid color, because each block's threads queue on s[128]."
+        }
+      ],
+      "explanation": "Section 4: the measured table shows global atomics slow on both inputs (13.5 and 6.6 GB/s) and privatization 8.7 and 6.5 times faster; the solid color costs `histGlobal` 2.1 times its random-data time and `histShared` 2.7 times.",
+      "hints": [
+        "Read the table row by row: compare each kernel with itself across the two inputs.",
+        "Divide the solid-color time by the random-data time for each kernel, then compare the kernels."
+      ]
+    },
+    {
+      "id": "cuda-005-q07",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "On another card `histogram.cu` reports a `histShared` time of 1.250 ms and a `histGlobal` time of 12.500 ms on random data. (a) What GB/s does the program print in the `histShared` row? (b) How many times faster is `histShared` on that card?",
+      "stimulus": {
+        "kind": "code",
+        "language": "cuda",
+        "content": "const int N = 16 * 1024 * 1024;\nconst size_t bytes = (size_t)N * sizeof(int);\nprintf(\"%-7s %-11s %10.3f %7.1f   %s\\n\", dataName[d], kernelName[k], ms,\n       bytes / (ms * 1e6), ok ? \"yes\" : \"NO\");",
+        "caption": "The lines of snippets/histogram.cu that compute and print a row (the declaration of N shortened)."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "printed bandwidth",
+            "value": 53.7,
+            "tolerance": 0.05,
+            "unit": "GB/s"
+          },
+          {
+            "label": "speedup",
+            "value": 10,
+            "tolerance": 0.05,
+            "unit": "times"
+          }
+        ]
+      },
+      "precision_note": "bytes = 4 x 16,777,216 = 67,108,864; 67,108,864 / (1.250 x 1e6) = 53.687, printed with %7.1f as 53.7. Speedup 12.500 / 1.250 = 10.0. Using 1,024-based gigabytes (GiB) would give 50.0, the wrong unit for this program.",
+      "explanation": "Section 4: bandwidth is the $4 \\times 16{,}777{,}216$ bytes of input divided by the time; the program divides bytes by milliseconds times $10^6$, which is GB/s with $10^9$ bytes per GB. The speedup is the ratio of the two times.",
+      "hints": [
+        "Count the bytes of input: 4 bytes per value.",
+        "bytes / (ms x 1e6) is bytes per nanosecond, which equals GB/s."
+      ]
+    },
+    {
+      "id": "cuda-005-q08",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 8,
+      "tags": [
+        "privatization",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`privatized_histogram` models `histShared` on the CPU: each block counts its elements of a grid-stride loop into a private histogram, then merges every bin into the global histogram. On a solid-color input with two or more blocks its totals come out too large. Fix it so that the merged histogram equals a plain count and `merges` is one per bin per block.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def privatized_histogram(values, n_blocks, block_size, bins):\n    \"\"\"histShared on the CPU: return (hist, merges), the merged histogram and the number of global merge atomics.\n    Element i belongs to thread i % (n_blocks * block_size), as in a grid-stride loop.\"\"\"\n    stride = n_blocks * block_size\n    hist = [0] * bins\n    merges = 0\n    private = [0] * bins\n    for b in range(n_blocks):\n        for i, v in enumerate(values):\n            if (i % stride) // block_size == b:\n                private[v] += 1                    # count in the block's private histogram\n        for k in range(bins):\n            hist[k] += private[k]                  # merge: one global atomic per bin per block\n            merges += 1\n    return hist, merges\n",
+      "solution": "def privatized_histogram(values, n_blocks, block_size, bins):\n    \"\"\"histShared on the CPU: return (hist, merges), the merged histogram and the number of global merge atomics.\n    Element i belongs to thread i % (n_blocks * block_size), as in a grid-stride loop.\"\"\"\n    stride = n_blocks * block_size\n    hist = [0] * bins\n    merges = 0\n    for b in range(n_blocks):\n        private = [0] * bins                       # phase 1: every block starts from zero\n        for i, v in enumerate(values):\n            if (i % stride) // block_size == b:\n                private[v] += 1                    # count in the block's private histogram\n        for k in range(bins):\n            hist[k] += private[k]                  # merge: one global atomic per bin per block\n            merges += 1\n    return hist, merges\n",
+      "tests": "from collections import Counter\ndef ref(values, bins):\n    c = Counter(values)\n    return [c.get(k, 0) for k in range(bins)]\n# solid color: every value the same, two blocks\nvals = [3] * 64\nassert privatized_histogram(vals, 2, 8, 4) == ([0, 0, 0, 64], 8)\n# mixed values, four blocks of four threads\nvals = [i % 5 for i in range(100)]\nh, m = privatized_histogram(vals, 4, 4, 5)\nassert h == ref(vals, 5) and m == 20\n# a single block needs no reset, more blocks do\nvals = [0, 1, 1, 2, 2, 2] * 10\nassert privatized_histogram(vals, 1, 4, 3) == (ref(vals, 3), 3)\nassert privatized_histogram(vals, 3, 2, 3) == (ref(vals, 3), 9)\n# the merge counts every bin of every block, zero or not\nassert privatized_histogram([1] * 10, 5, 1, 8)[1] == 40\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Section 3, phase 1: each block's private histogram must start at zero. The starter creates one list before the block loop, so block 1 merges block 0's counts again, and block $b$ adds every earlier block's counts once more. Zeroing `private` at the start of each block, as `histShared` zeroes `s` before its first barrier, fixes it; section 7's first mistake is the GPU version of this bug.",
+      "hints": [
+        "Compare the total for one block with the total for two blocks.",
+        "Where does each block's private histogram get its zeros?"
+      ]
+    },
+    {
+      "id": "cuda-005-q09",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3",
+        "o4"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "privatization",
+        "barriers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Put the steps of one block of the privatized histogram kernel in the order the kernel executes them.",
+      "items": [
+        {
+          "key": "a",
+          "text": "the block's threads set every bin of the shared array `s` to zero"
+        },
+        {
+          "key": "b",
+          "text": "the first `__syncthreads()`"
+        },
+        {
+          "key": "c",
+          "text": "each thread runs `atomicAdd(&s[in[i]], 1)` over its elements of the grid-stride loop"
+        },
+        {
+          "key": "d",
+          "text": "the second `__syncthreads()`"
+        },
+        {
+          "key": "e",
+          "text": "each thread runs `atomicAdd(&bins[b], s[b])` for its bins"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "explanation": "Section 3: zero, barrier, count, barrier, merge. The first barrier makes every bin zero before anyone counts; the second makes every count finish before anyone merges.",
+      "hints": [
+        "Each barrier separates two phases that touch the same shared bins."
+      ]
+    },
+    {
+      "id": "cuda-005-q10",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "barriers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In the privatized kernel, what does the `__syncthreads()` between the counting loop and the merge loop protect?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "No bin is merged into global memory before every thread of the block has finished counting.",
+          "correct": true,
+          "feedback": "Yes. Without it a thread can merge `s[b]` while others still increment it, and their late increments never reach the result."
+        },
+        {
+          "key": "b",
+          "text": "No block starts merging until every block of the grid has finished counting.",
+          "correct": false,
+          "feedback": "`__syncthreads()` holds one block only; an ordinary launch has no barrier across blocks inside the kernel, and the merge does not need one."
+        },
+        {
+          "key": "c",
+          "text": "No thread starts counting into the shared array until every one of its bins has been set back to zero.",
+          "correct": false,
+          "feedback": "That is the first barrier's job, between phase 1 and phase 2."
+        },
+        {
+          "key": "d",
+          "text": "The global bins are zeroed before the block merges into them.",
+          "correct": false,
+          "feedback": "The kernel never zeroes the global bins; the host does that with `cudaMemset` before the launch."
+        }
+      ],
+      "explanation": "Section 3: the second barrier makes every thread of the block finish counting before any bin is merged; it holds one block, which is enough because no block reads another's shared memory and the merge is made safe by its atomics.",
+      "hints": [
+        "Which two phases does the second barrier sit between?"
+      ]
+    },
+    {
+      "id": "cuda-005-q11",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "privatization",
+        "memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In the privatized histogram, in which kind of memory does each block keep its private copy of the bins?",
+      "answer": {
+        "model": "Shared memory: each block has its own `__shared__ int s[256]`.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|instead of|rather than|isn't|is not)\\s+(in\\s+|on\\s+)?(the\\s+)?(block's\\s+)?shared\\b)(?![\\s\\S]*\\bor\\s+(in\\s+)?(the\\s+)?shared\\b)(?![\\s\\S]*\\bshared\\s+(memory\\s+)?(and|or)\\s+(in\\s+)?(the\\s+)?(global|registers?|local|constant|l1|l2|texture|host)\\b)(?![\\s\\S]*(?<!\\bnot )(?<!\\bnot the )(?<!\\bthan )(?<!\\bthan the )(?<!\\bof )(?<!\\bof the )(?<!\\binto )(?<!\\binto the )(?<!\\bto )(?<!\\bto the )(?<!\\bfrom )(?<!\\bfrom the )(?<!\\bno )(?<!\\bno the )\\b(global|registers?|local memory|constant|l1|l2|texture|host)\\b)[\\s\\S]*(?<![a-z])shared(?![a-z])"
+        ]
+      },
+      "explanation": "Section 3: `histShared` declares `__shared__ int s[BINS]`, a private histogram per block in shared memory (1 KB of the 48 KB a block may use on the GTX 1650), and merges it into the global bins once at the end.",
+      "hints": [
+        "It is the on-chip memory that all threads of one block can read and write."
+      ]
+    },
+    {
+      "id": "cuda-005-q12",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "barriers",
+        "testing"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A reader deletes the first `__syncthreads()` of the privatized kernel, runs it three times on the GTX 1650, and gets the right total every time. What follows?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The race remains; three passing runs do not show it cannot happen, so the barrier stays.",
+          "correct": true,
+          "feedback": "Yes. Section 7 reproduced exactly this: three correct runs, yet a thread may still count into a bin before it is zeroed."
+        },
+        {
+          "key": "b",
+          "text": "The barrier is unnecessary, since the zeroing loop finishes before any atomic is issued.",
+          "correct": false,
+          "feedback": "Nothing orders one thread's zeroing against another thread's count without the barrier; a passing test does not prove the order."
+        },
+        {
+          "key": "c",
+          "text": "The barrier is unnecessary because shared-memory atomics always wait for pending stores to the same block.",
+          "correct": false,
+          "feedback": "Atomics order only the updates to their own address; they do not wait for another thread's plain store to be issued."
+        },
+        {
+          "key": "d",
+          "text": "The second barrier also covers phase 1, so one barrier is always enough.",
+          "correct": false,
+          "feedback": "The second barrier sits after counting; by then a missing clear may already have wiped an increment."
+        }
+      ],
+      "explanation": "Sections 3 and 7: without the first barrier a fast thread can increment `s[128]` before the thread that clears it runs, and the clear erases the increment. Three passing runs on one card do not prove the barrier unnecessary.",
+      "hints": [
+        "Can a test ever prove that two threads never interleave in a bad order?",
+        "Which thread clears s[128], and which threads increment it?"
+      ]
+    },
+    {
+      "id": "cuda-005-q13",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "shared-memory",
+        "bins"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A block may use 48 KB of shared memory on the GTX 1650. (a) What is the largest number of 4-byte `int` bins a private histogram can hold in 48 KB? (b) A histogram of 65,536 bins is computed in passes of 4,096 bins each; how many passes read the input?",
+      "answer": {
+        "parts": [
+          {
+            "label": "largest bin count",
+            "value": 12288,
+            "tolerance": 0,
+            "unit": "bins"
+          },
+          {
+            "label": "passes",
+            "value": 16,
+            "tolerance": 0,
+            "unit": "passes"
+          }
+        ]
+      },
+      "precision_note": "48 KB = 49,152 bytes, / 4 bytes per bin = 12,288 bins. 65,536 / 4,096 = 16 passes. Using 48,000 bytes gives 12,000, the wrong kilobyte for the device query's KB.",
+      "explanation": "Section 5: the model prints 1 KB for 256 bins and 16 KB for 4,096, so 48 KB holds $49{,}152 / 4 = 12{,}288$ bins. With 4,096 bins per pass, 65,536 bins need 16 passes, each reading the whole input again.",
+      "hints": [
+        "Convert 48 KB to bytes with 1,024 bytes per KB.",
+        "Each pass covers one range of 4,096 bins."
+      ]
+    },
+    {
+      "id": "cuda-005-q14",
+      "type": "match",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3",
+        "o4"
+      ],
+      "section": "7",
+      "est_minutes": 4,
+      "tags": [
+        "debugging",
+        "symptoms"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Match each mistake in a histogram kernel to the symptom it produced on the author's GTX 1650 (16,777,216 values).",
+      "left": [
+        {
+          "key": "1",
+          "text": "the shared array is never zeroed"
+        },
+        {
+          "key": "2",
+          "text": "the second `__syncthreads()` is deleted"
+        },
+        {
+          "key": "3",
+          "text": "the global bins are not cleared between two launches"
+        },
+        {
+          "key": "4",
+          "text": "128 solid-color launches accumulate into a signed `int` bin"
+        },
+        {
+          "key": "5",
+          "text": "a plain `bins[v]++` replaces `atomicAdd`"
+        }
+      ],
+      "right": [
+        {
+          "key": "a",
+          "text": "a total far above the input size, such as 48,413,184"
+        },
+        {
+          "key": "b",
+          "text": "a total a little short, tens of thousands low, different on every run"
+        },
+        {
+          "key": "c",
+          "text": "a total of exactly 33,554,432, twice the input"
+        },
+        {
+          "key": "d",
+          "text": "a negative count, -2,147,483,648"
+        },
+        {
+          "key": "e",
+          "text": "most increments lost, a total near 620,000"
+        },
+        {
+          "key": "f",
+          "text": "a launch error before the kernel runs"
+        }
+      ],
+      "answer": {
+        "1": "a",
+        "2": "b",
+        "3": "c",
+        "4": "d",
+        "5": "e"
+      },
+      "explanation": "Section 7 and section 1: leftover shared values inflate the total; merging before counting finishes drops late increments; uncleared global bins add the previous run's counts; 128 x 16,777,216 = 2,147,483,648 wraps a signed bin to its most negative value; a plain increment loses most updates. None of the mistakes produces a launch error.",
+      "hints": [
+        "Which mistakes add counts, and which ones lose them?",
+        "Only one mistake can make a count negative."
+      ]
+    },
+    {
+      "id": "cuda-005-q15",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o1",
+        "o4"
+      ],
+      "section": "3",
+      "est_minutes": 12,
+      "tags": [
+        "reduction",
+        "synchronization"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "connects": [
+        "cuda-004",
+        "cuda-009"
+      ],
+      "prompt": "Post 04's reduction ends with one `atomicAdd` per block into a single total, and this post's privatized histogram ends with one `atomicAdd` per bin per block. Compare the two: what contention each final step has, why a block barrier (`__syncthreads()`) is enough inside each kernel, and why neither needs a barrier across blocks.",
+      "kind": "compare",
+      "solution": "Both kernels do most of their work inside a block and touch global memory once per block per result. The reduction folds a block's values in shared memory and registers into one partial sum, then one thread adds it to the single global total: one atomic per block, all on one address, so the final step is a queue of `gridDim.x` atomics, short because the grid is small. The histogram counts a block's values into a private shared array and then merges each of its 256 bins with one atomic: 256 atomics per block, and each global bin receives one per block, so every global address sees a queue of `gridDim.x` merges whatever the data.\n\nInside each kernel a block barrier is enough because the data that threads hand to each other is block-local. In the histogram the first barrier makes every shared bin zero before counting, the second makes every count finish before the merge; in the reduction a barrier separates each tree step. No block ever reads another block's shared memory.\n\nNeither needs a barrier across blocks because the cross-block step is an atomic, which makes each read-modify-write indivisible regardless of the order in which blocks arrive. The result is complete when the kernel ends, and in an ordinary launch the end of a kernel is the only grid-wide barrier, as post 09 explains.",
+      "rubric": [
+        {
+          "criterion": "Identifies one atomic per block on one address (reduction) against one atomic per bin per block (histogram), each address seeing gridDim.x updates",
+          "points": 3
+        },
+        {
+          "criterion": "Explains why __syncthreads() suffices: the shared data handed between threads is block-local (zero then count, count then merge)",
+          "points": 3
+        },
+        {
+          "criterion": "Explains why no grid barrier is needed: atomics make the cross-block updates order-independent, and the kernel's end is the global barrier",
+          "points": 3
+        },
+        {
+          "criterion": "Uses the post's numbers or names correctly (256 merges per bin, s, histShared)",
+          "points": 1
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 3 and 7 and post 04: both patterns keep contention inside the block and send one atomic per block per result to global memory; block barriers order the block-local hand-overs, and atomics make the cross-block merge independent of block order, so no grid barrier is needed.",
+      "hints": [
+        "Count the global atomics each final step issues, and on how many addresses.",
+        "Ask which data one thread hands to another, and whether it ever crosses a block."
+      ]
+    },
+    {
+      "id": "cuda-005-q16",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o2",
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 12,
+      "tags": [
+        "design",
+        "skew"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A camera feed produces 8-bit pixel values in which about 90% of the pixels are 0 (a dark scene) and the rest are spread over 1 to 255. Using the post's counts and measurements, predict how the queue on the hottest address behaves under `histGlobal` and under `histShared`, say which kernel to start from, and describe how warp aggregation could shorten the remaining queue. State what should be measured to confirm it.",
+      "kind": "design",
+      "solution": "Under `histGlobal` the hottest global bin, bin 0, receives about 90% of all N increments, close to the solid-color worst case of the post, while the other bins share the rest; every element still takes a global atomic. Under `histShared` the hottest address is each block's `s[0]`, receiving about 90% of that block's elements (about 59,000 of 65,536 for the post's launch of 256 blocks over 16,777,216 values), and the global bin 0 receives one merge per block, 256, whatever the skew. Start from the privatized kernel: on the GTX 1650 it was 6.5 to 8.7 times faster than global atomics on both a random and a solid input, and this input sits between them.\n\nThe remaining queue is inside each block, on `s[0]`, which cost the private kernel 2.7 times its random-data time on the solid color. Warp aggregation shortens it: within a warp, `__match_any_sync` (compute capability 7.0 and later) returns the mask of lanes holding the same value; one leader per group adds the group's count, so a warp whose 32 lanes all hold 0 issues one shared atomic instead of 32.\n\nMeasure both kernels, and the aggregated variant, on the real skewed input and on the random and solid extremes with the harness's method (warm-up, averaged timed runs, a check against a host count), on the target card.",
+      "rubric": [
+        {
+          "criterion": "Predicts the hottest-address counts: about 0.9 N on global bin 0 for histGlobal; about 0.9 of a block's elements on s[0] and 256 merges for histShared",
+          "points": 3
+        },
+        {
+          "criterion": "Chooses the privatized kernel and justifies it with the measured table",
+          "points": 2
+        },
+        {
+          "criterion": "Explains warp aggregation with __match_any_sync and a leader per group, and why it shortens the queue on s[0]",
+          "points": 3
+        },
+        {
+          "criterion": "Proposes a measurement on the real skewed input and the extremes, checked against a host count",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 2 to 5: the hottest-address count follows the data distribution, privatization caps the global queue at one merge per block, and the remaining in-block queue on the hot shared bin is what warp aggregation attacks; only a measurement on the target input settles the speed.",
+      "hints": [
+        "Scale the solid-color counts of section 2 by the 90% share.",
+        "Where does the longest queue sit after privatization, and what can a warp do about it before it reaches that address?"
+      ]
+    },
+    {
+      "id": "cuda-005-q17",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "warp-aggregation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "One warp of the privatized kernel is about to increment shared bins. Its 32 lanes hold these values: 16 lanes hold 7, 8 lanes hold 3, and 8 lanes hold 200. (a) How many shared atomics does the warp issue without aggregation? (b) How many with warp aggregation by `__match_any_sync`, one leader per group of equal values?",
+      "answer": {
+        "parts": [
+          {
+            "label": "without aggregation",
+            "value": 32,
+            "tolerance": 0,
+            "unit": "atomics"
+          },
+          {
+            "label": "with aggregation",
+            "value": 3,
+            "tolerance": 0,
+            "unit": "atomics"
+          }
+        ]
+      },
+      "precision_note": "Without aggregation every lane issues its own atomic: 32. With aggregation each distinct value forms one group and its leader issues one atomic adding the group's size (16, 8 and 8): 3 atomics. Counting groups of lanes per bin as one atomic per lane pair (16) is the wrong method.",
+      "explanation": "Section 5: warp aggregation finds the lanes that hold the same value (the mask `__match_any_sync` returns) and lets one leader add the group's count, so the number of atomics equals the number of distinct values in the warp, here 3, instead of 32.",
+      "hints": [
+        "Without aggregation, each lane is on its own.",
+        "With aggregation, count the distinct values among the 32 lanes."
+      ]
+    },
+    {
+      "id": "cuda-005-q18",
+      "type": "numeric",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "7",
+      "est_minutes": 4,
+      "tags": [
+        "overflow",
+        "atomics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`histShared` counts 16,777,216 solid-color values per launch, and a program forgets to clear the global bins, so the launches accumulate. (a) After how many launches does a signed 32-bit `int` bin first overflow? (b) After how many would an `unsigned int` bin first overflow?",
+      "answer": {
+        "parts": [
+          {
+            "label": "signed int, launches",
+            "value": 128,
+            "tolerance": 0,
+            "unit": "launches"
+          },
+          {
+            "label": "unsigned int, launches",
+            "value": 256,
+            "tolerance": 0,
+            "unit": "launches"
+          }
+        ]
+      },
+      "precision_note": "16,777,216 = 2^24. Signed max 2^31 - 1 = 2,147,483,647; 127 launches give 2,130,706,432 (fits), 128 give 2^31 = 2,147,483,648 (overflows, read as -2,147,483,648, as section 7 measured). Unsigned max 2^32 - 1; 255 launches fit, 256 give 2^32 and wrap to 0. Dividing the maximum by 2^24 and rounding down (127, 255) gives the last safe launch, one short.",
+      "explanation": "Section 7: a signed bin holds at most $2^{31} - 1$; the 128th launch brings the count to $2^{31}$, which wraps to $-2^{31}$. An unsigned bin holds $2^{32} - 1$, so the 256th launch wraps it. The fix beyond that is `unsigned long long int` bins with the 64-bit `atomicAdd`.",
+      "hints": [
+        "Write 16,777,216 as a power of two.",
+        "Find the first multiple of it that exceeds the bin's largest value."
+      ]
+    }
+  ]
+}
