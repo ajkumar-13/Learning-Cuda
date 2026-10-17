@@ -1,0 +1,12 @@
+[project]
+name = "learning-cuda-posts"
+version = "0.1.0"
+description = "Root environment for the posts' CPU models of the Learning CUDA series (uv run python posts/NN-slug/snippets/<name>.py from this directory)."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pyyaml>=6",
+]
+
+[tool.uv]
+package = false

@@ -2,18 +2,18 @@
   <title id="t">Convolution time for a multi-threaded CPU and four GPU implementations on a Full HD image</title>
   <desc id="d">A bar chart of time in milliseconds, shorter is faster, for a 3 by 3 blur of a 1920 by 1080 image on an RTX 3080. The 8-thread CPU takes 3.2 milliseconds. The naive global-memory GPU kernel takes 2.1. Moving the filter to constant memory drops it to 1.4. Adding shared-memory tiling with a halo drops it to 0.9, drawn green as the kernel we built. The cuDNN library reaches 0.3, drawn blue. Each optimization removes one source of redundant memory traffic: constant memory for the filter, shared memory for the pixels.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .axis{stroke:var(--ts-ink);stroke-width:1;}
-    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
-    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
-    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .p{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .axis{stroke:var(--cuda-ink);stroke-width:1;}
+    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
+    .n{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .p{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Constant then shared memory: 0.9 ms, near a tuned library (1920x1080, RTX 3080)</text>
@@ -41,11 +41,11 @@
   <text class="label" x="550" y="462" text-anchor="middle">+ constant</text>
 
   <rect class="g" x="640" y="358" width="100" height="82"/>
-  <text class="val" x="690" y="350" text-anchor="middle" fill="var(--ts-success)">0.9</text>
+  <text class="val" x="690" y="350" text-anchor="middle" fill="var(--cuda-success)">0.9</text>
   <text class="label" x="690" y="462" text-anchor="middle">+ shared (halo)</text>
 
   <rect class="p" x="780" y="413" width="100" height="27"/>
-  <text class="val" x="830" y="405" text-anchor="middle" fill="var(--ts-primary)">0.3</text>
+  <text class="val" x="830" y="405" text-anchor="middle" fill="var(--cuda-primary)">0.3</text>
   <text class="label" x="830" y="462" text-anchor="middle">cuDNN</text>
 
   <text class="small" x="40" y="510">Constant memory removes the redundant filter reads; shared-memory tiling removes the redundant pixel reads. Together they reach 17x the single-threaded CPU.</text>

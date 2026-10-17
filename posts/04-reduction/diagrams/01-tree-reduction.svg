@@ -2,26 +2,26 @@
   <title id="t">Tree-based parallel reduction sums eight values in three halving steps instead of seven sequential adds</title>
   <desc id="d">A binary reduction tree. Step 0 has eight values 1 through 8. Step 1 sums adjacent pairs into four values 3, 7, 11, 15. Step 2 sums those into two values 10 and 26. Step 3 sums those into one value, 36, the total, highlighted in green along with the two arrows that feed it. The point is that the number of parallel steps is log base 2 of N, here 3 for 8 values, rather than N minus 1 sequential adds; for 16 million values that is about 24 steps instead of 16 million. The work is still order N, but the depth is order log N.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
-    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--ts-success);}
-    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .cellhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .flow{stroke:var(--ts-ink-muted);stroke-width:1;fill:none;}
-    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--cuda-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--cuda-success);}
+    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .cellhi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .flow{stroke:var(--cuda-ink-muted);stroke-width:1;fill:none;}
+    .flowhi{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Tree reduction: log N steps, not N</text>
   <text class="small" x="40" y="66">Sum pairs in parallel and fold the array in half each step, instead of adding one at a time.</text>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
   </defs>
 
   <text class="small" x="40" y="135">step 0</text>

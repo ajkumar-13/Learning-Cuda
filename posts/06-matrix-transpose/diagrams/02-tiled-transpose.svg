@@ -2,24 +2,24 @@
   <title id="t">Shared-memory tiling lets a transpose read rows and write rows, both coalesced, by turning the tile inside shared memory</title>
   <desc id="d">A left-to-right flow. On the left, global input A: a tile is read row by row, which is coalesced. The middle shows the tile staged in shared memory, drawn green; because shared memory is random access, it can be read in any order. On the right, global output B equals A transposed: it is written row by row, also coalesced, but each output row is read as a column of the shared tile. The kernel loads with tile at threadIdx.y, threadIdx.x and stores by reading tile at threadIdx.x, threadIdx.y, the swapped indices that transpose the tile. The takeaway is that both global accesses are coalesced, and the strided part is confined to fast shared memory.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
-    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .rowhi{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .shcell{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1;}
-    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
+    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .rowhi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .shcell{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1;}
+    .flow{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Shared memory turns the tile, so both global accesses stay coalesced</text>
   <text class="small" x="40" y="66">Load a tile by rows (coalesced), then store it by rows (coalesced) while reading columns from shared memory.</text>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
   </defs>
 
   <!-- Global A -->
@@ -58,7 +58,7 @@
   </g>
   <text class="small" x="810" y="288" text-anchor="middle">write rows: coalesced</text>
 
-  <rect x="160" y="340" width="640" height="48" rx="8" fill="var(--ts-surface)" stroke="var(--ts-border)" stroke-width="1"/>
+  <rect x="160" y="340" width="640" height="48" rx="8" fill="var(--cuda-surface)" stroke="var(--cuda-border)" stroke-width="1"/>
   <text class="mono" x="480" y="362" text-anchor="middle">load:  tile[threadIdx.y][threadIdx.x] = in[...]</text>
   <text class="mono" x="480" y="380" text-anchor="middle">store: out[...] = tile[threadIdx.x][threadIdx.y]   // swapped = transposed</text>
 </svg>

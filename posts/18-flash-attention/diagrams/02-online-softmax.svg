@@ -2,23 +2,23 @@
   <title id="t">Online softmax computes a softmax block by block by keeping a running max and a running sum, rescaling the old sum when the max grows</title>
   <desc id="d">Processing a row of scores one block at a time. Block 1, values x1 to x4, gives a running max m1 equal to their max and a running sum l1 equal to the sum of exp of each value minus m1, drawn green. Block 2, values x5 to x8, has a local max; the new running max m2 is the max of m1 and the local max. Because the old sum was computed with the smaller m1, it is rescaled by exp of m1 minus m2 before adding the new block's contribution, giving l2. After all blocks, the softmax of each value is exp of the value minus the final max, divided by the final sum. The point is that the running max and sum are O(1) state per row, so the full row of scores never has to be held in memory.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
-    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .stat{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
+    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .stat{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .flow{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="40">Online softmax: a running max and sum, no full row in memory</text>
   <text class="small" x="40" y="62">Standard softmax needs every value before any output. Online softmax folds in one block at a time.</text>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
   </defs>
 
   <!-- Block 1 -->
@@ -46,7 +46,7 @@
   <rect class="stat" x="304" y="240" width="430" height="84" rx="8"/>
   <text class="mono" x="318" y="264">m2 = max(m1, max(x5..x8))</text>
   <text class="mono" x="318" y="286">l2 = l1 * exp(m1 - m2)  +  sum exp(xi - m2)</text>
-  <text class="small" x="318" y="308" fill="var(--ts-success)">rescale the old sum to the new max, then add this block</text>
+  <text class="small" x="318" y="308" fill="var(--cuda-success)">rescale the old sum to the new max, then add this block</text>
 
   <!-- running stats arrow from block1 to block2 -->
   <path class="flow" d="M439,172 L439,238" marker-end="url(#a)"/>

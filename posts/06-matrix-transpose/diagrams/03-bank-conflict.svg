@@ -2,16 +2,16 @@
   <title id="t">Reading a column of an unpadded shared tile makes every lane hit one bank; padding the tile spreads the column across all banks</title>
   <desc id="d">Two panels about shared-memory bank conflicts when 32 lanes read one column of the tile. Shared memory has 32 banks, and a 4-byte word at address A is in bank A mod 32. On the left, an unpadded tile sized 32 by 32: column element in row r is at address r times 32, which is bank 0 for every row, so all lanes hit bank 0, a 32-way conflict drawn red, and the hardware serializes the access. On the right, the tile is padded to 32 by 33: the column element in row r is at address r times 33, which is bank r mod 32, so the lanes hit banks 0, 1, 2 and so on, all different, drawn green and conflict-free. The cost is one extra column, about 3 percent more shared memory, for up to a 32 times speedup on the column read.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-ink);}
-    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
-    .bad{fill:var(--ts-surface);stroke:var(--ts-alert);stroke-width:1.5;}
-    .good{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
+    .panel{fill:none;stroke:var(--cuda-border);stroke-width:1;}
+    .bad{fill:var(--cuda-surface);stroke:var(--cuda-alert);stroke-width:1.5;}
+    .good{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Padding the tile turns a 32-way bank conflict into none</text>
@@ -28,7 +28,7 @@
     <rect class="bad" x="80" y="264" width="300" height="30"/><text class="mono" x="92" y="284">row 3  ->  addr 96    ->  bank 0</text>
     <rect class="bad" x="80" y="300" width="300" height="30"/><text class="mono" x="92" y="320">...    ->  ...        ->  bank 0</text>
   </g>
-  <text class="small" x="60" y="368" fill="var(--ts-alert)">all 32 lanes hit bank 0: a 32-way conflict</text>
+  <text class="small" x="60" y="368" fill="var(--cuda-alert)">all 32 lanes hit bank 0: a 32-way conflict</text>
   <text class="small" x="60" y="392">The hardware serializes them: 32x slower reads.</text>
 
   <!-- RIGHT: padded -->
@@ -42,6 +42,6 @@
     <rect class="good" x="540" y="264" width="300" height="30"/><text class="mono" x="552" y="284">row 3  ->  addr 99    ->  bank 3</text>
     <rect class="good" x="540" y="300" width="300" height="30"/><text class="mono" x="552" y="320">...    ->  ...        ->  bank r</text>
   </g>
-  <text class="small" x="520" y="368" fill="var(--ts-success)">32 lanes hit 32 different banks: conflict-free</text>
+  <text class="small" x="520" y="368" fill="var(--cuda-success)">32 lanes hit 32 different banks: conflict-free</text>
   <text class="small" x="520" y="392">The column read is now fully parallel.</text>
 </svg>

@@ -6,7 +6,7 @@ standard: "2.2.0"
 key: cuda
 code: cuda
 title: 'Learning CUDA: From First Kernel to FlashAttention'
-status: complete
+status: in-progress
 author: Ajay
 library: null
 slug_patterns:

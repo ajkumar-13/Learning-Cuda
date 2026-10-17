@@ -5,7 +5,7 @@ series posts each ship a focused snippet, this folder holds standalone example k
 CMake build, and a set of practice challenges to solve.
 
 > **Setup.** For installing a GPU toolchain on any OS, see the series'
-> [SETUP.md](../SETUP.md) and [TROUBLESHOOTING.md](../TROUBLESHOOTING.md). The
+> [RUNNING.md](../RUNNING.md) and its [build failures](../RUNNING.md#when-a-build-fails). The
 > Windows-with-Visual-Studio specifics (the `-ccbin` dance, CMake generators) live here in
 > [WINDOWS-SETUP.md](WINDOWS-SETUP.md) and [WINDOWS-TROUBLESHOOTING.md](WINDOWS-TROUBLESHOOTING.md).
 
@@ -38,7 +38,7 @@ cmake -S . -B build && cmake --build build --config Release
 ```
 
 Or compile any single file directly with `nvcc` (match `-arch` to your GPU; see the
-[arch table](../SETUP.md#step-3--pick-your--arch-flag)):
+[arch table](../RUNNING.md#pick-the--arch-flag)):
 
 ```bash
 nvcc -O2 src/vec_add.cu -o vec_add && ./vec_add

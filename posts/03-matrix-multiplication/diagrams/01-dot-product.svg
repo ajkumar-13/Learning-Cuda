@@ -2,17 +2,17 @@
   <title id="t">Each element of the output matrix is the dot product of a row of A and a column of B</title>
   <desc id="d">Three matrices laid out in the standard multiply arrangement: A on the left sized M by K, B above sized K by N, and C at the lower right sized M by N. To compute one element of C, here C at row 1 column 2 highlighted in green, you take the green highlighted row 1 of A and the green highlighted column 2 of B and sum their elementwise products over k. Dashed green guides run from A's highlighted row rightward and from B's highlighted column downward; they meet exactly at the highlighted cell of C. The formula reads C at i,j equals the sum over k of A at i,k times B at k,j. One GPU thread computes one element of C.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--ts-ink);}
-    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-success);}
-    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .hot{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .guide{stroke:var(--ts-success);stroke-width:1;fill:none;stroke-dasharray:4 3;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--cuda-ink);}
+    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--cuda-success);}
+    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .hot{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .guide{stroke:var(--cuda-success);stroke-width:1;fill:none;stroke-dasharray:4 3;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">One output element is a row of A dotted with a column of B</text>

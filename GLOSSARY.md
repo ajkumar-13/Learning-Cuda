@@ -1,53 +1,153 @@
 # Glossary
 
-The terms used across the series, defined once. Each links to the post that introduces it.
+The terms used across Learning CUDA, one entry each, grouped by topic and alphabetical within a group. Each entry names the post that introduces the term. The fixed names and symbols (the operand names, the global-index formula, `TILE`, `s_A` and `s_B`, $I$ and $\beta$, the three kinds of number, the three cards) are set out in the [notation guide](notation_guide.md). Terms the series shares with the `compute` and `transformer` series are defined here as this series uses them, from the side of the kernel.
+
+---
 
 ## Execution model
 
-- **Thread** — one instance of a kernel, running over one element. The smallest unit of execution. ([01](posts/01-introduction-to-cuda/index.md))
-- **Block (thread block)** — a group of up to 1024 threads that run on one SM, share fast on-chip memory, and can synchronize with `__syncthreads()`. ([01](posts/01-introduction-to-cuda/index.md))
-- **Grid** — all the blocks launched by one kernel call; blocks run independently and in any order. ([01](posts/01-introduction-to-cuda/index.md))
-- **Kernel** — a `__global__` function that runs on the GPU, written from the point of view of one thread, launched with `kernel<<<grid, block>>>(...)`. ([01](posts/01-introduction-to-cuda/index.md))
-- **Global index** — a thread's flat position, `blockIdx.x * blockDim.x + threadIdx.x` (and its 2D form). ([01](posts/01-introduction-to-cuda/index.md), [02](posts/02-vector-addition/index.md))
-- **Streaming multiprocessor (SM)** — the hardware unit that runs blocks; a GPU has many. ([01](posts/01-introduction-to-cuda/index.md))
-- **Warp** — a group of 32 threads that execute the same instruction in lockstep (SIMT). ([01](posts/01-introduction-to-cuda/index.md))
-- **Warp divergence** — when threads in a warp take different branches, so the hardware runs both paths in series. ([01](posts/01-introduction-to-cuda/index.md))
-- **Occupancy** — the ratio of active warps to the maximum an SM supports; higher occupancy hides memory latency better. ([11](posts/14-kernel-fusion/index.md))
+**Block (thread block).** A group of up to 1024 threads that runs on one streaming multiprocessor, shares that SM's on-chip shared memory, and can synchronize with `__syncthreads()`. Its size is `blockDim.x` (and `.y`, `.z`), chosen as a multiple of 32. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Compute capability.** The version number of a GPU's architecture and feature set, written `major.minor` (7.5 for the GTX 1650, 8.6 for the RTX 3080, 8.0 for the A100). It decides which instructions a kernel may use and the `-arch=sm_XX` flag it is built with. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Global index.** A thread's position in the whole launch, always written `blockIdx.x * blockDim.x + threadIdx.x` and named `i` in 1D; the 2D form computes `row` and `col` the same way from the `.y` and `.x` components. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 02](posts/02-vector-addition/index.md).
+
+**Grid.** All the blocks launched by one kernel call; its size is `gridDim.x` (and `.y`, `.z`). Blocks run independently and in any order, which is why there is no barrier across the grid inside a running kernel. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Kernel.** A `__global__` function that runs on the GPU, written from the point of view of one thread and launched over a grid with `kernel<<<blocksPerGrid, blockSize>>>(args)`. On the GPU the grid is the loop. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Latency hiding.** Keeping enough warps resident that, while some wait hundreds of cycles for global memory, the scheduler issues instructions from others; it is the GPU's answer to memory latency, where a CPU answers with large caches. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 10](posts/10-roofline/index.md).
+
+**nvcc, PTX, cubin.** `nvcc` is the CUDA compiler driver: it splits a `.cu` file into host code (passed to the host C++ compiler) and device code, which it compiles to PTX, a virtual instruction set, and then to a cubin, the machine code for one architecture. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Occupancy.** The ratio of warps resident on a streaming multiprocessor to the most it can hold. Theoretical occupancy is capped by whichever runs out first of the block size, the registers per thread and the shared memory per block; higher occupancy gives the scheduler more warps to hide latency with, up to a point. Derived by counting in [post 10](posts/10-roofline/index.md) and measured with Nsight Compute in [post 11](posts/11-profiling-debugging/index.md).
+
+**SIMT (single instruction, multiple threads).** The GPU's execution style: the threads of a warp run one instruction stream together, each on its own data and registers. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Streaming multiprocessor (SM).** The hardware unit that runs blocks: it holds the warp schedulers, the arithmetic units, the register file and the shared memory. A GPU has many (14 on the GTX 1650). See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Thread.** One instance of a kernel, the smallest unit of execution; it finds its data through `threadIdx` and `blockIdx`. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Warp.** A group of 32 threads of one block that the hardware schedules together and that execute the same instruction in lockstep. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Warp divergence.** The cost of a branch that splits a warp: the hardware runs each taken path in turn with the other lanes idle, so a two-way split roughly halves throughput for that code. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 04](posts/04-reduction/index.md).
 
 ## Memory
 
-- **Host / device** — the CPU (and system RAM) versus the GPU (and its global memory); separate address spaces. ([01](posts/01-introduction-to-cuda/index.md), [02](posts/02-vector-addition/index.md))
-- **Global memory (HBM/DRAM)** — large, off-chip, slow GPU memory; the only tier visible to every thread. ([01](posts/01-introduction-to-cuda/index.md))
-- **Shared memory (SRAM)** — small, fast, per-block on-chip scratchpad you manage by hand. ([01](posts/01-introduction-to-cuda/index.md), [03](posts/03-matrix-multiplication/index.md))
-- **Registers** — the fastest, per-thread storage. ([01](posts/01-introduction-to-cuda/index.md))
-- **Constant memory** — a 64 KB read-only space whose cache broadcasts one value to a whole warp. ([07](posts/07-convolution/index.md))
-- **Coalescing** — when the 32 threads of a warp read consecutive addresses, served as one 128-byte transaction; strided access costs up to 32. ([06](posts/06-matrix-transpose/index.md))
-- **Bank conflict** — when multiple lanes hit the same shared-memory bank and serialize; fixed by padding. ([06](posts/06-matrix-transpose/index.md))
-- **Pinned (page-locked) memory** — host memory the GPU can DMA directly, required for truly async transfers. ([10](posts/12-cuda-streams/index.md))
-- **Arithmetic intensity** — FLOPs per byte moved; decides whether a kernel is memory-bound or compute-bound. ([02](posts/02-vector-addition/index.md), [11](posts/14-kernel-fusion/index.md))
+**Bank conflict.** Shared memory is divided into 32 banks, and when two or more lanes of a warp touch different addresses in the same bank, the accesses serialize. The usual fix is padding a tile by one column (`[TILE][TILE + 1]`). See [post 06](posts/06-matrix-transpose/index.md).
+
+**Coalescing.** When the 32 threads of a warp read or write consecutive addresses, the hardware serves the warp with as few 128-byte transactions as the data needs; a strided access pattern makes each lane cost its own transaction, up to 32 times the traffic. See [post 02](posts/02-vector-addition/index.md) and [post 06](posts/06-matrix-transpose/index.md).
+
+**Constant memory.** A 64 KB read-only space with its own cache, which broadcasts one value to every lane of a warp that reads the same address in the same instruction; used for filter weights. See [post 07](posts/07-convolution/index.md).
+
+**Global memory.** The card's main memory, off-chip DRAM (GDDR on consumer cards, HBM on datacenter ones): large, slow (hundreds of cycles), and the only tier every thread and the host can reach. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Host and device.** The CPU with its system memory, and the GPU with its global memory: separate address spaces, joined by copies across PCIe (`cudaMemcpy`). Device copies of an array are named `d_A`, `d_B`. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 02](posts/02-vector-addition/index.md).
+
+**L2 cache.** The hardware-managed cache over global memory, shared by the whole GPU. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Memory wall.** The gap between how fast a processor can compute and how fast memory can feed it; a kernel that does little arithmetic per byte runs at the speed of memory, not of the cores. See [post 02](posts/02-vector-addition/index.md).
+
+**Pinned (page-locked) memory.** Host memory the operating system will not page out, so the GPU can copy it directly; required for a `cudaMemcpyAsync` that overlaps with compute. See [post 12](posts/12-cuda-streams/index.md).
+
+**Registers.** The fastest storage, private to one thread. The register file of an SM is shared among its resident threads, so registers per thread is one of the limits on occupancy. See [post 01](posts/01-introduction-to-cuda/index.md).
+
+**Shared memory.** A small, fast, on-chip scratchpad shared by the threads of one block and managed by hand (`__shared__`); the tier that tiling, reductions and transposes are built on. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 03](posts/03-matrix-multiplication/index.md).
+
+**Tile, `TILE`, `s_A` and `s_B`.** A tile is a `TILE x TILE` block of a matrix that a thread block loads into shared memory once and reuses many times; `TILE` is its width, and `s_A` and `s_B` are the shared-memory copies of the tiles of `A` and `B`. See [post 03](posts/03-matrix-multiplication/index.md).
 
 ## Patterns and operations
 
-- **Map / reduce / scan** — the three pillars: element-wise (N→N independent), aggregate (N→1), running total (N→N dependent). ([02](posts/02-vector-addition/index.md), [04](posts/04-reduction/index.md), [08](posts/08-parallel-scan/index.md))
-- **Tiling** — loading a block of data into shared memory once and reusing it many times. ([03](posts/03-matrix-multiplication/index.md))
-- **Warp shuffle (`__shfl_*_sync`)** — instructions that let lanes read each other's registers directly, no shared memory. ([04](posts/04-reduction/index.md))
-- **Atomic operation** — an indivisible read-modify-write (`atomicAdd`); correct under contention but serializing. ([04](posts/04-reduction/index.md), [05](posts/05-histogram/index.md))
-- **Privatization** — giving each block a private copy (e.g. a shared histogram) and merging once, to cut contention. ([05](posts/05-histogram/index.md))
-- **Halo (apron)** — the border of input a tile needs beyond its output, equal to the filter radius. ([07](posts/07-convolution/index.md))
-- **Online softmax** — computing a softmax block by block with a running max and sum, rescaled as the max grows. ([14](posts/18-flash-attention/index.md))
-- **Stream compaction** — removing elements in parallel using an exclusive scan of a keep/drop predicate as output positions. ([08](posts/08-parallel-scan/index.md))
+**Atomic operation.** An indivisible read-modify-write such as `atomicAdd`: no update is lost under contention, but contended atomics on one address serialize, and atomicity says nothing about the order in which other threads see other writes. See [post 04](posts/04-reduction/index.md), [post 05](posts/05-histogram/index.md) and [post 09](posts/09-synchronization/index.md).
 
-## Systems and hardware
+**Blelloch scan.** A work-efficient scan in two passes over a tree, an up-sweep that builds partial sums and a down-sweep that distributes them, doing $O(N)$ additions in $O(\log N)$ steps. See [post 08](posts/08-parallel-scan/index.md).
 
-- **Profiler (Nsight Systems / Nsight Compute)** — `nsys` shows the system timeline (copy/compute overlap); `ncu` shows per-kernel counters: achieved bandwidth, occupancy, and stall reasons. ([09](posts/11-profiling-debugging/index.md))
-- **Compute Sanitizer** — the CUDA correctness suite: `memcheck` (out-of-bounds), `racecheck` (shared-memory races), and `synccheck`. ([09](posts/11-profiling-debugging/index.md))
-- **Stream** — an ordered queue of GPU operations; operations in different streams can overlap on separate engines. ([10](posts/12-cuda-streams/index.md))
-- **Kernel fusion** — combining several operations into one kernel so intermediates stay in registers, not memory. ([11](posts/14-kernel-fusion/index.md))
-- **Asynchronous copy (`cp.async`)** — an Ampere (`sm_80`+) instruction that copies global to shared memory in the background, bypassing the register file. ([12](posts/15-async-copy-pipelining/index.md))
-- **Double buffering** — keeping two shared-memory tiles so compute on one overlaps the `cp.async` load of the next. ([12](posts/15-async-copy-pipelining/index.md))
-- **Software pipelining** — a multi-stage schedule (prologue, steady state, epilogue) that overlaps the load of tile `k+1` with the compute on tile `k`. ([12](posts/15-async-copy-pipelining/index.md))
-- **Tensor Core** — hardware that computes a whole 16×16×16 matrix multiply-accumulate per warp instruction. ([13](posts/17-tensor-cores/index.md))
-- **Mixed precision** — multiplying in FP16 (fast) but accumulating in FP32 (accurate). ([13](posts/17-tensor-cores/index.md))
-- **WMMA** — the Warp Matrix Multiply-Accumulate API: fragments, `load_matrix_sync`, `mma_sync`, `store_matrix_sync`. ([13](posts/17-tensor-cores/index.md))
-- **CUTLASS** — NVIDIA's C++ template library exposing the device→threadblock→warp→MMA tiling hierarchy. ([15](posts/19-cutlass-triton/index.md))
-- **Triton** — a Python DSL for writing GPU kernels at the block level, with autotuning and JIT compilation. ([15](posts/19-cutlass-triton/index.md))
+**Halo (apron).** The border of input a tile needs beyond its own output elements, as wide as the filter radius; loaded into shared memory beside the tile. See [post 07](posts/07-convolution/index.md).
+
+**Hillis-Steele scan.** The simple parallel scan: at each step, with a doubling stride, every element adds the element that many positions back, which takes $\log N$ steps but $O(N \log N)$ additions; the right choice inside a warp. See [post 08](posts/08-parallel-scan/index.md).
+
+**Map, reduce, scan.** The three basic shapes of data-parallel work: a map is elementwise (each output depends on one input), a reduction combines $N$ inputs into one value, and a scan produces every running total. See [post 02](posts/02-vector-addition/index.md), [post 04](posts/04-reduction/index.md) and [post 08](posts/08-parallel-scan/index.md).
+
+**Online softmax.** Computing a softmax block by block with a running maximum and a running sum, rescaling the partial result whenever the maximum grows, so the whole row never has to be held at once; the update that makes FlashAttention memory-linear. See [post 18](posts/18-flash-attention/index.md).
+
+**Privatization.** Giving each block (or warp) its own private copy of a shared result, such as a histogram in shared memory, and merging the copies once at the end, to cut atomic contention on global memory. See [post 05](posts/05-histogram/index.md).
+
+**Race condition.** Two or more threads accessing one location without ordering, at least one of them writing, so the result depends on timing; a plain `counter += 1` from many threads loses most of its updates. See [post 09](posts/09-synchronization/index.md).
+
+**Stream compaction.** Removing elements in parallel: an exclusive scan of a keep-or-drop flag gives each kept element its output position. See [post 08](posts/08-parallel-scan/index.md).
+
+**Tiling.** Loading a block of data into shared memory (or registers) once and reusing it many times, to cut global-memory traffic; the step that moves matrix multiplication from memory bound toward compute bound. See [post 03](posts/03-matrix-multiplication/index.md).
+
+**Warp shuffle (`__shfl_*_sync`).** Instructions that let the lanes of a warp read each other's registers directly, with no shared memory and no block barrier. See [post 04](posts/04-reduction/index.md).
+
+## Synchronization
+
+**Barrier (`__syncthreads`).** A point every thread of a block must reach before any continues; it orders the block's shared-memory writes before the reads that follow. Placed inside a branch that not every thread takes, it deadlocks the block. See [post 03](posts/03-matrix-multiplication/index.md) and [post 09](posts/09-synchronization/index.md).
+
+**Memory fence (`__threadfence`).** An instruction that orders a thread's memory writes as seen by other threads within a scope; unlike a barrier, it does not wait for any other thread. See [post 09](posts/09-synchronization/index.md).
+
+**Thread scope.** The set of threads whose view of memory a fence or an atomic orders: block, device or system, nested like rings, the wider costing more. See [post 09](posts/09-synchronization/index.md).
+
+**Warp synchronization (`__syncwarp`).** A barrier over the lanes of one warp named by a 32-bit mask; needed because, since compute capability 7.0, the lanes of a warp are not guaranteed to run in lockstep. See [post 09](posts/09-synchronization/index.md).
+
+## Performance
+
+**Arithmetic intensity ($I$).** The floating-point operations a kernel performs per byte it moves to and from DRAM, in FLOP per byte. Vector addition does about $1/12 \approx 0.083$; a kernel whose $I$ is below the card's ratio of peak FLOP/s to $\beta$ is memory bound. Met in [post 02](posts/02-vector-addition/index.md), defined in [post 10](posts/10-roofline/index.md).
+
+**Memory bound and compute bound.** A kernel is memory bound when it waits on bytes (its arithmetic intensity is low, and only better access patterns speed it up) and compute bound when it waits on arithmetic. See [post 02](posts/02-vector-addition/index.md) and [post 10](posts/10-roofline/index.md).
+
+**Peak bandwidth ($\beta$).** The card's theoretical DRAM bandwidth in GB/s (160 GB/s for the author's GTX 1650 with Max-Q Design, as its device query reports); achieved bandwidth is reported as a fraction of it. See [post 02](posts/02-vector-addition/index.md) and [post 10](posts/10-roofline/index.md).
+
+**Register pressure.** Too many registers per thread: fewer threads fit on an SM, so occupancy falls, and past the hardware limit the compiler spills registers to slow local memory; the limit on how much fusion pays. See [post 14](posts/14-kernel-fusion/index.md).
+
+**Roofline.** The ceiling on a kernel's performance as a function of its arithmetic intensity: attainable GFLOP/s is the smaller of the compute peak and $I \cdot \beta$. Plotted log-log, the bandwidth roof slopes and the compute roof is flat, and they meet at the ridge point. See [post 10](posts/10-roofline/index.md).
+
+## Systems and tools
+
+**Asynchronous copy (`cp.async`).** An instruction of compute capability 8.0 and above (`sm_80`) that copies from global to shared memory in the background without passing through registers, so a block can compute on one tile while the next loads. See [post 15](posts/15-async-copy-pipelining/index.md).
+
+**Compute Sanitizer.** The CUDA toolkit's correctness tool, `compute-sanitizer`, with the tools memcheck (out-of-bounds and misaligned accesses), racecheck (shared-memory races) and synccheck (illegal barrier use). See [post 11](posts/11-profiling-debugging/index.md).
+
+**CUDA Graph.** A recorded sequence of kernels and copies with their dependencies, captured once from a stream and replayed with one launch, which removes most of the per-launch CPU overhead. See [post 13](posts/13-cuda-graphs/index.md).
+
+**Double buffering.** Keeping two shared-memory buffers per operand (`s_A[2][TILE][TILE]`) so the block computes on one while the `cp.async` load of the next fills the other. See [post 15](posts/15-async-copy-pipelining/index.md).
+
+**Kernel fusion.** Combining several operations into one kernel so the intermediate results stay in registers instead of making a round trip through global memory. See [post 14](posts/14-kernel-fusion/index.md).
+
+**Nsight Systems and Nsight Compute.** NVIDIA's two profilers: Nsight Systems (`nsys`) shows the whole timeline of copies, kernels and API calls; Nsight Compute (`ncu`) shows one kernel's counters, such as achieved bandwidth, achieved occupancy and stall reasons. See [post 11](posts/11-profiling-debugging/index.md).
+
+**Software pipelining.** A multi-stage schedule (a prologue, a steady state and an epilogue) that overlaps the load of tile `k + 1` with the compute on tile `k`. See [post 15](posts/15-async-copy-pipelining/index.md).
+
+**Stream.** An ordered queue of GPU work; work in different streams may overlap, a copy on a copy engine beside a kernel on the SMs. See [post 12](posts/12-cuda-streams/index.md).
+
+**Stream-ordered allocation.** Allocating and freeing device memory as stream operations (`cudaMallocAsync`, `cudaFreeAsync`) from a memory pool, so allocation no longer synchronizes the device. See [post 13](posts/13-cuda-graphs/index.md).
+
+## Numerics and Tensor Cores
+
+**BF16, FP16, FP32, TF32.** Floating-point formats by their bits of sign, exponent and mantissa: FP32 is 1, 8 and 23; FP16 is 1, 5 and 10, with a maximum of 65,504; BF16 is 1, 8 and 7, FP32's range with less precision; TF32 is a Tensor Core compute mode with FP32's 8-bit exponent and a 10-bit mantissa. See [post 16](posts/16-numerical-precision/index.md).
+
+**Kahan (compensated) summation.** Summation that carries a second variable holding the low-order bits each addition discards and feeds them back, recovering a nearly exact sum for a few extra operations per element. See [post 16](posts/16-numerical-precision/index.md).
+
+**Mixed precision.** Multiplying in a narrow format (FP16 or BF16) for speed and accumulating in FP32 for accuracy. See [post 16](posts/16-numerical-precision/index.md) and [post 17](posts/17-tensor-cores/index.md).
+
+**Non-associativity.** Floating-point addition is not associative, so a parallel reduction that adds in a different order from a serial loop gives a slightly different answer; the tolerance, not bit equality, is the test. See [post 16](posts/16-numerical-precision/index.md).
+
+**Stable softmax.** Subtracting the row maximum before exponentiating, which leaves the softmax unchanged and keeps every exponent at or below zero, so nothing overflows. See [post 16](posts/16-numerical-precision/index.md).
+
+**Tensor Core.** A hardware unit, from compute capability 7.0, that computes a small matrix multiply-accumulate `D = A * B + C` as one warp-wide operation; through WMMA the tile is `16 x 16 x 16`, 4096 fused multiply-adds. See [post 17](posts/17-tensor-cores/index.md).
+
+**WMMA (warp matrix multiply-accumulate).** The CUDA C++ API to Tensor Cores: a warp loads tiles into opaque fragments (`load_matrix_sync`), multiplies them (`mma_sync`) and stores the result (`store_matrix_sync`). See [post 17](posts/17-tensor-cores/index.md).
+
+## Libraries and tools above CUDA
+
+**cuBLAS, cuDNN, CUB.** NVIDIA's libraries for dense linear algebra, deep-learning primitives, and block- and device-wide parallel primitives (reduce, scan, sort); the baselines the kernel posts compare against. See [post 03](posts/03-matrix-multiplication/index.md) and [post 19](posts/19-cutlass-triton/index.md).
+
+**CUTLASS.** NVIDIA's C++ template library for matrix multiplication, which exposes the tiling hierarchy (device, thread block, warp, Tensor Core instruction) as composable templates. See [post 19](posts/19-cutlass-triton/index.md).
+
+**Triton.** A Python language and compiler for GPU kernels written at the level of blocks rather than threads, with autotuning and just-in-time compilation; it runs on Linux. See [post 19](posts/19-cutlass-triton/index.md).
+
+## How numbers are labeled
+
+**The three kinds of number.** Every number in a post is derived by the post's CPU model, measured on a named card, or a representative published figure, and the post says which in the sentence that uses it or after its table. See the [notation guide](notation_guide.md).
+
+**The three cards.** The GPUs the series measured on: the GeForce GTX 1650 (Turing, compute capability 7.5), the GeForce RTX 3080 (Ampere, 8.6) and the A100 (Ampere, 8.0). A measured number always names its card. See the [notation guide](notation_guide.md).

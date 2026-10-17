@@ -2,24 +2,24 @@
   <title id="t">The Blelloch scan builds partial sums in an up-sweep, then distributes them in a down-sweep to produce an exclusive scan</title>
   <desc id="d">Three rows showing the work-efficient Blelloch scan in place on the array 3, 1, 7, 0, 4, 1, 6, 3. The first row is the input. The up-sweep phase builds partial sums like a reduction tree, giving the second row 3, 4, 7, 11, 4, 5, 6, 25, where the last element 25 is the total sum, highlighted. Then the last element is set to zero and the down-sweep phase distributes values back down, giving the third row, the exclusive scan 0, 3, 4, 11, 11, 15, 16, 22, drawn green. The whole thing does about 2N additions, order N work, instead of the N log N of the simpler Hillis-Steele scan.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--ts-ink);}
-    .cell{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .tot{fill:var(--ts-surface);stroke:var(--ts-ink);stroke-width:1.5;}
-    .outc{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--cuda-ink);}
+    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .tot{fill:var(--cuda-surface);stroke:var(--cuda-ink);stroke-width:1.5;}
+    .outc{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .flow{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Blelloch scan: up-sweep builds sums, down-sweep distributes them</text>
   <text class="small" x="40" y="66">Work-efficient: about 2N additions (O(N) work) instead of Hillis-Steele's N log N.</text>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
   </defs>
 
   <text class="label" x="120" y="104">input</text>
@@ -53,7 +53,7 @@
   <path class="flow" d="M480,306 L480,338" marker-end="url(#a)"/>
   <text class="small" x="500" y="328">set last = 0, then down-sweep: distribute back down</text>
 
-  <text class="label" x="120" y="388" fill="var(--ts-success)">exclusive scan</text>
+  <text class="label" x="120" y="388" fill="var(--cuda-success)">exclusive scan</text>
   <g>
     <rect class="outc" x="120" y="398" width="80" height="46"/><text class="mono" x="160" y="427" text-anchor="middle">0</text>
     <rect class="outc" x="208" y="398" width="80" height="46"/><text class="mono" x="248" y="427" text-anchor="middle">3</text>

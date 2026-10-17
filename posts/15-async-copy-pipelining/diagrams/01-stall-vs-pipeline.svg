@@ -2,19 +2,19 @@
   <title id="t">A synchronous tile loop stalls while each tile loads; a pipelined loop hides the load behind compute</title>
   <desc id="d">Two timelines for a four-tile loop. The top, synchronous like post 03's tiled matmul, alternates a load block, then a red stall bubble where the compute units wait for the load to arrive, then a compute block, repeated four times, so the row is long. The bottom, pipelined with cp.async, runs the loads on their own row staggered ahead of the computes on a second row, so that every load after the first overlaps a compute; a green band marks the steady state where load and compute happen at once and the stall bubbles are gone. The pipelined timeline finishes much sooner because the load latency is hidden behind compute instead of being waited on.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#7E9CD0;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink);}
-    .load{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
-    .comp{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
-    .stall{fill:none;stroke:var(--ts-alert);stroke-width:1.5;stroke-dasharray:4 3;}
-    .band{fill:none;stroke:var(--ts-success);stroke-width:1.5;stroke-dasharray:5 3;}
-    .divider{stroke:var(--ts-grid);stroke-width:1;}
-    .axis{stroke:var(--ts-ink-muted);stroke-width:1;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#7E9CD0;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
+    .load{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
+    .comp{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
+    .stall{fill:none;stroke:var(--cuda-alert);stroke-width:1.5;stroke-dasharray:4 3;}
+    .band{fill:none;stroke:var(--cuda-success);stroke-width:1.5;stroke-dasharray:5 3;}
+    .divider{stroke:var(--cuda-grid);stroke-width:1;}
+    .axis{stroke:var(--cuda-ink-muted);stroke-width:1;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="42">The stall, and the pipeline that hides it</text>
@@ -39,7 +39,7 @@
     <rect class="stall" x="706" y="104" width="42" height="30"/>
     <rect class="comp" x="748" y="104" width="60" height="30"/><text class="mono" x="778" y="123" text-anchor="middle">comp 3</text>
   </g>
-  <text class="small" x="241" y="158" text-anchor="middle" fill="var(--ts-alert)">stall</text>
+  <text class="small" x="241" y="158" text-anchor="middle" fill="var(--cuda-alert)">stall</text>
   <line class="axis" x1="160" y1="180" x2="808" y2="180"/>
   <text class="small" x="160" y="200">compute units idle inside each red bubble, waiting on global memory</text>
 
@@ -51,7 +51,7 @@
   <text class="small" x="40" y="372">compute</text>
   <!-- steady-state band -->
   <rect class="band" x="280" y="300" width="288" height="92" rx="6"/>
-  <text class="small" x="424" y="412" text-anchor="middle" fill="var(--ts-success)">load and compute overlap</text>
+  <text class="small" x="424" y="412" text-anchor="middle" fill="var(--cuda-success)">load and compute overlap</text>
   <!-- load row (staggered one step ahead) -->
   <g>
     <rect class="load" x="160" y="306" width="96" height="28"/><text class="mono" x="208" y="324" text-anchor="middle">load 0</text>

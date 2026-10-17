@@ -2,16 +2,16 @@
   <title id="t">Serial execution runs copy and compute one at a time; splitting the work across streams overlaps them into a pipeline</title>
   <desc id="d">Two timelines. The top, serial with the default stream, is one row of twelve blocks: for each of four chunks a host-to-device copy, a kernel, and a device-to-host copy, end to end, twelve stage-times total, because only one engine works at a time so the other two sit idle, about 33 percent utilization. The bottom, pipelined with four streams, has three engine rows: the host-to-device copy engine, the compute engine, and the device-to-host copy engine. Each runs its four chunks staggered diagonally so that in the steady state, highlighted with a green band, all three engines are busy at once. The pipeline finishes in six stage-times instead of twelve, a 2 times speedup here that approaches 3 times with more chunks as utilization approaches 100 percent.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--ts-ink);}
-    .blk{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .band{fill:none;stroke:var(--ts-success);stroke-width:1.5;stroke-dasharray:5 3;}
-    .divider{stroke:var(--ts-grid);stroke-width:1;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
+    .blk{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .band{fill:none;stroke:var(--cuda-success);stroke-width:1.5;stroke-dasharray:5 3;}
+    .divider{stroke:var(--cuda-grid);stroke-width:1;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="40">The serial trap, and the pipeline that fixes it</text>
@@ -42,7 +42,7 @@
   <text class="small" x="40" y="392">D2H copy</text>
   <!-- steady-state overlap band -->
   <rect class="band" x="408" y="296" width="208" height="116" rx="6"/>
-  <text class="small" x="512" y="430" text-anchor="middle" fill="var(--ts-success)">all 3 engines busy</text>
+  <text class="small" x="512" y="430" text-anchor="middle" fill="var(--cuda-success)">all 3 engines busy</text>
   <!-- H2D row -->
   <g>
     <rect class="blk" x="200" y="300" width="100" height="28"/><text class="mono" x="250" y="319" text-anchor="middle">1</text>

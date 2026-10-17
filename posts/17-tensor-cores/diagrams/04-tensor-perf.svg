@@ -2,18 +2,18 @@
   <title id="t">Throughput in TFLOPS of the same 4096 matrix multiply across FP32 kernels and Tensor Core kernels</title>
   <desc id="d">A bar chart of throughput in TFLOPS for a 4096 by 4096 by 4096 matrix multiply on an RTX 3080. The FP32 kernels, drawn neutral: naive FP32 reaches 3, tiled FP32 with shared memory reaches 11, and cuBLAS SGEMM reaches 33. The Tensor Core kernels using FP16 with FP32 accumulate, drawn green: a basic WMMA kernel reaches 65 and an optimized one reaches 98, roughly 20 to 33 times the naive FP32. The cuBLAS HGEMM library, drawn blue, reaches 125. The takeaway is that Tensor Cores plus mixed precision unlock an order of magnitude beyond a tuned FP32 kernel, at the cost of FP16 input precision.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .axis{stroke:var(--ts-ink);stroke-width:1;}
-    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
-    .n{fill:var(--ts-surface);stroke:var(--ts-ink-muted);stroke-width:1.5;}
-    .g{fill:var(--ts-surface);stroke:var(--ts-success);stroke-width:1.5;}
-    .p{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:12px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .axis{stroke:var(--cuda-ink);stroke-width:1;}
+    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
+    .n{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
+    .g{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
+    .p{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Same matmul, 3 to 125 TFLOPS (4096 cubed, RTX 3080)</text>
@@ -38,12 +38,12 @@
   <rect class="n" x="410" y="359" width="86" height="81"/><text class="val" x="453" y="351" text-anchor="middle">33</text>
   <text class="small" x="453" y="460" text-anchor="middle">cuBLAS</text><text class="small" x="453" y="476" text-anchor="middle">SGEMM</text>
 
-  <rect class="g" x="520" y="280" width="86" height="160"/><text class="val" x="563" y="272" text-anchor="middle" fill="var(--ts-success)">65</text>
+  <rect class="g" x="520" y="280" width="86" height="160"/><text class="val" x="563" y="272" text-anchor="middle" fill="var(--cuda-success)">65</text>
   <text class="small" x="563" y="460" text-anchor="middle">TC basic</text><text class="small" x="563" y="476" text-anchor="middle">WMMA</text>
 
-  <rect class="g" x="630" y="199" width="86" height="241"/><text class="val" x="673" y="191" text-anchor="middle" fill="var(--ts-success)">98</text>
+  <rect class="g" x="630" y="199" width="86" height="241"/><text class="val" x="673" y="191" text-anchor="middle" fill="var(--cuda-success)">98</text>
   <text class="small" x="673" y="460" text-anchor="middle">TC opt</text><text class="small" x="673" y="476" text-anchor="middle">WMMA</text>
 
-  <rect class="p" x="740" y="132" width="86" height="308"/><text class="val" x="783" y="124" text-anchor="middle" fill="var(--ts-primary)">125</text>
+  <rect class="p" x="740" y="132" width="86" height="308"/><text class="val" x="783" y="124" text-anchor="middle" fill="var(--cuda-primary)">125</text>
   <text class="small" x="783" y="460" text-anchor="middle">cuBLAS</text><text class="small" x="783" y="476" text-anchor="middle">HGEMM</text>
 </svg>

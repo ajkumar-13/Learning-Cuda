@@ -1,16 +1,16 @@
-# Build directories
+# ===== Build directories =====
 /build/
 /build-*/
 /build_vs/
 /build_ninja/
-examples/build/
+/examples/build/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
 install_manifest.txt
 
-# Compiled object files and libraries
+# ===== Compiled object files and libraries =====
 *.o
 *.obj
 *.so
@@ -21,7 +21,7 @@ install_manifest.txt
 *.lib
 *.exp
 
-# Visual Studio / IDE files
+# ===== Visual Studio / IDE =====
 .vscode/
 .idea/
 *.suo
@@ -32,7 +32,7 @@ install_manifest.txt
 *.ipch
 *.pdb
 
-# CUDA / NVIDIA artifacts
+# ===== CUDA / NVIDIA artifacts =====
 *.cubin
 *.ptx
 *.fatbin
@@ -42,21 +42,53 @@ install_manifest.txt
 *.cuobj*
 *.cudafe*
 
-# Logs
+# ===== Logs and OS / editor junk =====
 *.log
-
-# Misc
 .DS_Store
+Thumbs.db
+desktop.ini
 *.swp
-*.excalidraw
 
-# Video assets (kept local; too large for the repo)
+# ===== Claude Code: local settings =====
+.claude/
+
+# ===== Diagram working files (not shipped) =====
+# Excalidraw scenes and working directories. The rendered SVG is published in
+# posts/NN-slug/diagrams/; figure sources in posts/NN-slug/diagrams/src/ are published with
+# their figures.
+*.excalidraw
+/posts/*/diagrams/excalidraw/
+
+# ===== Video assets (kept local; too large for the repository) =====
 **/videos/
 *.mp4
 
-# Keep internal/private documentation local-only (do not push to GitHub)
+# ===== Local setup notes in examples/ (kept on the author's machine) =====
 SETUP_RESOLUTION.md
 INSTALL_WINDOWS.md
 
-# Kernel visualizer is a separate nested git repository (own history, node_modules, dist)
+# ===== Kernel visualizer: a separate nested git repository (own history, node_modules, dist) =====
 kernel-visualizer/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Maintainers' question viewer, built on demand by series-standard/tools/build_questions_html.py
+/.review/
+
+# Authoring material (series-standard Section 3.1): kept on the author's machine, not published.
+# The website reads posts/, examples/, projects/, series.yaml, pyproject.toml, uv.lock, LICENSE
+# and the root reference pages only. assets/ holds the design tokens and the figure design page.
+/plan.md
+/CONTRIBUTING.md
+/verify/
+/tools/
+/templates/
+/audits/
+/assets/

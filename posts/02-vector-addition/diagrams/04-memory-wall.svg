@@ -2,21 +2,21 @@
   <title id="t">Log-log runtime of vector addition versus array size for the CPU and two GPU measurements, showing the crossover and the bandwidth floor</title>
   <desc id="d">A log-log chart. The horizontal axis is array size N from one thousand to one hundred million in decade steps. The vertical axis is runtime from one microsecond up to one hundred milliseconds, larger times higher up so lower curves are faster. Three measured curves from a GTX 1650 laptop. The single-threaded CPU curve starts fastest for tiny arrays, under one microsecond at one thousand elements, then climbs steeply to about 146 milliseconds at one hundred million elements, ending as the slowest. The GPU kernel-only curve is a flat low band, the fastest at large sizes, about 0.82 milliseconds at ten million and 8.3 milliseconds at one hundred million. The GPU with host-to-device and device-to-host transfer is a roughly flat 140 microsecond floor for small arrays, dominated by launch and PCIe cost, and only overtakes the CPU near one to ten million elements. The annotations mark the small-N transfer floor and the crossover region, and note that at large N every curve is limited by memory bandwidth, not arithmetic.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-accent:#D98E5F;--ts-success:#5C9E78;--ts-alert:#C66B5E;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-accent:#E8B088;--ts-success:#7FBF9B;--ts-alert:#D88880;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .axis{stroke:var(--ts-ink);stroke-width:1;}
-    .grid{stroke:var(--ts-grid);stroke-width:0.75;}
-    .cpu{stroke:var(--ts-accent);stroke-width:1.5;fill:none;}
-    .gpuk{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
-    .gput{stroke:var(--ts-primary);stroke-width:1.5;fill:none;}
-    .mcpu{fill:var(--ts-accent);}
-    .mgpuk{fill:var(--ts-success);}
-    .mgput{fill:var(--ts-primary);}
-    .cross{stroke:var(--ts-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-accent:#D98E5F;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-accent:#E8B088;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:19px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .axis{stroke:var(--cuda-ink);stroke-width:1;}
+    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
+    .cpu{stroke:var(--cuda-accent);stroke-width:1.5;fill:none;}
+    .gpuk{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
+    .gput{stroke:var(--cuda-primary);stroke-width:1.5;fill:none;}
+    .mcpu{fill:var(--cuda-accent);}
+    .mgpuk{fill:var(--cuda-success);}
+    .mgput{fill:var(--cuda-primary);}
+    .cross{stroke:var(--cuda-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="40">Same kernel, different verdict: runtime vs array size (GTX 1650, log-log)</text>
@@ -77,7 +77,7 @@
   <text class="small" x="600" y="362">data is on device</text>
 
   <!-- legend -->
-  <rect x="132" y="104" width="250" height="74" rx="8" fill="var(--ts-surface)" stroke="var(--ts-border)" stroke-width="1"/>
+  <rect x="132" y="104" width="250" height="74" rx="8" fill="var(--cuda-surface)" stroke="var(--cuda-border)" stroke-width="1"/>
   <line class="cpu"  x1="146" y1="124" x2="178" y2="124"/><text class="small" x="186" y="128">CPU (1 thread)</text>
   <line class="gput" x1="146" y1="146" x2="178" y2="146"/><text class="small" x="186" y="150">GPU (with transfer)</text>
   <line class="gpuk" x1="146" y1="168" x2="178" y2="168"/><text class="small" x="186" y="172">GPU (kernel only)</text>

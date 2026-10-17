@@ -2,27 +2,27 @@
   <title id="t">Host and device are separate memories; you copy inputs across PCIe, run the kernel, and copy the result back</title>
   <desc id="d">On the left, the host holds the input arrays h_A and h_B and a slot for the result h_C in system RAM. On the right, the device holds the GPU copies d_A and d_B, the vectorAdd kernel that computes d_C at i equals d_A at i plus d_B at i with one thread per element, and the result d_C. A dashed line down the middle marks the slow PCIe bus. One arrow copies the inputs from host to device, the kernel runs and writes d_C, and a second arrow copies the result back from device to host. The six labelled steps are cudaMalloc, copy inputs in, launch, synchronize, copy the result back, and cudaFree. The takeaway is that the inputs cross once and the result crosses back, and that round trip is the cost the kernel must beat.</desc>
   <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-success:#5C9E78;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-success:#7FBF9B;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--ts-ink);}
-    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
-    .box{fill:var(--ts-surface);stroke:var(--ts-border);stroke-width:1;}
-    .kernel{fill:var(--ts-surface);stroke:var(--ts-primary);stroke-width:1.5;}
-    .flow{stroke:var(--ts-ink-muted);stroke-width:1.5;fill:none;}
-    .flowhi{stroke:var(--ts-success);stroke-width:1.5;fill:none;}
-    .divider{stroke:var(--ts-grid);stroke-width:1;stroke-dasharray:5 5;}
+    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
+    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
+    .bg{fill:var(--cuda-bg);}
+    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
+    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
+    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
+    .panel{fill:none;stroke:var(--cuda-border);stroke-width:1;}
+    .box{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
+    .kernel{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
+    .flow{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
+    .flowhi{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
+    .divider{stroke:var(--cuda-grid);stroke-width:1;stroke-dasharray:5 5;}
   ]]></style>
   <rect class="bg" width="960" height="540"/>
   <text class="title" x="40" y="44">Copy in, run the kernel, copy out</text>
   <text class="small" x="40" y="66">The host and the device have separate memory. Data must cross the PCIe bus before and after the kernel.</text>
 
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-ink-muted)"/></marker>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ts-success)"/></marker>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
+    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
   </defs>
 
   <!-- HOST -->
