@@ -1,52 +1,247 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Warp shuffle reduces values across a warp by reading other lanes' registers directly, with no shared memory</title>
-  <desc id="d">A row of eight lanes, each holding a value in a register; a real warp has 32 lanes. In the first step, with offset 4, each of lanes 0 to 3 reads the register of the lane 4 positions higher and adds it, shown as four green arrows from lanes 4 to 7 down into lanes 0 to 3, so lanes 0 to 3 now hold partial sums. The step repeats with offset 2 and then offset 1, after which lane 0 holds the total. For a full 32-lane warp it takes 5 steps with offsets 16, 8, 4, 2, 1. The code is val plus equals shfl_down_sync of mask 0xffffffff, val, and the offset. The takeaway is that this uses registers only, with no shared memory and no syncthreads inside the warp, because the lanes are implicitly in lockstep, making it the fastest reduction primitive.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--cuda-ink);}
-    .lane{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .lanehi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .shfl{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
-    .codebox{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Warp shuffle: lanes read each other's registers directly</text>
-  <text class="small" x="40" y="66">No shared memory and no __syncthreads inside the warp — the 32 lanes are implicitly in lockstep.</text>
-
-  <defs>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
-  </defs>
-
-  <text class="label" x="40" y="150">lanes (one register each)  —  32 in a real warp, 8 shown</text>
-  <g>
-    <rect class="lane" x="192" y="166" width="64" height="46"/><text class="mono" x="224" y="195" text-anchor="middle">a0</text>
-    <rect class="lane" x="264" y="166" width="64" height="46"/><text class="mono" x="296" y="195" text-anchor="middle">a1</text>
-    <rect class="lane" x="336" y="166" width="64" height="46"/><text class="mono" x="368" y="195" text-anchor="middle">a2</text>
-    <rect class="lane" x="408" y="166" width="64" height="46"/><text class="mono" x="440" y="195" text-anchor="middle">a3</text>
-    <rect class="lane" x="480" y="166" width="64" height="46"/><text class="mono" x="512" y="195" text-anchor="middle">a4</text>
-    <rect class="lane" x="552" y="166" width="64" height="46"/><text class="mono" x="584" y="195" text-anchor="middle">a5</text>
-    <rect class="lane" x="624" y="166" width="64" height="46"/><text class="mono" x="656" y="195" text-anchor="middle">a6</text>
-    <rect class="lane" x="696" y="166" width="64" height="46"/><text class="mono" x="728" y="195" text-anchor="middle">a7</text>
-  </g>
-  <!-- delta=4 shuffles: lane i reads lane i+4 -->
-  <g class="shfl">
-    <path d="M512,212 C512,260 224,260 224,214" marker-end="url(#aS)"/>
-    <path d="M584,212 C584,272 296,272 296,214" marker-end="url(#aS)"/>
-    <path d="M656,212 C656,284 368,284 368,214" marker-end="url(#aS)"/>
-    <path d="M728,212 C728,296 440,296 440,214" marker-end="url(#aS)"/>
-  </g>
-  <text class="small" x="224" y="320">step 1, offset 4: lanes 0–3 read lanes 4–7 and add  →  lanes 0–3 now hold partial sums</text>
-  <text class="small" x="224" y="346">step 2, offset 2: lanes 0–1 read lanes 2–3.   step 3, offset 1: lane 0 reads lane 1.</text>
-
-  <rect class="lanehi" x="192" y="372" width="64" height="46"/><text class="mono" x="224" y="401" text-anchor="middle">sum</text>
-  <text class="small" x="270" y="400">lane 0 holds the total after 3 steps (5 steps for a full 32-lane warp).</text>
-
-  <rect class="codebox" x="40" y="446" width="520" height="44" rx="6"/>
-  <text class="mono" x="56" y="473" font-size="12">val += __shfl_down_sync(0xffffffff, val, offset);  // offset = 16,8,4,2,1</text>
-  <text class="small" x="588" y="473">Registers only: the fastest reduction primitive.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-03-warp-shuffle-title" aria-describedby="cuda-03-warp-shuffle-desc">
+<title id="cuda-03-warp-shuffle-title">A warp sums in its registers, no shared memory</title>
+<desc id="cuda-03-warp-shuffle-desc">Eight lanes, lane 0 to lane 7, each holding one register: 3 1 7 0 4 1 6 3. At offset 4 every lane adds the register of the lane four above; lanes 0 to 3 now hold 7 2 13 3, in orange, with arrows from lanes 4 to 7. At offset 2 lanes 0 and 1 hold 20 and 5; at offset 1 lane 0 holds 25, the sum, in green. The other lanes also add at every step, and their values, unfilled, are never read. A full warp of 32 lanes takes five steps, offsets 16, 8, 4, 2 and 1.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-orange { stroke: var(--cuda-orange); }
+</style>
+<defs>
+<marker id="cuda-03-warp-shuffle-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-03-warp-shuffle-arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-orange"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="584">A warp sums in its registers, no shared memory</text>
+<text x="40" y="76" class="t-subtitle" data-w="685">At offset k, each lane adds the register of lane + k to its own. Eight lanes shown; a warp has 32.</text>
+<rect x="200" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="280" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="360" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="440" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="520" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="600" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="680" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="760" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="200" y="120" width="640" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="146" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="320" y="146" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="400" y="146" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="480" y="146" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="560" y="146" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="640" y="146" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="720" y="146" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="800" y="146" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<text x="40" y="144" class="t-label" data-w="59">registers</text>
+<rect x="200" y="208" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="208" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="360" y="208" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="440" y="208" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="520" y="208" width="80" height="40" class="cell"/>
+<rect x="600" y="208" width="80" height="40" class="cell"/>
+<rect x="680" y="208" width="80" height="40" class="cell"/>
+<rect x="760" y="208" width="80" height="40" class="cell"/>
+<rect x="200" y="208" width="640" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="234" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="320" y="234" text-anchor="middle" class="t-cell16" data-w="10">2</text>
+<text x="400" y="234" text-anchor="middle" class="t-cell16" data-w="19">13</text>
+<text x="480" y="234" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="560" y="234" text-anchor="middle" class="t-cell16" data-w="10">8</text>
+<text x="640" y="234" text-anchor="middle" class="t-cell16" data-w="10">2</text>
+<text x="720" y="234" text-anchor="middle" class="t-cell16" data-w="19">12</text>
+<text x="800" y="234" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+</g>
+<text x="40" y="232" class="t-label" data-w="51">offset 4</text>
+<rect x="200" y="296" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="296" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="360" y="296" width="80" height="40" class="cell"/>
+<rect x="440" y="296" width="80" height="40" class="cell"/>
+<rect x="520" y="296" width="80" height="40" class="cell"/>
+<rect x="600" y="296" width="80" height="40" class="cell"/>
+<rect x="680" y="296" width="80" height="40" class="cell"/>
+<rect x="760" y="296" width="80" height="40" class="cell"/>
+<rect x="200" y="296" width="640" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="322" text-anchor="middle" class="t-cell16" data-w="19">20</text>
+<text x="320" y="322" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="400" y="322" text-anchor="middle" class="t-cell16" data-w="19">21</text>
+<text x="480" y="322" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="560" y="322" text-anchor="middle" class="t-cell16" data-w="19">20</text>
+<text x="640" y="322" text-anchor="middle" class="t-cell16" data-w="10">8</text>
+<text x="720" y="322" text-anchor="middle" class="t-cell16" data-w="19">24</text>
+<text x="800" y="322" text-anchor="middle" class="t-cell16" data-w="19">12</text>
+</g>
+<text x="40" y="320" class="t-label" data-w="51">offset 2</text>
+<rect x="200" y="384" width="80" height="40" class="cell f-green-soft"/>
+<rect x="280" y="384" width="80" height="40" class="cell"/>
+<rect x="360" y="384" width="80" height="40" class="cell"/>
+<rect x="440" y="384" width="80" height="40" class="cell"/>
+<rect x="520" y="384" width="80" height="40" class="cell"/>
+<rect x="600" y="384" width="80" height="40" class="cell"/>
+<rect x="680" y="384" width="80" height="40" class="cell"/>
+<rect x="760" y="384" width="80" height="40" class="cell"/>
+<rect x="200" y="384" width="640" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="410" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+<text x="320" y="410" text-anchor="middle" class="t-cell16" data-w="19">26</text>
+<text x="400" y="410" text-anchor="middle" class="t-cell16" data-w="19">26</text>
+<text x="480" y="410" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+<text x="560" y="410" text-anchor="middle" class="t-cell16" data-w="19">28</text>
+<text x="640" y="410" text-anchor="middle" class="t-cell16" data-w="19">32</text>
+<text x="720" y="410" text-anchor="middle" class="t-cell16" data-w="19">36</text>
+<text x="800" y="410" text-anchor="middle" class="t-cell16" data-w="19">24</text>
+</g>
+<text x="40" y="408" class="t-label" data-w="51">offset 1</text>
+<g data-grid="skip">
+<text x="240" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 0</text>
+<text x="320" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 1</text>
+<text x="400" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 2</text>
+<text x="480" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 3</text>
+<text x="560" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 4</text>
+<text x="640" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 5</text>
+<text x="720" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 6</text>
+<text x="800" y="112" text-anchor="middle" class="t-tick" data-w="38">lane 7</text>
+</g>
+<rect x="200" y="384" width="80" height="40" class="emph s-green" data-fit="skip"/>
+<path d="M560,160 L242.97,207.55" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M640,160 L322.97,207.55" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M720,160 L402.97,207.55" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M800,160 L482.97,207.55" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M400,248 L242.87,295.14" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M480,248 L322.87,295.14" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<path d="M320,336 L242.57,382.46" class="s-orange w1 nofill" marker-end="url(#cuda-03-warp-shuffle-arrow-orange)"/>
+<text x="840" y="452" text-anchor="end" class="t-code" data-w="359">v += __shfl_down_sync(0xffffffff, v, off);</text>
+<rect x="40" y="464" width="16" height="16" class="f-orange s-orange w1"/>
+<text x="72" y="476" class="t-label" data-w="152">value lane 0 still needs</text>
+<rect x="256" y="464" width="16" height="16" class="s-ink-muted w15 nofill"/>
+<text x="288" y="476" class="t-label" data-w="147">computed, never read</text>
+<rect x="464" y="464" width="16" height="16" class="s-green w15 nofill"/>
+<text x="496" y="476" class="t-label" data-w="54">the sum</text>
+<text x="40" y="504" class="t-note" data-w="626">A full warp of 32 lanes takes five steps, offsets 16, 8, 4, 2, 1. Values from reduction_model.py.</text>
 </svg>

@@ -1,0 +1,751 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-004",
+  "next_ordinal": 17,
+  "questions": [
+    {
+      "id": "cuda-004-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "race",
+        "atomics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Thousands of threads each run `*result += array[i];` on the same global address `result`, with no atomic. What does the program produce?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The correct total, only slower, because the hardware queues every thread's write to that one address.",
+          "correct": false,
+          "feedback": "Queuing whole read-add-write operations is what `atomicAdd` does. A plain `+=` is three steps that other threads can interleave with."
+        },
+        {
+          "key": "b",
+          "text": "A wrong, usually too small total that varies from run to run, as updates overwrite each other.",
+          "correct": true,
+          "feedback": "Each `+=` is a separate read, add and write; two threads that read the same old total both write, and one addition is lost. How many are lost depends on timing."
+        },
+        {
+          "key": "c",
+          "text": "A compile error, because a kernel may not write to an address that other threads also write.",
+          "correct": false,
+          "feedback": "The compiler accepts the line; nothing in CUDA forbids several threads writing one address. The damage shows only at run time, as a wrong sum."
+        },
+        {
+          "key": "d",
+          "text": "The correct total on a GPU whose warps run in lockstep, and a wrong one only across blocks.",
+          "correct": false,
+          "feedback": "Even lanes of one warp that read the total before any of them writes it lose updates, and since compute capability 7.0 lanes need not run in lockstep at all."
+        }
+      ],
+      "explanation": "Section 1: a race condition. Two threads read the same old total, each adds its element, and the second write erases the first. The result is non-deterministic and usually short; `atomicAdd` makes each read-add-write indivisible and fixes correctness, not speed.",
+      "hints": [
+        "Split `+=` into the three memory steps it really is."
+      ]
+    },
+    {
+      "id": "cuda-004-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1",
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "atomics",
+        "serialization",
+        "benchmark"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In the post's measurement, the kernel that does one `atomicAdd(out, in[i])` per element took 30.234 ms for 16,777,216 floats, longer than the 24.993 ms of one CPU thread. Which explanation fits?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The 64 MiB copy from host to device is inside the timed region of that kernel only.",
+          "correct": false,
+          "feedback": "The harness copies the input once before any timing, and the events bracket only the launch, for every row alike."
+        },
+        {
+          "key": "b",
+          "text": "The kernel reads the input with a strided pattern, so most of every 128-byte transaction is wasted.",
+          "correct": false,
+          "feedback": "Thread `i` reads `in[i]`, so adjacent threads read adjacent addresses: the loads are coalesced. The cost is in the atomic, not the load."
+        },
+        {
+          "key": "c",
+          "text": "All 16,777,216 updates go to one address, so they happen one after another.",
+          "correct": true,
+          "feedback": "An atomic is correct because it is indivisible, and indivisible updates of one address cannot overlap: the sum is serial, just done far from the threads."
+        },
+        {
+          "key": "d",
+          "text": "Atomics give wrong answers under contention, so the kernel retries until the check passes.",
+          "correct": false,
+          "feedback": "The atomic sum passed its check; atomics never lose an update. Nothing in the harness retries a launch."
+        }
+      ],
+      "explanation": "Sections 1 and 6: `atomicAdd` restores correctness by making every read-add-write indivisible, which serializes all updates to the one address. With 16,777,216 of them the GPU does the sum one addition at a time, and on the GTX 1650 that was no faster than the plain CPU loop.",
+      "hints": [
+        "Ask what two atomics on the same address can and cannot do at the same time."
+      ]
+    },
+    {
+      "id": "cuda-004-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "tree",
+        "depth",
+        "work"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A tree reduction sums $N = 1{,}048{,}576$ values ($2^{20}$) by adding pairs and halving the count at every step. How many steps does it take, and how many additions does it perform in total?",
+      "answer": {
+        "parts": [
+          {
+            "label": "steps (depth)",
+            "value": 20,
+            "tolerance": 0,
+            "unit": "steps"
+          },
+          {
+            "label": "additions in total",
+            "value": 1048575,
+            "tolerance": 0,
+            "unit": "additions"
+          }
+        ]
+      },
+      "precision_note": "Depth is log2(2^20) = 20; every addition removes one value, so N - 1 = 1,048,575 additions, the count a serial loop also performs. The model's section 2 prints the same pair for 2^24 (24 steps, 16777215 additions). Answering N / 2 = 524,288 counts only the first step's additions.",
+      "explanation": "Each step halves the number of partial sums, so $2^{20}$ values need 20 steps to reach one. The total work does not shrink: each addition turns two values into one, so going from $N$ values to 1 takes $N - 1 = 1{,}048{,}575$ additions. The tree changes the depth, not the work (section 2).",
+      "hints": [
+        "How many times can $2^{20}$ be halved before one value is left?",
+        "Each addition removes exactly one value from the pile."
+      ]
+    },
+    {
+      "id": "cuda-004-q04",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 6,
+      "tags": [
+        "divergence",
+        "addressing",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The post counts divergent warp-steps (a step at which a warp has some lanes active and some idle) for one block of 256 threads: 47 with interleaved addressing and 5 with sequential addressing. Count them for one block of 512 threads (16 warps, 9 steps) for both schemes.",
+      "stimulus": {
+        "kind": "code",
+        "language": "python",
+        "content": "print(divergent_warp_steps(active_interleaved(512), 512))\nprint(divergent_warp_steps(active_sequential(512), 512))",
+        "caption": "Two calls to snippets/reduction_model.py that answer both parts."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "interleaved",
+            "value": 95,
+            "tolerance": 0,
+            "unit": "warp-steps"
+          },
+          {
+            "label": "sequential",
+            "value": 5,
+            "tolerance": 0,
+            "unit": "warp-steps"
+          }
+        ]
+      },
+      "precision_note": "Interleaved: strides 1, 2, 4, 8, 16 split all 16 warps (5 x 16 = 80), then strides 32, 64, 128, 256 split 8, 4, 2, 1 warps: 80 + 15 = 95. Sequential: strides 256, 128, 64, 32 leave whole warps active or idle; strides 16, 8, 4, 2, 1 split warp 0 only: 5. The model's two calls print 95 and 5. Doubling 47 to 94 misses that the block adds one more step.",
+      "explanation": "With interleaved addressing every warp is split while the stride is below 32 (5 steps of 16 warps, 80), and then the active threads fall in 8, 4, 2 and 1 warps, one lane each (15 more): 95. Sequential addressing keeps the active threads contiguous, so only the last five steps, with fewer than 32 active threads, split a warp, whatever the block size: 5 (section 3).",
+      "hints": [
+        "Count the steps at which the stride is below 32 separately from the steps at which it is 32 or more.",
+        "Under sequential addressing, which steps leave fewer than 32 active threads?"
+      ]
+    },
+    {
+      "id": "cuda-004-q05",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "addressing",
+        "divergence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Compared with interleaved addressing (`tid % (2 * stride) == 0`), what does sequential addressing (`tid < stride`) change in a shared-memory tree over one block of 256 threads?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It performs fewer additions, because each step skips the elements that are already summed.",
+          "correct": false,
+          "feedback": "Both schemes perform 255 additions for 256 values; any tree must, since each addition removes one value."
+        },
+        {
+          "key": "b",
+          "text": "It needs fewer steps, because the stride starts at the largest value instead of 1.",
+          "correct": false,
+          "feedback": "Both run 8 steps for 256 values; the strides only run in the opposite order."
+        },
+        {
+          "key": "c",
+          "text": "It removes the need for `__syncthreads()` between steps, because no thread reads a value another thread wrote in the same step.",
+          "correct": false,
+          "feedback": "Every step still reads partial sums written by other threads at the step before, so the barrier stays; `reduceShared` keeps it."
+        },
+        {
+          "key": "d",
+          "text": "The active threads are contiguous, so warps are all busy or all idle until fewer than 32 remain.",
+          "correct": true,
+          "feedback": "That is the whole difference: same additions, same result, but the active threads pack into whole warps."
+        }
+      ],
+      "explanation": "Section 3: sequential addressing keeps the first `stride` threads active, so the 128, 64 and 32 active threads fill whole warps, and only the last five steps leave a split warp. The model counts 5 divergent warp-steps against 47 for interleaved addressing, with the same 255 additions and the same 8 steps.",
+      "hints": [
+        "Look at which thread ids are active at the first step in each scheme, and which warps they fall in."
+      ]
+    },
+    {
+      "id": "cuda-004-q06",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "warp-shuffle"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "After `warpReduce(v)` has run its five `__shfl_down_sync` steps with offsets 16, 8, 4, 2 and 1, which lane of the warp holds the sum of all 32 values?",
+      "answer": {
+        "model": "Lane 0.",
+        "accept": [
+          "(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|rather than|instead of)\\s+(in\\s+|on\\s+)?(lane\\s*(0|zero)|the first lane)\\b)(?![\\s\\S]*\\blane\\s*(31|1|thirty)\\b)^[\\s\\S]*?(\\blane\\s*(0|#0|zero)\\b|\\bthe first lane\\b|^\\s*(0|zero)\\s*\\.?\\s*$)"
+        ]
+      },
+      "explanation": "Section 4: each step adds the value of the lane `off` places above, so the partial sums move toward lower lanes, and after offsets 16, 8, 4, 2 and 1 lane 0 holds the warp's total. The other lanes hold values that nothing reads.",
+      "hints": [
+        "The shuffle is `down`: values travel from higher lanes to lower ones."
+      ]
+    },
+    {
+      "id": "cuda-004-q07",
+      "type": "short",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "8",
+      "est_minutes": 3,
+      "tags": [
+        "warp-shuffle",
+        "legacy",
+        "build"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A reduction copied from a 2014 tutorial calls `__shfl_down(v, off)`, without a mask. What happens when it is built with CUDA 12.3 for the GTX 1650 (`-arch=sm_75`), and what is the fix?",
+      "answer": {
+        "model": "It does not compile: the CUDA 12.3 headers remove the maskless __shfl_down for compute capability 7.0 and later (identifier \"__shfl_down\" is undefined). Use __shfl_down_sync(0xffffffff, v, off) with a mask naming the participating lanes.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\bcompiles?\\s+(fine|but|and|ok|okay|without|successfully|cleanly))(?![\\s\\S]*\\bsilent)(?![\\s\\S]*\\bwrong\\s+(value|result|sum|answer)s?\\b)(?=[\\s\\S]*(\\bfails?\\s+to\\s+(compile|build)|\\b(compil\\w*|build)\\s+(error|fails?|failure)|\\b(does\\s*n[o']t|do\\s*n[o']t|will\\s*not|won't|cannot|can't|can\\s+not|no\\s+longer)\\s+(compile|build)|\\bundefined\\b|\\bremoved\\b|\\berror\\b))(?=[\\s\\S]*_sync\\b)"
+        ]
+      },
+      "explanation": "Section 4 and section 8: the maskless shuffles were deprecated in CUDA 9.0, and the CUDA 12.3 headers remove them when compiling for compute capability 7.0 and later, so the build stops with `identifier \"__shfl_down\" is undefined`. The fix is the `_sync` form with a mask, `__shfl_down_sync(0xffffffff, v, off)`, called by every lane the mask names.",
+      "hints": [
+        "The post reports what this exact build printed on the GTX 1650.",
+        "Name the replacement intrinsic and its extra first argument."
+      ]
+    },
+    {
+      "id": "cuda-004-q08",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "8",
+      "est_minutes": 3,
+      "tags": [
+        "warp-shuffle",
+        "mask",
+        "divergence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A kernel calls `warpReduce(v)`, with its mask `0xffffffff`, inside `if (i < N) { ... }`. N is not a multiple of 32, so in the last warp some lanes fail the guard. What does the CUDA programming model say about the shuffle in that warp?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The lanes that skipped the call contribute 0, so the sum is still correct.",
+          "correct": false,
+          "feedback": "Nothing supplies a 0 for a lane that never executes the intrinsic. The post's kernels get that 0 by calling `warpReduce` from every thread and initializing out-of-range values to 0."
+        },
+        {
+          "key": "b",
+          "text": "Undefined: lanes the mask names never reach the call, and the program may hang.",
+          "correct": true,
+          "feedback": "All lanes in the mask must take part in the same `_sync` call. Lin and Grover warn that a full mask in code that some lanes never reach can hang."
+        },
+        {
+          "key": "c",
+          "text": "The compiler rejects a `_sync` intrinsic inside a branch.",
+          "correct": false,
+          "feedback": "The `_sync` intrinsics may be called in divergent code; the mask must then name exactly the lanes that arrive, for example one computed before the branch with `__ballot_sync(0xffffffff, i < N)`."
+        },
+        {
+          "key": "d",
+          "text": "It is correct as long as a `__syncthreads()` follows the `if`, since the barrier gathers every lane of the block again.",
+          "correct": false,
+          "feedback": "A block barrier after the branch does nothing for the shuffle inside it; the exchange has already run with lanes missing from its mask."
+        }
+      ],
+      "explanation": "Section 4 states the mask rule and section 8 this mistake: the mask names the participating lanes, and every one of them must execute the same intrinsic. The safe pattern is the post's: every thread calls `warpReduce`, and threads past the end hold 0.",
+      "hints": [
+        "Which lanes does `0xffffffff` promise will take part?",
+        "Do the lanes that fail the guard ever execute the shuffle?"
+      ]
+    },
+    {
+      "id": "cuda-004-q09",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 10,
+      "tags": [
+        "grid-stride",
+        "model",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`thread_partials(x, blocks, threads)` models the first phase of `reduceWarpShuffle`: thread `i` of a grid of `blocks * threads` threads adds `x[i]`, `x[i + stride]`, `x[i + 2 * stride]`, ... into its own partial sum, and the function returns the list of all partial sums, one per thread. The version below counts some elements more than once. Fix it.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def thread_partials(x, blocks, threads):\n    \"\"\"Per-thread partial sums of a grid-stride loop over x.\"\"\"\n    stride = threads\n    partials = []\n    for b in range(blocks):\n        for t in range(threads):\n            i = b * threads + t\n            s = 0\n            while i < len(x):\n                s += x[i]\n                i += stride\n            partials.append(s)\n    return partials\n",
+      "solution": "def thread_partials(x, blocks, threads):\n    \"\"\"Per-thread partial sums of a grid-stride loop over x.\"\"\"\n    stride = blocks * threads\n    partials = []\n    for b in range(blocks):\n        for t in range(threads):\n            i = b * threads + t\n            s = 0\n            while i < len(x):\n                s += x[i]\n                i += stride\n            partials.append(s)\n    return partials\n",
+      "tests": "import random\n# every element is added exactly once, by exactly one thread\nfor n, blocks, threads in [(1000, 4, 32), (4096, 4, 256), (37, 2, 8), (5, 4, 4), (0, 2, 4)]:\n    x = [random.randint(1, 9) for _ in range(n)]\n    p = thread_partials(x, blocks, threads)\n    assert len(p) == blocks * threads\n    assert sum(p) == sum(x), (n, blocks, threads)\n# which elements thread 0 owns: 0, 128, 256, ... for 4 blocks of 32\nx = [0] * 1000\nfor k in range(0, 1000, 128):\n    x[k] = 1\nassert thread_partials(x, 4, 32)[0] == 8\nassert sum(thread_partials(x, 4, 32)[1:]) == 0\n# thread 33 (block 1, thread 1) owns 33, 161, 289, ...\nx = list(range(1000))\nassert thread_partials(x, 4, 32)[33] == sum(range(33, 1000, 128))\n# the post's launch: 64 elements per thread\nones = [1] * (2 * 4 * 256 * 64)\nassert set(thread_partials(ones, 8, 256)) == {64}\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "The stride of a grid-stride loop is the number of threads in the whole grid, `blockDim.x * gridDim.x` (section 5). With `stride = threads`, thread 0 of block 0 also walks through the elements that the other blocks' threads own, so every element past the first block is added several times. With `blocks * threads`, the threads tile the array once per pass and each element is added exactly once.",
+      "hints": [
+        "How many threads read one element each on every pass of the loop?",
+        "Set the stride to the size of the whole grid, not of one block."
+      ]
+    },
+    {
+      "id": "cuda-004-q10",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "grid-stride",
+        "atomics",
+        "launch"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The input grows to $N = 33{,}554{,}432$ floats. `reduceWarpShuffle` is still launched with 1,024 blocks of 256 threads, and `reduceShared` still with one thread per element in blocks of 256. Give the elements each thread of `reduceWarpShuffle` adds, and the `atomicAdd` calls of one launch of each kernel.",
+      "answer": {
+        "parts": [
+          {
+            "label": "elements per thread, reduceWarpShuffle",
+            "value": 128,
+            "tolerance": 0,
+            "unit": "elements"
+          },
+          {
+            "label": "atomicAdd calls, reduceWarpShuffle",
+            "value": 1024,
+            "tolerance": 0,
+            "unit": "calls"
+          },
+          {
+            "label": "atomicAdd calls, reduceShared",
+            "value": 131072,
+            "tolerance": 0,
+            "unit": "calls"
+          }
+        ]
+      },
+      "precision_note": "33,554,432 / (1,024 x 256) = 128 elements per thread; one atomicAdd per block, so 1,024 for the grid-stride launch and 33,554,432 / 256 = 131,072 for the one-thread-per-element launch. atomics_per_launch() in snippets/reduction_model.py gives 1,024 and 65,536 at the post's N, half of these two.",
+      "explanation": "The grid-stride launch has $1{,}024 \\times 256 = 262{,}144$ threads, so each adds $33{,}554{,}432 / 262{,}144 = 128$ elements, and its 1,024 blocks make 1,024 atomic additions whatever $N$ is. A launch with one thread per element needs $N / 256 = 131{,}072$ blocks, one atomic each, and the count grows with $N$ (section 5).",
+      "hints": [
+        "Count the threads of the grid-stride launch first.",
+        "Every kernel here makes exactly one atomic per block."
+      ]
+    },
+    {
+      "id": "cuda-004-q11",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth",
+        "peak",
+        "benchmark"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A reduction kernel sums the post's 16,777,216 floats (4 bytes each) in 0.500 ms on the GTX 1650, whose theoretical peak is 160 GB/s. Using decimal GB/s ($10^9$ bytes per second) as the post does, what bandwidth does it achieve, and what percentage of the peak is that?",
+      "answer": {
+        "parts": [
+          {
+            "label": "achieved bandwidth",
+            "value": 134.2,
+            "tolerance": 0.2,
+            "unit": "GB/s"
+          },
+          {
+            "label": "share of the theoretical peak",
+            "value": 83.9,
+            "tolerance": 0.2,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "67,108,864 bytes / 0.0005 s = 134,217,728,000 bytes/s = 134.2 GB/s; 134.2 / 160 = 83.9%. This is reduction.cu's formula bytes / ms / 1e6. Dividing 64 MiB by the time gives 128 (a binary unit) and 80%, outside the tolerance.",
+      "explanation": "The kernel reads its input once: $16{,}777{,}216 \\times 4 = 67{,}108{,}864$ bytes in $0.0005$ s is $134.2 \\times 10^9$ bytes per second, 134.2 GB/s. Against the 160 GB/s theoretical peak that is 83.9%, between the post's grid-stride tree and its warp-shuffle kernel (section 6).",
+      "hints": [
+        "Count the bytes the kernel must read, then divide by the time in seconds.",
+        "Keep the units decimal: 1 GB/s is $10^9$ bytes per second, and 64 MiB is 67,108,864 bytes."
+      ]
+    },
+    {
+      "id": "cuda-004-q12",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "memory-bound",
+        "clock",
+        "benchmark"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In a run the post logged, the SM clock of the GTX 1650 moved between 1,140 and 1,740 MHz while the memory clock stayed at 5,000 MHz. The tree rows varied by up to 1.7 times; the warp-shuffle row by under 2%. Why was the warp-shuffle kernel so stable?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Warp shuffles run on a separate clock from the rest of the SM.",
+          "correct": false,
+          "feedback": "Shuffles are SM instructions and run on the SM clock like every other instruction."
+        },
+        {
+          "key": "b",
+          "text": "It launches fewer blocks, and a launch with fewer blocks is not affected by the clock.",
+          "correct": false,
+          "feedback": "The sequential-plus-stride row also launches 1,024 blocks, and it varied with the clock; the block count is not the reason."
+        },
+        {
+          "key": "c",
+          "text": "It is memory bound, and the memory clock did not change.",
+          "correct": true,
+          "feedback": "A kernel limited by memory bandwidth follows the memory clock; the SM clock only changes how fast it handles bytes it is already waiting for."
+        },
+        {
+          "key": "d",
+          "text": "Its time is dominated by its 1,024 atomic additions, which run at a fixed rate.",
+          "correct": false,
+          "feedback": "1,024 atomics are a tiny part of a 0.44 ms kernel; the time is the 64 MiB read."
+        }
+      ],
+      "explanation": "Section 6: the warp-shuffle kernel reaches about 97% of the theoretical bandwidth, so it is memory bound and its time is set by global memory, whose clock held steady. The tree kernels are limited by their instructions and barriers, so they slowed with the SM clock.",
+      "hints": [
+        "Which of the two clocks limits a kernel that is at the bandwidth peak?"
+      ]
+    },
+    {
+      "id": "cuda-004-q13",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "block-reduce",
+        "composition"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Put the work of one block of `reduceWarpShuffle` in the order it happens.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Each thread adds its elements into a register with the grid-stride loop."
+        },
+        {
+          "key": "b",
+          "text": "Every warp reduces its 32 registers with `warpReduce`."
+        },
+        {
+          "key": "c",
+          "text": "Lane 0 of each warp writes its warp's total to `warpSums`."
+        },
+        {
+          "key": "d",
+          "text": "`__syncthreads()` makes all eight warp totals visible."
+        },
+        {
+          "key": "e",
+          "text": "Warp 0 reads the eight totals and reduces them with `warpReduce`."
+        },
+        {
+          "key": "f",
+          "text": "Thread 0 adds the block's total to the result with `atomicAdd`."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "explanation": "Section 5: grid level first (the grid-stride loop into one register per thread), then warp level (`warpReduce` in every warp), then block level (lane 0s write `warpSums`, the barrier, warp 0 reduces them), then one atomic per block. The barrier must sit between the writes to `warpSums` and warp 0's reads.",
+      "hints": [
+        "Start with the loop over global memory and end with the one atomic."
+      ]
+    },
+    {
+      "id": "cuda-004-q14",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 3,
+      "outcomes": [
+        "o1",
+        "o2",
+        "o3"
+      ],
+      "section": "8",
+      "est_minutes": 5,
+      "tags": [
+        "debugging",
+        "symptoms"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Match each symptom of a reduction kernel to its cause.",
+      "left": [
+        {
+          "key": "a",
+          "text": "The second launch returns about twice the reference sum."
+        },
+        {
+          "key": "b",
+          "text": "With 192 threads per block the sum is a little short and no error is reported."
+        },
+        {
+          "key": "c",
+          "text": "The GPU sum differs from the CPU loop's in the last digits, and changes slightly between runs."
+        },
+        {
+          "key": "d",
+          "text": "The program hangs inside a kernel that calls `warpReduce` under `if (i < N)`."
+        },
+        {
+          "key": "e",
+          "text": "Without atomics, a `+=` into one address returns a different, too small total each run."
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "The output was not zeroed before the launch."
+        },
+        {
+          "key": "q",
+          "text": "The halving loop assumes a power-of-two block, so one partial sum is dropped."
+        },
+        {
+          "key": "r",
+          "text": "Floating-point additions happen in a different order."
+        },
+        {
+          "key": "s",
+          "text": "Lanes named in the shuffle's mask never reach the call."
+        },
+        {
+          "key": "t",
+          "text": "A race: concurrent read-add-write updates overwrite each other."
+        },
+        {
+          "key": "u",
+          "text": "The input copy to the device was too slow."
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s",
+        "e": "t"
+      },
+      "explanation": "Section 8 and section 1: an output that is not zeroed adds a second total to the first; a 192-thread block reaches stride 3 and then stride 1, dropping a value; tree and atomic orders differ from the CPU loop and between runs; a full mask that some lanes never reach is undefined and may hang; a plain `+=` races. A slow copy changes the time, never the sum.",
+      "hints": [
+        "Separate the symptoms that change the value from the one that stops the program.",
+        "One option on the right never changes a sum."
+      ]
+    },
+    {
+      "id": "cuda-004-q15",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o4",
+        "o1"
+      ],
+      "section": "5",
+      "est_minutes": 15,
+      "tags": [
+        "histogram",
+        "privatization",
+        "atomics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Post 05 counts 16,777,216 byte values into 256 bins. Its naive kernel does one `atomicAdd(&bins[value], 1)` per element in global memory. Using this post's reasoning about atomics, explain what the per-block step of a faster histogram should be, why it removes most global atomics, how many global atomics one launch then makes, and where contention can still remain.",
+      "connects": [
+        "cuda-005"
+      ],
+      "kind": "connect",
+      "solution": "This post's fast reduction does not stop atomics; it makes them rare. Every element is first combined inside its block (a register, then a warp, then shared memory), and only one `atomicAdd` per block reaches the global total: 1,024 instead of 16,777,216.\n\nThe histogram analogue is a private histogram per block: each block keeps its own 256 bins in shared memory, every thread increments the shared bin of its element (still an atomic, but on block-local shared memory), a `__syncthreads()` waits for all of them, and then the block adds its 256 counts to the global bins, one global `atomicAdd` per bin per block. With B blocks a launch makes at most 256 x B global atomics instead of 16,777,216 (for 1,024 blocks, 262,144, and fewer if bins with a zero count are skipped).\n\nContention does not vanish: the shared-memory atomics still serialize when many threads of a block hit the same bin, which is exactly what solid-color input does, and the merge still contends across blocks on popular bins. The reduction has one bin, so its per-block total is a single value; the histogram has 256, so its per-block result is an array. Post 05 measures how much of the contention this removes.",
+      "rubric": [
+        {
+          "criterion": "States the reduction's principle: combine inside the block first, so global atomics are one per block, not one per element.",
+          "points": 2
+        },
+        {
+          "criterion": "Describes a per-block shared-memory histogram with a barrier before the merge.",
+          "points": 2
+        },
+        {
+          "criterion": "Counts the global atomics as at most 256 per block (262,144 for 1,024 blocks) against 16,777,216.",
+          "points": 2
+        },
+        {
+          "criterion": "Names the remaining contention: shared atomics on a popular bin within a block, and the merge on popular bins across blocks.",
+          "points": 2
+        }
+      ],
+      "answer_length": "two or three paragraphs",
+      "explanation": "Section 5 makes atomics harmless by making them rare: one per block after a block-level reduction. Post 05 applies the same idea to many bins (privatization); the per-block result becomes an array of counts, and contention moves to shared memory without disappearing.",
+      "hints": [
+        "In this post, where are the elements combined before any global atomic happens?",
+        "Replace the single block total with an array of 256 per-block counts, then count the merges."
+      ]
+    },
+    {
+      "id": "cuda-004-q16",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5",
+        "o2"
+      ],
+      "section": "6",
+      "est_minutes": 12,
+      "tags": [
+        "benchmark",
+        "critique",
+        "memory-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A colleague reads the post's table and concludes: \"The sequential shared-memory tree reaches only 23% of peak, so shared memory is slow, and the warp shuffle is what makes the last kernel fast.\" Critique this conclusion using the table's rows and what each kernel does.",
+      "kind": "critique",
+      "solution": "1. The table separates the two effects the colleague merges. The sequential tree and the sequential-plus-stride kernel run the same shared-memory tree; the only difference is that the second gives each thread 64 elements with a grid-stride loop. That alone took the bandwidth from 37.5 to 127.4 GB/s, 3.4 times, so shared memory was not what held the first kernel back.\n2. What held it back is the tree's fixed cost per element: with one element per thread a block pays eight barrier-separated steps and an atomic for every 256 elements; with 64 elements per thread the same cost is paid once per 16,384.\n3. The warp shuffle then removes most of the remaining tree work (the shared-memory steps and barriers inside each warp) and cuts the time by a further 18%, to 154.6 GB/s, 97% of the 160 GB/s theoretical peak. Its contribution is real but smaller than the grid-stride loop's.\n4. At 97% of peak the kernel is memory bound; no faster instruction, shuffle or otherwise, can make it much faster, so 'fast' is now a property of the memory, not of the shuffle.\n5. The tree rows also moved by up to 1.7 times with the SM clock on this hot laptop card, so a single 23% figure should be read with that variation in mind; the order of the rows, not the digits, is the evidence.",
+      "rubric": [
+        {
+          "criterion": "Uses the sequential-plus-stride row to show the same shared-memory tree reaches about 127 GB/s, so shared memory is not the bottleneck.",
+          "points": 3
+        },
+        {
+          "criterion": "Explains the real cost: a whole tree, barriers and atomic, per 256 elements when each thread has one element.",
+          "points": 2
+        },
+        {
+          "criterion": "Places the shuffle's contribution correctly: about 18% less time, to about 97% of peak.",
+          "points": 2
+        },
+        {
+          "criterion": "States that near the peak the kernel is memory bound, so the limit is bandwidth, and notes the clock-driven variation of the tree rows.",
+          "points": 1
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Section 6 applies one fix per row. Comparing rows that differ in one thing shows that the grid-stride loop gives the largest gain after the tree itself and the shuffle the last 18%; once a kernel reads at about 97% of the theoretical peak it is memory bound and the bandwidth, not the instruction mix, sets its time.",
+      "hints": [
+        "Find two rows that run the same shared-memory tree and differ in one thing only.",
+        "Compare the last row's bandwidth with the peak before crediting any instruction with the speed."
+      ]
+    }
+  ]
+}

@@ -1,77 +1,225 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Tree-based parallel reduction sums eight values in three halving steps instead of seven sequential adds</title>
-  <desc id="d">A binary reduction tree. Step 0 has eight values 1 through 8. Step 1 sums adjacent pairs into four values 3, 7, 11, 15. Step 2 sums those into two values 10 and 26. Step 3 sums those into one value, 36, the total, highlighted in green along with the two arrows that feed it. The point is that the number of parallel steps is log base 2 of N, here 3 for 8 values, rather than N minus 1 sequential adds; for 16 million values that is about 24 steps instead of 16 million. The work is still order N, but the depth is order log N.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--cuda-ink);}
-    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--cuda-success);}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .cellhi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .flow{stroke:var(--cuda-ink-muted);stroke-width:1;fill:none;}
-    .flowhi{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Tree reduction: log N steps, not N</text>
-  <text class="small" x="40" y="66">Sum pairs in parallel and fold the array in half each step, instead of adding one at a time.</text>
-
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
-  </defs>
-
-  <text class="small" x="40" y="135">step 0</text>
-  <text class="small" x="40" y="235">step 1</text>
-  <text class="small" x="40" y="335">step 2</text>
-  <text class="small" x="40" y="435">step 3</text>
-
-  <!-- arrows step0->1 -->
-  <g class="flow">
-    <path d="M206,156 L244,206" marker-end="url(#a)"/><path d="M282,156 L244,206" marker-end="url(#a)"/>
-    <path d="M358,156 L396,206" marker-end="url(#a)"/><path d="M434,156 L396,206" marker-end="url(#a)"/>
-    <path d="M510,156 L548,206" marker-end="url(#a)"/><path d="M586,156 L548,206" marker-end="url(#a)"/>
-    <path d="M662,156 L700,206" marker-end="url(#a)"/><path d="M738,156 L700,206" marker-end="url(#a)"/>
-  </g>
-  <!-- arrows step1->2 -->
-  <g class="flow">
-    <path d="M244,256 L320,306" marker-end="url(#a)"/><path d="M396,256 L320,306" marker-end="url(#a)"/>
-    <path d="M548,256 L624,306" marker-end="url(#a)"/><path d="M700,256 L624,306" marker-end="url(#a)"/>
-  </g>
-  <!-- arrows step2->3 (green, into the final sum) -->
-  <g class="flowhi">
-    <path d="M320,356 L472,406" marker-end="url(#aS)"/><path d="M624,356 L472,406" marker-end="url(#aS)"/>
-  </g>
-
-  <!-- row 0 -->
-  <g>
-    <rect class="cell" x="176" y="110" width="60" height="46"/><text class="mono" x="206" y="139" text-anchor="middle">1</text>
-    <rect class="cell" x="252" y="110" width="60" height="46"/><text class="mono" x="282" y="139" text-anchor="middle">2</text>
-    <rect class="cell" x="328" y="110" width="60" height="46"/><text class="mono" x="358" y="139" text-anchor="middle">3</text>
-    <rect class="cell" x="404" y="110" width="60" height="46"/><text class="mono" x="434" y="139" text-anchor="middle">4</text>
-    <rect class="cell" x="480" y="110" width="60" height="46"/><text class="mono" x="510" y="139" text-anchor="middle">5</text>
-    <rect class="cell" x="556" y="110" width="60" height="46"/><text class="mono" x="586" y="139" text-anchor="middle">6</text>
-    <rect class="cell" x="632" y="110" width="60" height="46"/><text class="mono" x="662" y="139" text-anchor="middle">7</text>
-    <rect class="cell" x="708" y="110" width="60" height="46"/><text class="mono" x="738" y="139" text-anchor="middle">8</text>
-  </g>
-  <!-- row 1 -->
-  <g>
-    <rect class="cell" x="214" y="210" width="60" height="46"/><text class="mono" x="244" y="239" text-anchor="middle">3</text>
-    <rect class="cell" x="366" y="210" width="60" height="46"/><text class="mono" x="396" y="239" text-anchor="middle">7</text>
-    <rect class="cell" x="518" y="210" width="60" height="46"/><text class="mono" x="548" y="239" text-anchor="middle">11</text>
-    <rect class="cell" x="670" y="210" width="60" height="46"/><text class="mono" x="700" y="239" text-anchor="middle">15</text>
-  </g>
-  <!-- row 2 -->
-  <g>
-    <rect class="cell" x="290" y="310" width="60" height="46"/><text class="mono" x="320" y="339" text-anchor="middle">10</text>
-    <rect class="cell" x="594" y="310" width="60" height="46"/><text class="mono" x="624" y="339" text-anchor="middle">26</text>
-  </g>
-  <!-- row 3 (final) -->
-  <rect class="cellhi" x="442" y="410" width="60" height="46"/><text class="monohi" x="472" y="439" text-anchor="middle">36</text>
-
-  <text class="small" x="560" y="430">the whole array reduced to one value</text>
-  <text class="small" x="40" y="500">Work is still O(N) additions, but the depth is O(log N): 16M values reduce in about 24 parallel steps, not 16M.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-tree-reduction-title" aria-describedby="cuda-01-tree-reduction-desc">
+<title id="cuda-01-tree-reduction-title">A tree sums eight values in three parallel steps</title>
+<desc id="cuda-01-tree-reduction-desc">The shared array s drawn four times, top to bottom. It starts with eight values, 3 1 7 0 4 1 6 3, in green. At stride 4, threads 0 to 3 each add the element four places up into their own, giving 7 2 13 3 in orange; at stride 2 threads 0 and 1 give 20 and 5; at stride 1 thread 0 gives 25, the sum, emphasized in green. Arrows show the two inputs of every addition. At the right, 4, 2 and 1 threads add at the three steps; 16,777,216 values would need 24 steps.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green { fill: var(--cuda-green); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-ink { fill: var(--cuda-orange-ink); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange { stroke: var(--cuda-orange); }
+</style>
+<defs>
+<marker id="cuda-01-tree-reduction-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-01-tree-reduction-arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-orange"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="572">A tree sums eight values in three parallel steps</text>
+<text x="40" y="76" class="t-subtitle" data-w="723">Sequential addressing: at stride s, thread t &lt; s adds s[t + s] into s[t]. Derived by reduction_model.py.</text>
+<rect x="200" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="280" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="360" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="440" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="520" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="600" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="680" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="760" y="120" width="80" height="40" class="cell f-green-soft"/>
+<rect x="200" y="120" width="640" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="146" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="320" y="146" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="400" y="146" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="480" y="146" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="560" y="146" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="640" y="146" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="720" y="146" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="800" y="146" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<text x="40" y="144" class="t-label" data-w="94">start: 8 values</text>
+<g data-grid="skip">
+<text x="240" y="112" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="320" y="112" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="400" y="112" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="480" y="112" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="560" y="112" text-anchor="middle" class="t-tick" data-w="8">4</text>
+<text x="640" y="112" text-anchor="middle" class="t-tick" data-w="8">5</text>
+<text x="720" y="112" text-anchor="middle" class="t-tick" data-w="8">6</text>
+<text x="800" y="112" text-anchor="middle" class="t-tick" data-w="8">7</text>
+</g>
+<rect x="200" y="216" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="216" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="360" y="216" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="440" y="216" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="200" y="216" width="320" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="242" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="320" y="242" text-anchor="middle" class="t-cell16" data-w="10">2</text>
+<text x="400" y="242" text-anchor="middle" class="t-cell16" data-w="19">13</text>
+<text x="480" y="242" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<text x="40" y="240" class="t-label" data-w="51">stride 4</text>
+<text x="544" y="240" class="t-label f-orange-ink" data-w="93">4 threads add</text>
+<rect x="200" y="312" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="312" width="80" height="40" class="cell f-orange-soft"/>
+<rect x="200" y="312" width="160" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="338" text-anchor="middle" class="t-cell16" data-w="19">20</text>
+<text x="320" y="338" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+</g>
+<text x="40" y="336" class="t-label" data-w="51">stride 2</text>
+<text x="384" y="336" class="t-label f-orange-ink" data-w="93">2 threads add</text>
+<rect x="200" y="408" width="80" height="40" class="cell f-green-soft"/>
+<rect x="200" y="408" width="80" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="240" y="434" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+</g>
+<text x="40" y="432" class="t-label" data-w="51">stride 1</text>
+<text x="184" y="112" text-anchor="end" class="t-tick" data-w="42">index t</text>
+<rect x="200" y="408" width="80" height="40" class="emph s-green" data-fit="skip"/>
+<g data-grid="skip">
+<path d="M280,428 L304,428" class="brace"/>
+<text x="308" y="433" class="t-label" data-w="155">1 thread adds: the sum</text>
+</g>
+<path d="M240,160 L240,213" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M560,160 L242.96,215.48" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M320,160 L320,213" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M640,160 L322.96,215.48" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M400,160 L400,213" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M720,160 L402.96,215.48" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M480,160 L480,213" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M800,160 L482.96,215.48" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M240,256 L240,309" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M400,256 L242.83,311.01" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M320,256 L320,309" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M480,256 L322.83,311.01" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M240,352 L240,405" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<path d="M320,352 L242.46,406.28" class="s-orange w1 nofill" marker-end="url(#cuda-01-tree-reduction-arrow-orange)"/>
+<rect x="40" y="456" width="16" height="16" class="f-green s-green w1"/>
+<text x="72" y="468" class="t-label" data-w="161">value in shared memory</text>
+<rect x="264" y="456" width="16" height="16" class="f-orange s-orange w1"/>
+<text x="296" y="468" class="t-label" data-w="257">partial sum written by an active thread</text>
+<text x="40" y="504" class="t-note" data-w="660">Depth is log₂ of the count: 3 steps for 8 values, 24 for 16,777,216, the same N − 1 adds either way.</text>
 </svg>

@@ -1,8 +1,27 @@
 id: cuda-004
 slug: 04-reduction
-title: "04 · Reduction — summing millions of numbers without a serial bottleneck"
+title: "04 - Reduction: summing millions of numbers without a serial bottleneck"
+summary: "How thousands of threads sum one array without racing or serializing: a shared-memory tree with sequential addressing, warp shuffles, and a grid-stride loop that reaches the memory bandwidth limit."
 date: 2026-07-04
-tags: [parallel-patterns, cuda, reduction]
-hero: diagrams/01-tree-reduction.svg
-reading_time: 15
+updated: 2026-10-17
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 14
+tags: [cuda, reduction, parallel-patterns, shared-memory, warp-shuffle, atomics]
+hero: diagrams/01-tree-reduction.svg
+prerequisites: [cuda-003]
+code: included
+outcomes:
+  - id: o1
+    text: "Distinguish a race from an atomic sum, and explain why one `atomicAdd` per element is correct but serial."
+  - id: o2
+    text: "Implement a shared-memory tree reduction and count the divergent warp-steps of interleaved against sequential addressing."
+  - id: o3
+    text: "Reduce a warp with `__shfl_down_sync` and state what its mask requires of the lanes that call it."
+  - id: o4
+    text: "Compose warp, block, and grid levels with a grid-stride loop and one `atomicAdd` per block."
+  - id: o5
+    text: "Read a bandwidth benchmark as a share of the card's theoretical peak and tell when a reduction has become memory bound."
+compute: gpu-small
+hardware: gtx-1650
