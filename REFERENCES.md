@@ -16,8 +16,9 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 02 - Your first CUDA kernel: vector addition and the memory wall
 
 - Harris, M. "An Even Easier Introduction to CUDA." NVIDIA Technical Blog, 25 January 2017; updated edition 2 May 2025. <https://developer.nvidia.com/blog/even-easier-introduction-cuda/>
-- Harris, M. "How to Implement Performance Metrics in CUDA C/C++." NVIDIA Technical Blog, 2012. <https://developer.nvidia.com/blog/how-implement-performance-metrics-cuda-cc/>
-- Harris, M. "CUDA Pro Tip: Write Flexible Kernels with Grid-Stride Loops." NVIDIA Technical Blog, 2013. <https://developer.nvidia.com/blog/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/>
+- Harris, M. "How to Implement Performance Metrics in CUDA C/C++." NVIDIA Technical Blog, 7 November 2012. <https://developer.nvidia.com/blog/how-implement-performance-metrics-cuda-cc/>
+- Harris, M. "CUDA Pro Tip: Write Flexible Kernels with Grid-Stride Loops." NVIDIA Technical Blog, 22 April 2013. <https://developer.nvidia.com/blog/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/>
+- Harris, M. "How to Optimize Data Transfers in CUDA C/C++." NVIDIA Technical Blog, 4 December 2012. <https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*. Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/>
 - Williams, S., Waterman, A. and Patterson, D. "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4), 2009. <https://doi.org/10.1145/1498765.1498785>
 
@@ -26,8 +27,9 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 03 - Matrix multiplication: from a memory-bound dot product to shared-memory tiling
 
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Shared Memory". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#shared-memory>
-- Boehm, S. "How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog." 2022. <https://siboehm.com/articles/22/CUDA-MMM>
+- Boehm, S. "How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog." December 2022. <https://siboehm.com/articles/22/CUDA-MMM>
 - NVIDIA. *CUTLASS: CUDA Templates for Linear Algebra Subroutines*. Source repository, consulted October 2026. <https://github.com/NVIDIA/cutlass>
+- NVIDIA. "Efficient GEMM in CUDA." CUTLASS documentation, consulted October 2026. <https://github.com/NVIDIA/cutlass/blob/main/media/docs/cpp/efficient_gemm.md>
 - NVIDIA. *cuBLAS Library Documentation*. Consulted October 2026. <https://docs.nvidia.com/cuda/cublas/>
 
 ---
@@ -35,18 +37,21 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 04 - Reduction: summing millions of numbers without a serial bottleneck
 
 - Harris, M. "Optimizing Parallel Reduction in CUDA." NVIDIA, 2007. <https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf>
-- Luitjens, J. "Faster Parallel Reductions on Kepler." NVIDIA Technical Blog, 2014. <https://developer.nvidia.com/blog/faster-parallel-reductions-kepler/>
+- Luitjens, J. "Faster Parallel Reductions on Kepler." NVIDIA Technical Blog, 13 February 2014. <https://developer.nvidia.com/blog/faster-parallel-reductions-kepler/>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Warp Shuffle Functions". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#warp-shuffle-functions>
-- Lin, Y. and Grover, V. "Using CUDA Warp-Level Primitives." NVIDIA Technical Blog, 2018. <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
+- Lin, Y. and Grover, V. "Using CUDA Warp-Level Primitives." NVIDIA Technical Blog, 15 January 2018. <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
+- Harris, M. "CUDA Pro Tip: Write Flexible Kernels with Grid-Stride Loops." NVIDIA Technical Blog, 22 April 2013. <https://developer.nvidia.com/blog/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/>
 
 ---
 
 ## Post 05 - Histogram: beating atomic contention with privatization
 
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Atomic Functions". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#atomic-functions>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Atomic Functions" and "Warp Match Functions". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#atomic-functions>
 - NVIDIA. *CUDA C++ Best Practices Guide*, section "Shared Memory". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory>
-- Gómez-Luna, J., González-Linares, J. M., Benavides, J. I. and Guil, N. "An Optimized Approach to Histogram Computation on GPU." *Machine Vision and Applications*, 2013.
-- Adinetz, A. "CUDA Pro Tip: Optimized Filtering with Warp-Aggregated Atomics." NVIDIA Technical Blog, 2014. <https://developer.nvidia.com/blog/cuda-pro-tip-optimized-filtering-warp-aggregated-atomics/>
+- Gómez-Luna, J., González-Linares, J. M., Benavides, J. I. and Guil, N. "An Optimized Approach to Histogram Computation on GPU." *Machine Vision and Applications* 24(5): 899-908, 2013.
+- Adinets, A. "CUDA Pro Tip: Optimized Filtering with Warp-Aggregated Atomics." NVIDIA Technical Blog, 1 October 2014, updated 2017. <https://developer.nvidia.com/blog/cuda-pro-tip-optimized-filtering-warp-aggregated-atomics/>
+- Sakharnykh, N. "GPU Pro Tip: Fast Histograms Using Shared Atomics on Maxwell." NVIDIA Technical Blog, 17 March 2015. <https://developer.nvidia.com/blog/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/>
+- NVIDIA. *NVIDIA's Next Generation CUDA Compute Architecture: Kepler GK110/210*. Whitepaper V1.1, 2014, section "Atomic Operations". <https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tesla-product-literature/NVIDIA-Kepler-GK110-GK210-Architecture-Whitepaper.pdf>
 
 ---
 
@@ -81,7 +86,7 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Memory Fence Functions" and "Atomic Functions". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#memory-fence-functions>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Independent Thread Scheduling". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#independent-thread-scheduling>
-- Lin, Y. and Grover, V. "Using CUDA Warp-Level Primitives." NVIDIA Technical Blog, 2018. <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
+- Lin, Y. and Grover, V. "Using CUDA Warp-Level Primitives." NVIDIA Technical Blog, 15 January 2018. <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
 - Sorensen, T., Donaldson, A. F., Batty, M., Gopalakrishnan, G. and Rakamarić, Z. "Portable Inter-Workgroup Barrier Synchronisation for GPUs." OOPSLA, 2016.
 - Boehm, H.-J. and Adve, S. V. "Foundations of the C++ Concurrency Memory Model." PLDI, 2008. <https://doi.org/10.1145/1375581.1375591>
 

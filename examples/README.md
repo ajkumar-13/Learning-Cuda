@@ -83,4 +83,4 @@ Available: `vector_addition`, `relu`, `matrix_addition`, `matrix_transpose`, `re
 
 The hands-on code here mirrors the series posts. Start with
 [Post 01 - Why GPUs exist: the CUDA execution model from the ground up](../posts/01-introduction-to-cuda/index.md) and
-[Post 02 — Vector addition](../posts/02-vector-addition/index.md), then work the challenges.
+[Post 02 - Your first CUDA kernel: vector addition and the memory wall](../posts/02-vector-addition/index.md), then work the challenges.

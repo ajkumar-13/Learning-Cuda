@@ -80,7 +80,7 @@ The [running guide](RUNNING.md) is the one recipe for every post: what runs wher
 
 ## Examples and challenges
 
-[examples/](examples/) holds standalone example kernels (vector addition, an elementwise multiply, a CPU reference), the benchmark harness behind post 02's vector-addition table, a CMake build that compiles every runnable post kernel straight from its post's `snippets/` folder, and practice challenges (vector addition, ReLU, matrix addition, matrix transpose, reversing an array), each a problem statement, a kernel to fill in and a test harness. The challenges are practice beside the posts, not part of the series. Its [README](examples/README.md) gives the build commands.
+[examples/](examples/) holds standalone example kernels (vector addition, an elementwise multiply, a CPU reference), an earlier benchmark harness for vector addition (post 02 now ships its own `vector_add_bench.cu`), a CMake build that compiles every runnable post kernel straight from its post's `snippets/` folder, and practice challenges (vector addition, ReLU, matrix addition, matrix transpose, reversing an array), each a problem statement, a kernel to fill in and a test harness. The challenges are practice beside the posts, not part of the series. Its [README](examples/README.md) gives the build commands.
 
 ## Reference pages
 

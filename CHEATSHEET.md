@@ -93,7 +93,7 @@ Discard the first run, average many, and report the kernel alone and the end-to-
 Arithmetic intensity $I$ is FLOP per byte moved to and from DRAM. The roofline caps attainable performance at the smaller of the compute peak and $I \cdot \beta$, where $\beta$ is the card's peak bandwidth.
 
 - Low $I$ (vector addition, about 0.083; transpose; reduction): memory bound. The lever is coalesced access that saturates DRAM bandwidth; extra arithmetic is free.
-- High $I$ (tiled matrix multiplication, attention): compute bound. Reuse data in shared memory and registers, and feed the arithmetic units.
+- Higher $I$ (tiled matrix multiplication, attention): reuse in shared memory and registers raises $I$ toward the card's ridge point (about 19.5 FLOP per byte on the GTX 1650 at its boost clock); one 16 x 16 shared-memory tile gives only 4 FLOP per byte loaded (post 03), and register tiling is what carries a kernel past the ridge.
 
 ---
 

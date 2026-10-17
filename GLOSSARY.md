@@ -62,6 +62,8 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Blelloch scan.** A work-efficient scan in two passes over a tree, an up-sweep that builds partial sums and a down-sweep that distributes them, doing $O(N)$ additions in $O(\log N)$ steps. See [post 08](posts/08-parallel-scan/index.md).
 
+**Grid-stride loop.** A kernel loop in which thread `i` handles elements `i`, `i + stride`, `i + 2 * stride` and so on, where `stride = blockDim.x * gridDim.x` is the number of threads in the grid: a launch of fixed size covers any `N`, adjacent threads still read adjacent addresses on every pass, and each thread combines many elements before any cooperation with other threads. See [post 04](posts/04-reduction/index.md) and [post 05](posts/05-histogram/index.md).
+
 **Halo (apron).** The border of input a tile needs beyond its own output elements, as wide as the filter radius; loaded into shared memory beside the tile. See [post 07](posts/07-convolution/index.md).
 
 **Hillis-Steele scan.** The simple parallel scan: at each step, with a doubling stride, every element adds the element that many positions back, which takes $\log N$ steps but $O(N \log N)$ additions; the right choice inside a warp. See [post 08](posts/08-parallel-scan/index.md).
@@ -77,6 +79,8 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 **Stream compaction.** Removing elements in parallel: an exclusive scan of a keep-or-drop flag gives each kept element its output position. See [post 08](posts/08-parallel-scan/index.md).
 
 **Tiling.** Loading a block of data into shared memory (or registers) once and reusing it many times, to cut global-memory traffic; the step that moves matrix multiplication from memory bound toward compute bound. See [post 03](posts/03-matrix-multiplication/index.md).
+
+**Warp aggregation.** Combining the atomic updates of a warp's lanes that target one address, so that one leader lane issues one atomic for the group. See [post 05](posts/05-histogram/index.md).
 
 **Warp shuffle (`__shfl_*_sync`).** Instructions that let the lanes of a warp read each other's registers directly, with no shared memory and no block barrier. See [post 04](posts/04-reduction/index.md).
 
