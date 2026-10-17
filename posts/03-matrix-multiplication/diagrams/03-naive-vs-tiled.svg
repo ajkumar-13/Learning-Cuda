@@ -1,0 +1,265 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="cuda-03-naive-vs-tiled-title" aria-describedby="cuda-03-naive-vs-tiled-desc">
+<title id="cuda-03-naive-vs-tiled-title">Naive re-reads global memory; tiled loads once per block</title>
+<desc id="cuda-03-naive-vs-tiled-desc">Left, the naive kernel: four threads computing elements 0 to 3 of row 2 of C each read the whole of row 2 of A from global memory, drawn as four red arrows to the same green row: 128 loads per output at K = 64, 524,288 in all. Right, the tiled kernel: a tile of A and a tile of B in global memory are loaded once, one element per thread, into the shared-memory tiles s_A and s_B; a purple __syncthreads() bar marks that the tiles are loaded; the threads then do TILE multiply-adds from shared memory; a second purple bar marks that every thread is done before the next load; an arrow loops back to the next tile. 8 loads per output, 32,768 in all, 16 times fewer.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green { fill: var(--cuda-green); }
+  .f-green-ink { fill: var(--cuda-green-ink); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-purple { fill: var(--cuda-purple); }
+  .f-purple-ink { fill: var(--cuda-purple-ink); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange-line { stroke: var(--cuda-orange-line); }
+  .s-red { stroke: var(--cuda-red); }
+</style>
+<defs>
+<marker id="cuda-03-naive-vs-tiled-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-03-naive-vs-tiled-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-red"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="720"/>
+<text x="40" y="48" class="t-title" data-w="695">Naive re-reads global memory; tiled loads once per block</text>
+<text x="40" y="76" class="t-subtitle" data-w="700">Load counts derived by snippets/matmul_model.py for 64 × 64 × 64, TILE = 16; tiles drawn 4 × 4.</text>
+<text x="40" y="128" class="t-head" data-w="44">naive</text>
+<text x="56" y="168" class="t-label" data-w="176">row 2 of A, global memory</text>
+<rect x="56" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="96" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="136" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="176" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="216" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="256" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="296" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="336" y="184" width="40" height="40" class="cell f-green-soft"/>
+<rect x="56" y="184" width="320" height="40" class="frame" data-fit="skip"/>
+<rect x="56" y="184" width="320" height="40" class="emph s-green" data-fit="skip"/>
+<rect x="56" y="464" width="72" height="48" rx="8" class="f-orange-soft" data-fit="skip"/>
+<rect x="56" y="464" width="72" height="48" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="92" y="496" text-anchor="middle" class="t-code" data-w="60">C[2][0]</text>
+<path d="M92,464 L95.95,227" class="s-red w15 nofill" marker-end="url(#cuda-03-naive-vs-tiled-arrow-red)"/>
+<rect x="152" y="464" width="72" height="48" rx="8" class="f-orange-soft" data-fit="skip"/>
+<rect x="152" y="464" width="72" height="48" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="188" y="496" text-anchor="middle" class="t-code" data-w="60">C[2][1]</text>
+<path d="M188,464 L176.15,227" class="s-red w15 nofill" marker-end="url(#cuda-03-naive-vs-tiled-arrow-red)"/>
+<rect x="248" y="464" width="72" height="48" rx="8" class="f-orange-soft" data-fit="skip"/>
+<rect x="248" y="464" width="72" height="48" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="284" y="496" text-anchor="middle" class="t-code" data-w="60">C[2][2]</text>
+<path d="M284,464 L256.35,226.98" class="s-red w15 nofill" marker-end="url(#cuda-03-naive-vs-tiled-arrow-red)"/>
+<rect x="344" y="464" width="72" height="48" rx="8" class="f-orange-soft" data-fit="skip"/>
+<rect x="344" y="464" width="72" height="48" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="380" y="496" text-anchor="middle" class="t-code" data-w="60">C[2][3]</text>
+<path d="M380,464 L336.54,226.95" class="s-red w15 nofill" marker-end="url(#cuda-03-naive-vs-tiled-arrow-red)"/>
+<text x="56" y="544" class="t-label f-red-ink" data-w="245">4 threads read the same row 4 times</text>
+<text x="56" y="608" class="t-label" data-w="171">128 loads per output (2K)</text>
+<text x="56" y="632" class="t-label" data-w="129">524,288 loads in all</text>
+<text x="520" y="128" class="t-head" data-w="36">tiled</text>
+<text x="520" y="168" class="t-label" data-w="210">tiles of A and B, global memory</text>
+<rect x="520" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="544" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="568" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="592" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="520" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="544" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="568" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="592" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="520" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="544" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="568" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="592" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="520" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="544" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="568" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="592" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="520" y="184" width="96" height="96" class="frame" data-fit="skip"/>
+<rect x="680" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="704" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="728" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="752" y="184" width="24" height="24" class="cell f-green-soft"/>
+<rect x="680" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="704" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="728" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="752" y="208" width="24" height="24" class="cell f-green-soft"/>
+<rect x="680" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="704" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="728" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="752" y="232" width="24" height="24" class="cell f-green-soft"/>
+<rect x="680" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="704" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="728" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="752" y="256" width="24" height="24" class="cell f-green-soft"/>
+<rect x="680" y="184" width="96" height="96" class="frame" data-fit="skip"/>
+<path d="M648,288 L648,333" class="flow" marker-end="url(#cuda-03-naive-vs-tiled-arrow)"/>
+<text x="660" y="316" class="t-note" data-w="173">loaded once, 1 per thread</text>
+<text x="520" y="360" class="t-label" data-w="197">s_A and s_B, shared memory</text>
+<rect x="520" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="544" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="568" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="592" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="520" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="544" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="568" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="592" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="520" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="544" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="568" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="592" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="520" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="544" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="568" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="592" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="520" y="376" width="96" height="96" class="frame" data-fit="skip"/>
+<rect x="680" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="704" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="728" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="752" y="376" width="24" height="24" class="cell f-green"/>
+<rect x="680" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="704" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="728" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="752" y="400" width="24" height="24" class="cell f-green"/>
+<rect x="680" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="704" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="728" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="752" y="424" width="24" height="24" class="cell f-green"/>
+<rect x="680" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="704" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="728" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="752" y="448" width="24" height="24" class="cell f-green"/>
+<rect x="680" y="376" width="96" height="96" class="frame" data-fit="skip"/>
+<rect x="520" y="488" width="352" height="8" class="f-purple" data-fit="skip"/>
+<text x="520" y="520" class="t-code f-purple-ink" data-w="248">__syncthreads(): tiles loaded</text>
+<rect x="520" y="528" width="352" height="40" rx="8" class="f-orange-soft" data-fit="skip"/>
+<rect x="520" y="528" width="352" height="40" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="536" y="552" class="t-label" data-w="215">each thread: TILE multiply-adds</text>
+<rect x="520" y="576" width="352" height="8" class="f-purple" data-fit="skip"/>
+<text x="520" y="608" class="t-code f-purple-ink" data-w="325">__syncthreads(): done before next load</text>
+<path d="M872,580 L888,580 L888,248 L787,248" class="flow" marker-end="url(#cuda-03-naive-vs-tiled-arrow)"/>
+<text x="808" y="272" class="t-tick" data-w="50">next tile</text>
+<text x="624" y="204" class="t-code" data-w="9">A</text>
+<text x="784" y="204" class="t-code" data-w="9">B</text>
+<text x="624" y="396" class="t-code" data-w="26">s_A</text>
+<text x="784" y="396" class="t-code" data-w="26">s_B</text>
+<text x="520" y="640" class="t-label f-green-ink" data-w="291">8 loads per output, 32,768 in all: 16 × fewer</text>
+<text x="40" y="684" class="t-note" data-w="594">Each loaded value is reused TILE times from shared memory before the block moves on.</text>
+</svg>

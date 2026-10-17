@@ -1,0 +1,777 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-003",
+  "next_ordinal": 19,
+  "questions": [
+    {
+      "id": "cuda-003-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 1,
+      "tags": [
+        "2d-index"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In a 2D launch over an output matrix `C: [M, N]`, which expression gives a thread's `row`?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`blockIdx.x * blockDim.x + threadIdx.x`",
+          "correct": false,
+          "feedback": "That is the `.x` form, which the post uses for `col`, the position along a row of `C`."
+        },
+        {
+          "key": "b",
+          "text": "`blockIdx.y * blockDim.y + threadIdx.y`",
+          "correct": true,
+          "feedback": "Yes. The `.y` components give the row, the same form as the 1D global index with `.y` in place of `.x`."
+        },
+        {
+          "key": "c",
+          "text": "`blockIdx.y * blockDim.x + threadIdx.x`",
+          "correct": false,
+          "feedback": "This mixes the block's row index with the width and the thread's column; it only coincides with the row for some threads."
+        },
+        {
+          "key": "d",
+          "text": "`threadIdx.y * blockDim.y + blockIdx.y`",
+          "correct": false,
+          "feedback": "The order is reversed: the block's index is scaled by the block size and the thread's index is added, never the other way round."
+        }
+      ],
+      "explanation": "Section 2: `row = blockIdx.y * blockDim.y + threadIdx.y` and `col = blockIdx.x * blockDim.x + threadIdx.x`, the 2D form of the global index, `row` from the `.y` components and `col` from the `.x` components.",
+      "hints": [
+        "Rows run down the matrix; which component of the launch runs down the grid?"
+      ]
+    },
+    {
+      "id": "cuda-003-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "launch",
+        "ceiling-division",
+        "surplus"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "An output `C: [M, N]` with $M = 600$ rows and $N = 1{,}000$ columns is covered by blocks of 16 x 16 threads, `col` from the `.x` components and `row` from the `.y` components. Give `gridDim.x`, `gridDim.y`, and the number of launched threads that fail the guard `row < M && col < N`.",
+      "answer": {
+        "parts": [
+          {
+            "label": "gridDim.x",
+            "value": 63,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "gridDim.y",
+            "value": 38,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "surplus threads",
+            "value": 12864,
+            "tolerance": 0,
+            "unit": "threads"
+          }
+        ]
+      },
+      "precision_note": "gridDim.x = ceil(1000 / 16) = 63, gridDim.y = ceil(600 / 16) = 38; threads = (63 x 16) x (38 x 16) = 1008 x 608 = 612,864; surplus = 612,864 - 600,000 = 12,864. The same ceil_div as snippets/matmul_model.py. Swapping the dimensions gives the same surplus but gridDim (38, 63); floor division gives (62, 37) and leaves elements uncovered.",
+      "explanation": "Columns run along `.x`, so `gridDim.x` is the ceiling of $1000 / 16$, 63, and rows along `.y`, the ceiling of $600 / 16$, 38. The launch covers $1008 \\times 608 = 612{,}864$ positions for $600{,}000$ elements, so 12,864 threads fail the guard, as in section 2's $1000 \\times 1000$ case.",
+      "hints": [
+        "Blocks come whole in each dimension: round each division up.",
+        "Multiply the covered width by the covered height and subtract $M \\times N$."
+      ]
+    },
+    {
+      "id": "cuda-003-q03",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 8,
+      "tags": [
+        "2d-index",
+        "guard",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`thread_rc` should return a thread's `(row, col)` in a 2D launch over `C: [M, N]`, or `None` when it fails the guard `row < M and col < N`. `block_idx`, `thread_idx` and `block_dim` are `(x, y)` pairs, as in CUDA. The version below returns `(37, 19)` for block `(2, 1)`, thread `(5, 3)` of a 16 x 16 launch, where the post finds `(19, 37)`. Fix it.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def thread_rc(block_idx, thread_idx, block_dim, M, N):\n    \"\"\"(row, col) of a thread in a 2D launch, or None when it fails row < M and col < N.\"\"\"\n    bx, by = block_idx\n    tx, ty = thread_idx\n    dx, dy = block_dim\n    row = bx * dx + tx\n    col = by * dy + ty\n    if row < M and col < N:\n        return row, col\n    return None\n",
+      "solution": "def thread_rc(block_idx, thread_idx, block_dim, M, N):\n    \"\"\"(row, col) of a thread in a 2D launch, or None when it fails row < M and col < N.\"\"\"\n    bx, by = block_idx\n    tx, ty = thread_idx\n    dx, dy = block_dim\n    row = by * dy + ty\n    col = bx * dx + tx\n    if row < M and col < N:\n        return row, col\n    return None\n",
+      "tests": "# the post's worked thread\nassert thread_rc((2, 1), (5, 3), (16, 16), 1000, 1000) == (19, 37)\nassert thread_rc((0, 0), (0, 0), (16, 16), 1, 1) == (0, 0)\n# the last thread inside a 1000 x 1000 output, and the first one past its right edge\nassert thread_rc((62, 62), (7, 7), (16, 16), 1000, 1000) == (999, 999)\nassert thread_rc((62, 62), (8, 0), (16, 16), 1000, 1000) is None\n# a block that is not square: rows step by blockDim.y, columns by blockDim.x\nassert thread_rc((1, 2), (3, 1), (32, 8), 600, 1000) == (17, 35)\n# a matrix that is not square: row 640 is past M = 600 although 640 < N\nassert thread_rc((0, 40), (0, 0), (16, 16), 600, 1000) is None\nassert thread_rc((40, 0), (0, 0), (16, 16), 600, 1000) == (0, 640)\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "`row` comes from the `.y` components and `col` from the `.x` components (section 2): `row = by * dy + ty`, `col = bx * dx + tx`. The starter swapped them, which a square matrix and a square block hide only for the diagonal; the non-square tests catch it, and so does any fix that scales `by` by `dx`.",
+      "hints": [
+        "Which component of the block and thread indices runs down the matrix?",
+        "Take `row` entirely from the `y` parts and `col` entirely from the `x` parts, including the block size."
+      ]
+    },
+    {
+      "id": "cuda-003-q04",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "load-count",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "For a square product with $M = N = K = 512$, how many global loads does the naive kernel issue in all, and how many does the tiled kernel with `TILE = 16` issue, counting as the post's model counts?",
+      "answer": {
+        "parts": [
+          {
+            "label": "naive global loads",
+            "value": 268435456,
+            "tolerance": 0,
+            "unit": "loads"
+          },
+          {
+            "label": "tiled global loads",
+            "value": 16777216,
+            "tolerance": 0,
+            "unit": "loads"
+          }
+        ]
+      },
+      "precision_note": "Naive: 2 loads per multiply-add, 2 x M x N x K = 2 x 512^3 = 268,435,456. Tiled: each value is loaded once per tile step and reused TILE times, 2 x 512^3 / 16 = 16,777,216. snippets/matmul_model.py asserts both formulas against its counts at 64^3. Forgetting the factor 2 gives 134,217,728 and 8,388,608.",
+      "explanation": "The naive kernel issues one load of `A` and one of `B` for each of the $MNK$ multiply-adds, $2 \\times 512^3 = 268{,}435{,}456$. The tiled kernel issues 2 loads per thread per tile step instead of `2 * TILE`, so its count is that divided by 16: 16,777,216 (section 3 prints the same ratio at $64^3$).",
+      "hints": [
+        "Each multiply-add of the naive kernel needs one value of `A` and one of `B`.",
+        "Tiling divides the global loads by `TILE`."
+      ]
+    },
+    {
+      "id": "cuda-003-q05",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "arithmetic-intensity",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The post's model gives 0.25 FLOP per byte loaded for the naive kernel and 4 for the tiled kernel with `TILE = 16`, counting 4-byte floats. With the same counting, what is the FLOP per byte loaded of the tiled kernel with `TILE = 32`?",
+      "answer": {
+        "value": 8,
+        "tolerance": 0,
+        "unit": "FLOP/byte"
+      },
+      "precision_note": "Per output: 2K FLOP over 2K / TILE loads of 4 bytes, so 2K / (2K / TILE x 4) = TILE / 4 = 32 / 4 = 8. The model prints 4.00 for TILE = 16. Dropping the 4 bytes per float gives 32; using TILE squared gives 256.",
+      "explanation": "Each output element costs $2K$ FLOP. Tiled, its thread issues $2K / \\text{TILE}$ loads of 4 bytes, so the ratio is $\\text{TILE} / 4$: 4 for a tile of 16 (section 3's model output) and 8 for a tile of 32. Intensity grows linearly with the tile width.",
+      "hints": [
+        "Write the FLOP per output and the bytes loaded per output in terms of `K` and `TILE`.",
+        "The `K` cancels; what is left depends only on `TILE` and the size of a float."
+      ]
+    },
+    {
+      "id": "cuda-003-q06",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "memory-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A $1024^3$ naive matrix multiply performs about 2.1 billion floating-point operations, yet the post calls it memory bound. Why?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Each multiply-add waits on two 4-byte loads, so its time goes to fetching operands.",
+          "correct": true,
+          "feedback": "Yes. At 0.25 FLOP per byte requested, the arithmetic units sit idle waiting for operands; the FLOP count alone says nothing about the bottleneck."
+        },
+        {
+          "key": "b",
+          "text": "Each thread writes its result to global memory, and those stores dominate the time of the kernel.",
+          "correct": false,
+          "feedback": "Each thread writes once after 2K FLOP and 2K loads. The single store per output element is negligible next to the loads."
+        },
+        {
+          "key": "c",
+          "text": "The loads of a warp are uncoalesced, because each thread of the warp reads a different row of `A`.",
+          "correct": false,
+          "feedback": "The threads of a warp share a row and differ in `col`: they read one address of `A` and consecutive addresses of `B`, which coalesces."
+        },
+        {
+          "key": "d",
+          "text": "Two billion operations is too few to keep a GPU busy, so the launch overhead dominates.",
+          "correct": false,
+          "feedback": "The naive kernel takes about 11 ms at this size on the GTX 1650, thousands of times a launch overhead. The problem is the ratio of loads to arithmetic, not the amount of work."
+        }
+      ],
+      "explanation": "Section 3: every multiply-add needs a value of `A` and one of `B`, two 4-byte loads per 2 FLOP, 0.25 FLOP per byte requested, and the same values are requested by every thread of a row or column. Most repeats never reach DRAM, but the load instructions remain, and the kernel reaches about 200 of the card's roughly 3,100 GFLOP/s.",
+      "hints": [
+        "Compare the bytes requested with the FLOP done per multiply-add."
+      ]
+    },
+    {
+      "id": "cuda-003-q07",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "memory-hierarchy",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The naive kernel requests 8 bytes for every 2 FLOP. If every request went to DRAM at the GTX 1650's theoretical 160 GB/s, it could not exceed 40 GFLOP/s, yet the post measures about 200. Even after a warp merges its identical and neighboring requests, the remaining traffic would need more than 200 GB/s. What part of the memory system must serve the remaining repeated requests?",
+      "answer": {
+        "model": "The L1 and L2 caches: repeated loads of the same values hit in cache instead of going to DRAM.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|not sure)\\b)(?![\\s\\S]*\\b(not|never|no|isn't|aren't|rather than|instead of)\\b(?:(?!dram|because|but\\b|so\\b)[^.;:,\\n]){0,30}\\b(l1|l2|caches?|cache\\s+hierarchy|cached|caching)\\b)(?![\\s\\S]*\\b(l1|l2|caches?)\\b[\\s\\S]{0,12}\\bor\\s+(the\\s+)?(shared|registers?|dram|global)\\b)(?![\\s\\S]*\\b(shared|registers?)\\b[\\s\\S]{0,12}\\bor\\s+(the\\s+)?(l1|l2|caches?)\\b)(?![\\s\\S]*(?<!not )(?<!not the )(?<!not in )(?<!no )(?<!never uses )(?<!without )\\bshared\\b)[\\s\\S]*\\b(l1|l2|caches?|cached|caching)\\b"
+        ]
+      },
+      "explanation": "Section 3: 0.25 FLOP per byte times 160 GB/s is a 40 GFLOP/s ceiling for traffic that all reaches DRAM. Measuring about five times that means at most a fifth of the requested bytes reach DRAM. Merging within a warp (2 distinct values of `A` and 16 of `B` per step for 32 threads) cuts 256 bytes to 72 per 64 FLOP, still about 220 GB/s at 196 GFLOP/s; the L1 and L2 caches serve the rest, because the same row of `A` and column of `B` are requested by many warps and blocks.",
+      "hints": [
+        "Between the load instruction and DRAM sits hardware that keeps recently used data."
+      ]
+    },
+    {
+      "id": "cuda-003-q08",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "barrier"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Name the CUDA C++ function a kernel calls so that every thread of its block waits until all threads of the block have reached that point.",
+      "answer": {
+        "model": "__syncthreads()",
+        "accept": [
+          "^(?![\\s\\S]*\\b(not|never|isn't|maybe|perhaps|probably|i think|or)\\b)(?![\\s\\S]*(syncwarp|devicesynchronize|threadfence|streamsynchronize))[\\s\\S]*(\\b|_)_*syncthreads\\b"
+        ]
+      },
+      "explanation": "Section 4: `__syncthreads()` is the block-wide barrier. The tiled kernel calls it twice per tile step, once after the loads into `s_A` and `s_B` and once after the multiply-adds.",
+      "hints": [
+        "The tiled kernel calls it twice in its loop."
+      ]
+    },
+    {
+      "id": "cuda-003-q09",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "barrier",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "What does the second `__syncthreads()` of the tiled kernel's loop, the one after the multiply-adds, protect?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The tile slots, from being overwritten by the next step's loads while slower threads still read them.",
+          "correct": true,
+          "feedback": "Yes. Without it a fast thread could write the next tile into `s_A` or `s_B` while another thread is still multiplying with the current one."
+        },
+        {
+          "key": "b",
+          "text": "The tile slots, from being read before the threads that own them have finished writing them into shared memory.",
+          "correct": false,
+          "feedback": "That is the first barrier, between the loads and the multiply-adds."
+        },
+        {
+          "key": "c",
+          "text": "The final write to `C`, so that no two threads of the block write the same element of `C` at once.",
+          "correct": false,
+          "feedback": "Each thread writes only its own element of `C`, after the loop; no two threads share an output, so no barrier is needed there."
+        },
+        {
+          "key": "d",
+          "text": "The global loads, so that the threads of each warp read consecutive addresses together and coalesce.",
+          "correct": false,
+          "feedback": "Coalescing depends on the addresses a warp's threads use, not on a barrier; the barrier orders the block's threads in time."
+        }
+      ],
+      "explanation": "Section 4: the first barrier protects this step's reads from its writes; the second protects the next step's writes from this step's reads. Every thread must be done with the current tile before any thread overwrites it.",
+      "hints": [
+        "What happens to `s_A` and `s_B` at the start of the next iteration?"
+      ]
+    },
+    {
+      "id": "cuda-003-q10",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "tiling",
+        "barrier"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Put the work of one thread of the tiled kernel in order, from the start of a tile step to the end of the kernel, for a product whose `K` is exactly one tile wide.",
+      "items": [
+        {
+          "key": "a",
+          "text": "add the TILE products of its row of s_A and column of s_B to sum"
+        },
+        {
+          "key": "b",
+          "text": "write sum to C, if row < M and col < N"
+        },
+        {
+          "key": "c",
+          "text": "store one element of A into s_A and one element of B into s_B"
+        },
+        {
+          "key": "d",
+          "text": "wait at __syncthreads() until the block has finished the multiply-adds"
+        },
+        {
+          "key": "e",
+          "text": "wait at __syncthreads() until the block has filled both tiles"
+        }
+      ],
+      "answer": [
+        "c",
+        "e",
+        "a",
+        "d",
+        "b"
+      ],
+      "partial_credit": true,
+      "explanation": "Section 4: each thread loads its slot of both tiles, the first barrier waits for the block to finish loading, the thread adds its `TILE` products from shared memory, the second barrier waits for the block to finish reading, and after the loop the guarded write stores the result.",
+      "hints": [
+        "A tile must be complete before anyone reads it.",
+        "The guarded write comes after the loop."
+      ]
+    },
+    {
+      "id": "cuda-003-q11",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "barrier",
+        "divergence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A variant of the tiled kernel wraps the whole body of its tile loop, loads and both barriers, in `if (row < M && col < N) { ... }` to skip the threads past the edge. For $M = N = K = 1000$ and `TILE = 16`, what is the problem?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Some threads of an edge block reach `__syncthreads()` and others skip it, which can hang the block.",
+          "correct": true,
+          "feedback": "Yes. A barrier must be reached by every thread of the block; in the last row and column of blocks the guard is false for some threads."
+        },
+        {
+          "key": "b",
+          "text": "None: 1000 is not a multiple of 16, so the guard around the loop body is needed, and it makes the kernel correct.",
+          "correct": false,
+          "feedback": "The guard is needed, but not around the barriers. The post loads unconditionally with zero fill and guards only the final write."
+        },
+        {
+          "key": "c",
+          "text": "The compiler rejects a `__syncthreads()` placed inside an `if` statement, so the kernel does not even build.",
+          "correct": false,
+          "feedback": "It compiles. The rule is about what happens at run time when the threads of a block take different paths."
+        },
+        {
+          "key": "d",
+          "text": "Only speed: the threads past the edge sit idle in every edge block, which wastes a few percent of the launch.",
+          "correct": false,
+          "feedback": "Idle surplus threads are harmless; the danger is the barrier that only some threads of a block reach."
+        }
+      ],
+      "explanation": "Section 7: a `__syncthreads()` inside a condition that differs within a block is undefined behavior. In the edge blocks of a $1000 \\times 1000$ product the guard splits each block, so the barrier is reached by only some threads. The fix is to load unconditionally with zero fill and guard only the write to `C`.",
+      "hints": [
+        "Which blocks contain threads on both sides of the guard?",
+        "What must be true of every thread of a block at a barrier?"
+      ]
+    },
+    {
+      "id": "cuda-003-q12",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 10,
+      "tags": [
+        "tiling",
+        "zero-fill",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`tiled_matmul(A, B, tile)` multiplies two lists of lists the way the tiled kernel does: it walks `K` one tile at a time and treats a slot of the tile past the end of `K` as 0.0. The version below gives a wrong `C` whenever `K` is not a multiple of `tile`. Fix it.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def tiled_matmul(A, B, tile):\n    \"\"\"C = A * B, accumulated over K one tile of width `tile` at a time; slots past K count as 0.0.\"\"\"\n    M, K, N = len(A), len(B), len(B[0])\n    C = [[0.0] * N for _ in range(M)]\n    for t in range(K // tile):\n        for i in range(M):\n            for j in range(N):\n                for k in range(tile):\n                    kk = t * tile + k\n                    a = A[i][kk] if kk < K else 0.0\n                    b = B[kk][j] if kk < K else 0.0\n                    C[i][j] += a * b\n    return C\n",
+      "solution": "def tiled_matmul(A, B, tile):\n    \"\"\"C = A * B, accumulated over K one tile of width `tile` at a time; slots past K count as 0.0.\"\"\"\n    M, K, N = len(A), len(B), len(B[0])\n    C = [[0.0] * N for _ in range(M)]\n    for t in range((K + tile - 1) // tile):\n        for i in range(M):\n            for j in range(N):\n                for k in range(tile):\n                    kk = t * tile + k\n                    a = A[i][kk] if kk < K else 0.0\n                    b = B[kk][j] if kk < K else 0.0\n                    C[i][j] += a * b\n    return C\n",
+      "tests": "def naive(A, B):\n    return [[sum(A[i][k] * B[k][j] for k in range(len(B))) for j in range(len(B[0]))] for i in range(len(A))]\n\nA = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]\nB = [[1, 0], [0, 1], [2, 3], [4, 5], [6, 7]]\n# K = 5 is a multiple of neither tile\nassert tiled_matmul(A, B, 2) == naive(A, B)\nassert tiled_matmul(A, B, 4) == naive(A, B)\n# K = 5, a tile wider than K: one partial tile\nassert tiled_matmul(A, B, 16) == naive(A, B)\n# an exact multiple still works\nA2 = [[1, 2, 3, 4], [5, 6, 7, 8]]\nB2 = [[1, 2], [3, 4], [5, 6], [7, 8]]\nassert tiled_matmul(A2, B2, 2) == naive(A2, B2)\nassert tiled_matmul(A2, B2, 4) == naive(A2, B2)\nassert tiled_matmul([[3]], [[4]], 16) == [[12.0]]\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "The loop over tiles must run the ceiling of `K / tile` times, `(K + tile - 1) // tile`, exactly as the kernel's `for (int t = 0; t < (K + TILE - 1) / TILE; ++t)` (section 4); the zero fill then makes the partial last tile contribute only its in-range products. The floor division of the starter drops the last partial tile, and with a tile wider than `K` it runs no tile at all. `math.ceil(K / tile)` is equally correct.",
+      "hints": [
+        "How many tiles of width `tile` does it take to cover `K` when `K` is not a multiple?",
+        "Round the number of tiles up, as the kernel's loop bound does; the zero fill handles the rest."
+      ]
+    },
+    {
+      "id": "cuda-003-q13",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "benchmark",
+        "gflops"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "From the table that `matmul.cu` printed on the author's GTX 1650: (a) how many times less time does cuBLAS take than the naive kernel at $512^3$ (naive 1.184 ms, cuBLAS 0.179 ms)? (b) cuBLAS took 9.946 ms at $2048^3$; how many GFLOP/s is that?",
+      "stimulus": {
+        "kind": "code",
+        "language": "text",
+        "content": "  size    naive ms  GFLOP/s    tiled ms  GFLOP/s   cuBLAS ms  GFLOP/s\n   512       1.184      227       0.814      330       0.179     1502\n  2048     108.001      159      77.244      222       9.946     ????",
+        "caption": "Two rows of the measured table of section 5, one value hidden."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "naive time over cuBLAS time at 512^3",
+            "value": 6.61,
+            "tolerance": 0.05,
+            "unit": "times"
+          },
+          {
+            "label": "cuBLAS at 2048^3",
+            "value": 1727,
+            "tolerance": 2,
+            "unit": "GFLOP/s"
+          }
+        ]
+      },
+      "precision_note": "(a) 1.184 / 0.179 = 6.615. (b) 2 x 2048^3 = 17,179,869,184 FLOP; / 9.946e-3 s = 1.7273e12 FLOP/s = 1,727 GFLOP/s, the value matmul.cu prints (flop / (ms * 1e6)). Using 2048^3 without the factor 2 gives 864; the GFLOP/s ratio 1502 / 227 = 6.62 is the same comparison and is accepted.",
+      "explanation": "Section 5: time ratios compare kernels, and GFLOP/s is $2MNK$ FLOP divided by the time. (a) $1.184 / 0.179 \\approx 6.6$. (b) $2 \\times 2048^3 / 9.946\\,\\text{ms} \\approx 1{,}727$ GFLOP/s, measured on one laptop card that drifts from run to run.",
+      "hints": [
+        "For (b), count the FLOP of one product first: one multiply and one add per inner step.",
+        "Divide $2 \\times 2048^3$ by the time in seconds and by $10^9$."
+      ]
+    },
+    {
+      "id": "cuda-003-q14",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2",
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "benchmark",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The model says tiling divides the global loads by 16, but at $1024^3$ the tiled kernel runs only 1.6 times faster than the naive one on the GTX 1650. Which explanation agrees with the post's model and measurements?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Most naive repeats never reached DRAM, and the tiled loop still issues two shared-memory loads per multiply-add.",
+          "correct": true,
+          "feedback": "Yes. Tiling mostly removed traffic that never reached DRAM, and the shared-memory loads and barriers now set the pace."
+        },
+        {
+          "key": "b",
+          "text": "The tiled kernel's loads from global memory are uncoalesced, which wastes most of the DRAM bandwidth that the tile saved.",
+          "correct": false,
+          "feedback": "Consecutive `threadIdx.x` read consecutive addresses of a row of `A` or `B`; the tile loads are coalesced."
+        },
+        {
+          "key": "c",
+          "text": "The model miscounts the loads: the tiled kernel really issues as many global loads as the naive kernel does.",
+          "correct": false,
+          "feedback": "The model runs the kernel's load pattern and counts every load: 32,768 against 524,288 at $64^3$."
+        },
+        {
+          "key": "d",
+          "text": "Shared memory is as slow as DRAM on this card, so moving every repeated load into shared memory saves nothing.",
+          "correct": false,
+          "feedback": "Shared memory is on-chip; if it were as slow as DRAM the tiled kernel would not be faster at all, and cuBLAS, which leans on it, would not reach 2,189 GFLOP/s."
+        }
+      ],
+      "explanation": "Section 5: the naive kernel already beat its DRAM-only ceiling of 40 GFLOP/s by about five times, so most of its loads never reached DRAM (merged within a warp or served by the caches); and the tiled loop does two shared-memory loads per multiply-add plus a barrier per tile. Register tiling attacks that second cost.",
+      "hints": [
+        "Compare the naive kernel's measured GFLOP/s with its DRAM-only ceiling.",
+        "What does each multiply-add of the tiled kernel still need?"
+      ]
+    },
+    {
+      "id": "cuda-003-q15",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "optimizations",
+        "cublas"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Match each technique to what it changes in a matrix-multiply kernel.",
+      "left": [
+        {
+          "key": "1",
+          "text": "shared-memory tiling"
+        },
+        {
+          "key": "2",
+          "text": "register tiling"
+        },
+        {
+          "key": "3",
+          "text": "vectorized float4 loads"
+        },
+        {
+          "key": "4",
+          "text": "double buffering"
+        }
+      ],
+      "right": [
+        {
+          "key": "a",
+          "text": "a block loads a tile of A and B once and all its threads reuse it"
+        },
+        {
+          "key": "b",
+          "text": "each thread computes several outputs, so one value read from shared memory feeds several multiply-adds"
+        },
+        {
+          "key": "c",
+          "text": "one load instruction moves four floats"
+        },
+        {
+          "key": "d",
+          "text": "the next tile is loaded while the current one is used"
+        },
+        {
+          "key": "e",
+          "text": "the threads of a warp read consecutive addresses"
+        },
+        {
+          "key": "f",
+          "text": "each thread adds its products with an atomic operation"
+        }
+      ],
+      "answer": {
+        "1": "a",
+        "2": "b",
+        "3": "c",
+        "4": "d"
+      },
+      "explanation": "Section 5: the post's kernel does shared-memory tiling; a tuned library adds register tiling, `float4` loads and double buffering. Consecutive addresses across a warp is coalescing, a property of the tile loads rather than one of these techniques, and no step of a matrix multiply needs an atomic.",
+      "hints": [
+        "Two of the right-hand items describe none of the four techniques.",
+        "Double buffering is the subject of post 15."
+      ]
+    },
+    {
+      "id": "cuda-003-q16",
+      "type": "numeric",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "7",
+      "est_minutes": 4,
+      "tags": [
+        "launch",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The tiled kernel with `TILE = 16` is launched over a $1024 \\times 1024$ output with the grid unchanged, $(64, 64)$ blocks, but with blocks of only $8 \\times 8$ threads. Its index uses `blockDim`. What percentage of the elements of `C` does it write at all?",
+      "answer": {
+        "value": 25,
+        "tolerance": 0,
+        "unit": "%"
+      },
+      "precision_note": "row = blockIdx.y * 8 + threadIdx.y reaches at most 63 * 8 + 7 = 511, and col likewise 511, so only the 512 x 512 top-left quarter is written: 262,144 of 1,048,576 elements, 25%. Section 7 reports the run: 640 GFLOP/s at 256^3 with relative error 1.0. Counting rows only gives 50%.",
+      "explanation": "With `blockDim` of 8 the 64 blocks of each dimension cover only rows and columns 0 to 511, half of each dimension, so a quarter of `C` is written and three quarters are not (section 7); the written quarter is wrong too, because only an $8 \\times 8$ corner of each tile is loaded. The kernel runs fast and fails its check.",
+      "hints": [
+        "Find the largest `row` any thread computes.",
+        "The same limit applies to `col`; combine the two."
+      ]
+    },
+    {
+      "id": "cuda-003-q17",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o2",
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 15,
+      "tags": [
+        "roofline",
+        "arithmetic-intensity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "connects": [
+        "cuda-010"
+      ],
+      "prompt": "Post 10 places kernels under a roofline: attainable GFLOP/s is the smaller of the compute peak and $I \\cdot \\beta$. Take this post's numbers for the GTX 1650: $\\beta = 160$ GB/s, a compute peak of about 3,118 GFLOP/s, and the model's 0.25 and 4 FLOP per byte loaded for the naive and the tiled kernel. Compute the ridge point and each kernel's ceiling if every loaded byte came from DRAM, compare them with the measured 196 and 305 GFLOP/s at $1024^3$, and explain what the comparison reveals and what would move the tiled kernel toward the ridge.",
+      "kind": "connect",
+      "solution": "1. Ridge point: $3118 / 160 \\approx 19.5$ FLOP per byte. Both kernels sit far left of it, in the memory-bound region, if their loaded bytes all came from DRAM.\n2. Ceilings: naive $0.25 \\times 160 = 40$ GFLOP/s; tiled $4 \\times 160 = 640$ GFLOP/s.\n3. Comparison: the naive kernel measures 196 GFLOP/s, about five times its DRAM-only ceiling, so most of its loads never reach DRAM: a warp merges its identical and neighboring requests, and the L1 and L2 caches serve the rest; the bytes it loads are not the bytes DRAM moves, and its true DRAM intensity is higher than 0.25. The tiled kernel measures 305, under half its 640 ceiling, so DRAM is not what limits it: its two shared-memory loads per multiply-add and its barriers are.\n4. Moving toward the ridge: a larger `TILE` raises the global intensity ($\\text{TILE} / 4$, 8 at a tile of 32) but costs occupancy; register tiling, each thread computing a small block of outputs, cuts the shared-memory loads per multiply-add, which is the limit the tiled kernel actually hits; `float4` loads and double buffering reduce instruction count and hide latency. cuBLAS, at 2,189 GFLOP/s, about 70% of the boost-clock peak, shows how far these steps go.\n5. Lesson for the roofline: intensity must be measured in the bytes that actually cross the boundary the roof models; a load count is an upper bound on DRAM traffic, which is why post 11 measures it with a profiler.",
+      "rubric": [
+        {
+          "criterion": "Computes the ridge point (about 19.5 FLOP per byte) and both DRAM-only ceilings (40 and 640 GFLOP/s).",
+          "points": 3
+        },
+        {
+          "criterion": "Notes that the naive kernel exceeds its ceiling and concludes that most of its loads never reach DRAM (merged within a warp or served by the caches).",
+          "points": 2
+        },
+        {
+          "criterion": "Notes that the tiled kernel is below its ceiling and names shared-memory loads or instruction overhead as its limit.",
+          "points": 2
+        },
+        {
+          "criterion": "Names register tiling (and optionally a larger tile, float4 loads, double buffering) as what moves it toward the ridge, with the trade-off of a larger tile.",
+          "points": 2
+        }
+      ],
+      "answer_length": "two paragraphs",
+      "explanation": "Sections 3 and 5 give the intensities, the measured rates and the peak; post 10 supplies the roofline. The naive kernel beating its DRAM-only ceiling is the evidence that loaded bytes overstate DRAM traffic, and the tiled kernel falling short of its ceiling points at the shared-memory traffic that register tiling removes.",
+      "hints": [
+        "The ridge point is the peak compute divided by the bandwidth.",
+        "A measured rate above a ceiling means an assumption behind the ceiling is false; which one?"
+      ]
+    },
+    {
+      "id": "cuda-003-q18",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "barrier",
+        "double-buffering"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A reader proposes declaring two copies of each tile, `s_A[2][TILE][TILE]` and `s_B[2][TILE][TILE]`, loading the tiles of step `t` into buffer `t % 2`, and deleting the second `__syncthreads()` of the loop, keeping only the one after the loads. Is the kernel still correct? Argue from what each of the two barriers protected in the original kernel.",
+      "kind": "critique",
+      "solution": "Yes, one barrier per step is then enough.\n\nIn the original kernel the first barrier protects a step's reads from its writes: no thread reads a slot of the tile before its owner has stored it. That hazard is unchanged by double buffering, so the barrier after the loads must stay.\n\nThe second barrier protected the next step's writes from the current step's reads, because step `t + 1` overwrote the same arrays that step `t` was still reading. With two buffers, step `t + 1` writes buffer `(t + 1) % 2`, which was last read during step `t - 1`. A thread can only start step `t + 1`'s loads after it has passed the barrier of step `t`, and no thread passes that barrier until every thread has reached it, which each thread does only after finishing its reads of step `t - 1`. So every read of the buffer being overwritten is complete before any write to it.\n\nThe cost is twice the shared memory, 4 KB per block instead of 2 KB at `TILE = 16`. The same arrangement is the start of the double-buffered pipeline of post 15, where the next tile's load is also overlapped with the current tile's multiply-adds.",
+      "rubric": [
+        {
+          "criterion": "States what each original barrier protects: reads after writes within a step, and next-step writes after current-step reads.",
+          "points": 2
+        },
+        {
+          "criterion": "Keeps the first barrier and explains why double buffering does not remove that hazard.",
+          "points": 2
+        },
+        {
+          "criterion": "Shows that the buffer written in step t + 1 was last read in step t - 1, before the barrier of step t, so the second barrier is no longer needed.",
+          "points": 3
+        },
+        {
+          "criterion": "Notes the cost in shared memory or the link to the double buffering of post 15.",
+          "points": 1
+        }
+      ],
+      "answer_length": "two or three paragraphs",
+      "explanation": "Section 4 assigns one hazard to each barrier. Double buffering separates the buffer being written from the buffer being read, so the write-after-read hazard is covered by the previous step's barrier, while the read-after-write hazard within a step still needs its own.",
+      "hints": [
+        "List the two hazards the original barriers prevent.",
+        "In the proposed kernel, when was the buffer that step `t + 1` writes last read?"
+      ]
+    }
+  ]
+}

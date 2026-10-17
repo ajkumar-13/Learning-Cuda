@@ -1,8 +1,25 @@
 id: cuda-003
 slug: 03-matrix-multiplication
-title: "03 · Matrix multiplication — from a memory-bound dot product to shared-memory tiling"
+title: "03 - Matrix multiplication: from a memory-bound dot product to shared-memory tiling"
+summary: "Why the one-thread-per-output matrix multiply spends its time on loads, how a shared-memory tile with two barriers divides the global loads by the tile width, and how both kernels measure against cuBLAS."
 date: 2026-07-02
-tags: [first-kernels, cuda, shared-memory]
-hero: diagrams/01-dot-product.svg
-reading_time: 16
+updated: 2026-10-17
+status: complete
 part: "Part I - First Kernels"
+level: beginner
+reading_time: 12
+tags: [cuda, matrix-multiplication, shared-memory, tiling, cublas, first-kernels]
+hero: diagrams/01-dot-product.svg
+prerequisites: [cuda-002]
+code: included
+outcomes:
+  - id: o1
+    text: "Map a 2D output matrix onto a 2D grid of 16 x 16 blocks and compute any thread's (row, col) by hand."
+  - id: o2
+    text: "Count the global loads per output element of the naive and the tiled kernel, and explain why the naive kernel is memory bound."
+  - id: o3
+    text: "Write a tiled kernel with shared-memory tiles and two barriers, and say what each barrier protects."
+  - id: o4
+    text: "Read a naive, tiled, and cuBLAS benchmark in ms and GFLOP/s, and name what a tuned library adds beyond one level of tiling."
+compute: gpu-small
+hardware: gtx-1650
