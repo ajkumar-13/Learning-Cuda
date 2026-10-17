@@ -1,8 +1,27 @@
 id: cuda-002
 slug: 02-vector-addition
-title: "02 · Your first CUDA kernel — vector addition and the memory wall"
+title: "02 - Your first CUDA kernel: vector addition and the memory wall"
+summary: "How a launch of guarded threads replaces the loop of C[i] = A[i] + B[i], the host code that copies data in and out, and why a kernel at 12 bytes per addition is memory bound and judged by its bandwidth."
 date: 2026-06-30
-tags: [first-kernels, cuda, memory-bound]
-hero: diagrams/01-grid-is-the-loop.svg
-reading_time: 14
+updated: 2026-10-17
+status: complete
 part: "Part I - First Kernels"
+level: beginner
+reading_time: 17
+tags: [cuda, first-kernels, vector-addition, memory-bound, benchmarking, host-device]
+hero: diagrams/01-grid-is-the-loop.svg
+prerequisites: [cuda-001]
+code: included
+outcomes:
+  - id: o1
+    text: "Write the vector-addition kernel from one thread's point of view and compute any thread's global index in a launch."
+  - id: o2
+    text: "Size a launch with a ceiling division, pick a block size that is a multiple of 32, and say what the guard `if (i < N)` does for the surplus threads."
+  - id: o3
+    text: "Move data across the host and device boundary with `cudaMalloc`, `cudaMemcpy`, and `cudaFree`, and check every call and the launch with `CUDA_CHECK`."
+  - id: o4
+    text: "Benchmark a kernel honestly with CUDA events, a warm-up, pinned memory, and a check of every element, timing the kernel apart from the copies."
+  - id: o5
+    text: "Predict from arithmetic intensity that vector addition is memory bound, and judge the kernel by its achieved bandwidth as a fraction of the card's peak."
+compute: gpu-small
+hardware: gtx-1650

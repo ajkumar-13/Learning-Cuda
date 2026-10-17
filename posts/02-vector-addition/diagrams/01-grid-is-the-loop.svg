@@ -1,90 +1,254 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">The CPU walks the array one index per step; the GPU runs one thread per index, all logically in parallel</title>
-  <desc id="d">A single output array C of six values 1.5 through 6.5 sits in the middle. Above it, the CPU view: numbered badges 1 through 6 over the cells and a left-to-right arrow show that one core fills the elements strictly in order, one step at a time. Below it, the GPU view: six threads t0 through t5, split by a dashed divider into block 0 (threads 0 to 3) and block 1 (threads 4 and 5) because blockDim.x is 4, one under each cell, each with an arrow to its own cell, all running logically in parallel in a single launch. One thread, t5, is highlighted in green to show how a thread finds its element: its global index is blockIdx.x times blockDim.x plus threadIdx.x, which for block 1, thread 1 is 1 times 4 plus 1 equals 5, so it owns cell 5. The takeaway is that the loop the CPU runs over the indices becomes, on the GPU, a grid of threads that each own one index.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--cuda-ink);}
-    .monohi{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:13px;fill:var(--cuda-success);}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .cellhi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .node{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .nodehi{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .flow{stroke:var(--cuda-ink-muted);stroke-width:1;fill:none;}
-    .flowhi{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
-    .badge{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .badgetxt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink-muted);}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">The grid is the loop: one thread per element</text>
-  <text class="small" x="40" y="66">Computing C[i] = A[i] + B[i] over a six-element array.</text>
-
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
-    <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
-  </defs>
-
-  <!-- CPU: sequential, above -->
-  <text class="label" x="288" y="120">CPU — one core, in sequence</text>
-  <g>
-    <circle class="badge" cx="320" cy="150" r="11"/><text class="badgetxt" x="320" y="154" text-anchor="middle">1</text>
-    <circle class="badge" cx="384" cy="150" r="11"/><text class="badgetxt" x="384" y="154" text-anchor="middle">2</text>
-    <circle class="badge" cx="448" cy="150" r="11"/><text class="badgetxt" x="448" y="154" text-anchor="middle">3</text>
-    <circle class="badge" cx="512" cy="150" r="11"/><text class="badgetxt" x="512" y="154" text-anchor="middle">4</text>
-    <circle class="badge" cx="576" cy="150" r="11"/><text class="badgetxt" x="576" y="154" text-anchor="middle">5</text>
-    <circle class="badge" cx="640" cy="150" r="11"/><text class="badgetxt" x="640" y="154" text-anchor="middle">6</text>
-  </g>
-  <path class="flow" d="M320,176 L640,176" marker-end="url(#a)"/>
-  <text class="small" x="40" y="180">six steps,</text>
-  <text class="small" x="40" y="198">one after another</text>
-
-  <!-- the array (neutral) -->
-  <text class="label" x="232" y="244" text-anchor="end">array C</text>
-  <g>
-    <rect class="cell"   x="288" y="222" width="64" height="44"/><text class="mono" x="320" y="249" text-anchor="middle">1.5</text>
-    <rect class="cell"   x="352" y="222" width="64" height="44"/><text class="mono" x="384" y="249" text-anchor="middle">2.5</text>
-    <rect class="cell"   x="416" y="222" width="64" height="44"/><text class="mono" x="448" y="249" text-anchor="middle">3.5</text>
-    <rect class="cell"   x="480" y="222" width="64" height="44"/><text class="mono" x="512" y="249" text-anchor="middle">4.5</text>
-    <rect class="cell"   x="544" y="222" width="64" height="44"/><text class="mono" x="576" y="249" text-anchor="middle">5.5</text>
-    <rect class="cellhi" x="608" y="222" width="64" height="44"/><text class="mono" x="640" y="249" text-anchor="middle">6.5</text>
-  </g>
-  <text class="small" x="320" y="286" text-anchor="middle">0</text>
-  <text class="small" x="384" y="286" text-anchor="middle">1</text>
-  <text class="small" x="448" y="286" text-anchor="middle">2</text>
-  <text class="small" x="512" y="286" text-anchor="middle">3</text>
-  <text class="small" x="576" y="286" text-anchor="middle">4</text>
-  <text class="small" x="640" y="286" text-anchor="middle">5</text>
-
-  <!-- GPU: parallel, below -->
-  <g>
-    <path class="flow" d="M320,360 L320,300" marker-end="url(#a)"/>
-    <path class="flow" d="M384,360 L384,300" marker-end="url(#a)"/>
-    <path class="flow" d="M448,360 L448,300" marker-end="url(#a)"/>
-    <path class="flow" d="M512,360 L512,300" marker-end="url(#a)"/>
-    <path class="flow" d="M576,360 L576,300" marker-end="url(#a)"/>
-    <path class="flowhi" d="M640,360 L640,300" marker-end="url(#aS)"/>
-  </g>
-  <g>
-    <rect class="node"   x="288" y="362" width="64" height="38" rx="5"/><text class="mono" x="320" y="386" text-anchor="middle">t0</text>
-    <rect class="node"   x="352" y="362" width="64" height="38" rx="5"/><text class="mono" x="384" y="386" text-anchor="middle">t1</text>
-    <rect class="node"   x="416" y="362" width="64" height="38" rx="5"/><text class="mono" x="448" y="386" text-anchor="middle">t2</text>
-    <rect class="node"   x="480" y="362" width="64" height="38" rx="5"/><text class="mono" x="512" y="386" text-anchor="middle">t3</text>
-    <rect class="node"   x="544" y="362" width="64" height="38" rx="5"/><text class="mono" x="576" y="386" text-anchor="middle">t4</text>
-    <rect class="nodehi" x="608" y="362" width="64" height="38" rx="5"/><text class="mono" x="640" y="386" text-anchor="middle">t5</text>
-  </g>
-
-  <!-- block boundary: with blockDim.x = 4 the threads fall into block 0 (0-3) and block 1 (4-...) -->
-  <line x1="544" y1="300" x2="544" y2="402" stroke="var(--cuda-ink-muted)" stroke-width="1" stroke-dasharray="4 4"/>
-  <text class="small" x="416" y="418" text-anchor="middle">block 0</text>
-  <text class="small" x="608" y="418" text-anchor="middle">block 1</text>
-
-  <text class="label" x="288" y="444">GPU — six threads, one launch, all in parallel</text>
-
-  <!-- single green-traced explanation -->
-  <text class="small" x="288" y="470">thread t5 finds its own index:</text>
-  <text class="monohi" x="288" y="492">i = blockIdx.x * blockDim.x + threadIdx.x = 1 * 4 + 1 = 5</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-grid-is-the-loop-title" aria-describedby="cuda-01-grid-is-the-loop-desc">
+<title id="cuda-01-grid-is-the-loop-title">The grid is the loop: one thread per element</title>
+<desc id="cuda-01-grid-is-the-loop-desc">Two panels over the same array C of 6 elements, C[0] to C[5], drawn in green above a time axis of steps. Left, the CPU: one thread walks the loop, so in step 1 it writes C[0], in step 2 C[1], and so on to C[5] in step 6: a blue diagonal of 6 cells over 6 steps. Right, the GPU: 6 threads, one per index, write all 6 elements in step 1, drawn as one orange row; steps 2 to 6 are an empty dashed region. A downward arrow on each side marks time. Each thread finds its index with i = blockIdx.x * blockDim.x + threadIdx.x.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-blue-soft { fill: var(--cuda-blue-soft); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .t-cell13 { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+</style>
+<defs>
+<marker id="cuda-01-grid-is-the-loop-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="533">The grid is the loop: one thread per element</text>
+<text x="40" y="76" class="t-subtitle" data-w="585">C[i] = A[i] + B[i] over 6 elements: 6 steps in sequence against one step in parallel.</text>
+<text x="40" y="128" class="t-head" data-w="255">CPU: one thread walks the loop</text>
+<rect x="104" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="144" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="184" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="224" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="264" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="304" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="104" y="144" width="240" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="124" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[0]</text>
+<text x="164" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[1]</text>
+<text x="204" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[2]</text>
+<text x="244" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[3]</text>
+<text x="284" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[4]</text>
+<text x="324" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[5]</text>
+</g>
+<text x="40" y="168" class="t-tick" data-w="32">array</text>
+<rect x="104" y="200" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="144" y="200" width="40" height="40" class="cell"/>
+<rect x="184" y="200" width="40" height="40" class="cell"/>
+<rect x="224" y="200" width="40" height="40" class="cell"/>
+<rect x="264" y="200" width="40" height="40" class="cell"/>
+<rect x="304" y="200" width="40" height="40" class="cell"/>
+<rect x="104" y="240" width="40" height="40" class="cell"/>
+<rect x="144" y="240" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="184" y="240" width="40" height="40" class="cell"/>
+<rect x="224" y="240" width="40" height="40" class="cell"/>
+<rect x="264" y="240" width="40" height="40" class="cell"/>
+<rect x="304" y="240" width="40" height="40" class="cell"/>
+<rect x="104" y="280" width="40" height="40" class="cell"/>
+<rect x="144" y="280" width="40" height="40" class="cell"/>
+<rect x="184" y="280" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="224" y="280" width="40" height="40" class="cell"/>
+<rect x="264" y="280" width="40" height="40" class="cell"/>
+<rect x="304" y="280" width="40" height="40" class="cell"/>
+<rect x="104" y="320" width="40" height="40" class="cell"/>
+<rect x="144" y="320" width="40" height="40" class="cell"/>
+<rect x="184" y="320" width="40" height="40" class="cell"/>
+<rect x="224" y="320" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="264" y="320" width="40" height="40" class="cell"/>
+<rect x="304" y="320" width="40" height="40" class="cell"/>
+<rect x="104" y="360" width="40" height="40" class="cell"/>
+<rect x="144" y="360" width="40" height="40" class="cell"/>
+<rect x="184" y="360" width="40" height="40" class="cell"/>
+<rect x="224" y="360" width="40" height="40" class="cell"/>
+<rect x="264" y="360" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="304" y="360" width="40" height="40" class="cell"/>
+<rect x="104" y="400" width="40" height="40" class="cell"/>
+<rect x="144" y="400" width="40" height="40" class="cell"/>
+<rect x="184" y="400" width="40" height="40" class="cell"/>
+<rect x="224" y="400" width="40" height="40" class="cell"/>
+<rect x="264" y="400" width="40" height="40" class="cell"/>
+<rect x="304" y="400" width="40" height="40" class="cell f-blue-soft"/>
+<rect x="104" y="200" width="240" height="240" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="124" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 0</text>
+<text x="164" y="265" text-anchor="middle" class="t-cell13" data-w="28">i = 1</text>
+<text x="204" y="305" text-anchor="middle" class="t-cell13" data-w="28">i = 2</text>
+<text x="244" y="345" text-anchor="middle" class="t-cell13" data-w="28">i = 3</text>
+<text x="284" y="385" text-anchor="middle" class="t-cell13" data-w="28">i = 4</text>
+<text x="324" y="425" text-anchor="middle" class="t-cell13" data-w="28">i = 5</text>
+</g>
+<g data-grid="skip">
+<text x="96" y="225" text-anchor="end" class="t-tick" data-w="39">step 1</text>
+<text x="96" y="265" text-anchor="end" class="t-tick" data-w="39">step 2</text>
+<text x="96" y="305" text-anchor="end" class="t-tick" data-w="39">step 3</text>
+<text x="96" y="345" text-anchor="end" class="t-tick" data-w="39">step 4</text>
+<text x="96" y="385" text-anchor="end" class="t-tick" data-w="39">step 5</text>
+<text x="96" y="425" text-anchor="end" class="t-tick" data-w="39">step 6</text>
+</g>
+<text x="40" y="468" class="t-code" data-w="368">for (i = 0; i &lt; 6; ++i) C[i] = A[i] + B[i];</text>
+<text x="40" y="196" class="t-tick" data-w="28">time</text>
+<path d="M48,208 L48,429" class="flow" marker-end="url(#cuda-01-grid-is-the-loop-arrow)"/>
+<text x="520" y="128" class="t-head" data-w="235">GPU: one thread per element</text>
+<rect x="584" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="624" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="664" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="704" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="744" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="784" y="144" width="40" height="40" class="cell f-green-soft"/>
+<rect x="584" y="144" width="240" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="604" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[0]</text>
+<text x="644" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[1]</text>
+<text x="684" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[2]</text>
+<text x="724" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[3]</text>
+<text x="764" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[4]</text>
+<text x="804" y="169" text-anchor="middle" class="t-cell13" data-w="26">C[5]</text>
+</g>
+<text x="520" y="168" class="t-tick" data-w="32">array</text>
+<rect x="584" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="624" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="664" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="704" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="744" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="784" y="200" width="40" height="40" class="cell f-orange-soft"/>
+<rect x="584" y="200" width="240" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="604" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 0</text>
+<text x="644" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 1</text>
+<text x="684" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 2</text>
+<text x="724" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 3</text>
+<text x="764" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 4</text>
+<text x="804" y="225" text-anchor="middle" class="t-cell13" data-w="28">i = 5</text>
+</g>
+<g data-grid="skip">
+<text x="576" y="225" text-anchor="end" class="t-tick" data-w="39">step 1</text>
+</g>
+<rect x="584" y="240" width="240" height="200" class="w1 nofill s-ink-muted d-lead" data-fit="skip"/>
+<text x="600" y="304" class="t-note" data-w="170">steps 2 to 6: no work left;</text>
+<text x="600" y="328" class="t-note" data-w="200">each thread wrote its own C[i]</text>
+<text x="520" y="468" class="t-code" data-w="351">i = blockIdx.x * blockDim.x + threadIdx.x</text>
+<text x="520" y="196" class="t-tick" data-w="28">time</text>
+<path d="M528,208 L528,429" class="flow" marker-end="url(#cuda-01-grid-is-the-loop-arrow)"/>
+<text x="40" y="504" class="t-note" data-w="347">A loop takes N steps; a grid of N threads takes one.</text>
 </svg>

@@ -1,0 +1,830 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-002",
+  "next_ordinal": 19,
+  "questions": [
+    {
+      "id": "cuda-002-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "kernel",
+        "grid-is-the-loop"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The CPU version of vector addition is a `for` loop over `i`. Where did that loop go in the CUDA kernel `vectorAdd`?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Into the launch: the grid starts one thread per element, and each runs the body for its own `i`.",
+          "correct": true,
+          "feedback": "Yes. The grid is the loop: the launch provides one thread per element, and the kernel body is what one iteration did."
+        },
+        {
+          "key": "b",
+          "text": "Into the compiler, which unrolls the loop body so that the GPU can run the iterations in a quicker order.",
+          "correct": false,
+          "feedback": "No unrolling is involved. The kernel has no loop to unroll; it describes the work of one thread."
+        },
+        {
+          "key": "c",
+          "text": "Into each thread, which still loops over all `N` elements but finishes faster on the GPU's quicker cores.",
+          "correct": false,
+          "feedback": "If every thread looped over all elements, each element would be written by every thread. A thread handles one index."
+        },
+        {
+          "key": "d",
+          "text": "Into the host code, which calls the kernel once per element from a loop around the launch line.",
+          "correct": false,
+          "feedback": "The host launches the kernel once; that single launch starts all the threads."
+        }
+      ],
+      "explanation": "Section 1: on a GPU the loop disappears into the launch. `vectorAdd<<<blocksPerGrid, blockSize>>>` starts one thread per element (plus a few surplus threads), and each thread computes its own `i` and does one iteration's work.",
+      "hints": [
+        "How many times does the host launch the kernel, and how many threads does that launch start?"
+      ]
+    },
+    {
+      "id": "cuda-002-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2",
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "launch",
+        "ceiling-division",
+        "surplus"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The vector-addition kernel runs over $N = 5{,}000{,}000$ elements with `blockSize = 256`. How many blocks does `(N + blockSize - 1) / blockSize` give, and how many surplus threads fail the guard `i < N`?",
+      "answer": {
+        "parts": [
+          {
+            "label": "blocksPerGrid",
+            "value": 19532,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "surplus threads",
+            "value": 192,
+            "tolerance": 0,
+            "unit": "threads"
+          }
+        ]
+      },
+      "precision_note": "5,000,000 / 256 = 19,531.25, so the ceiling is 19,532 blocks (launch(5_000_000, 256) in snippets/vector_add.py); 19,532 x 256 = 5,000,192 threads, 192 more than N. A floor division gives 19,531 blocks and leaves 64 elements unwritten.",
+      "explanation": "Blocks come whole, so the launch rounds up: $\\lceil 5{,}000{,}000 / 256 \\rceil = 19{,}532$ blocks, $19{,}532 \\times 256 = 5{,}000{,}192$ threads. The last 192 threads compute an index of 5,000,000 or more and return at the guard (section 2).",
+      "hints": [
+        "Divide N by 256 and round up, not down.",
+        "Multiply the block count by 256 and subtract N."
+      ]
+    },
+    {
+      "id": "cuda-002-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "global-index"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In the post's launch of 3,907 blocks of 256 threads over $N = 1{,}000{,}003$, which thread writes `C[1000002]`, the last element? Give its `blockIdx.x` and its `threadIdx.x`.",
+      "answer": {
+        "parts": [
+          {
+            "label": "blockIdx.x",
+            "value": 3906,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "threadIdx.x",
+            "value": 66,
+            "tolerance": 0,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "Invert i = blockIdx.x * blockDim.x + threadIdx.x: 1,000,002 // 256 = 3,906 and 1,000,002 - 3,906 x 256 = 1,000,002 - 999,936 = 66. Block 3,906 is the last of the 3,907 blocks; its threads 67 to 255, 189 of them, are the surplus.",
+      "explanation": "The block is the quotient of $i$ by `blockDim.x` and the thread is the remainder: $1{,}000{,}002 = 3{,}906 \\times 256 + 66$. Threads 67 to 255 of the same block compute 1,000,003 to 1,000,191 and fail the guard, the 189 surplus threads of section 2.",
+      "hints": [
+        "Divide 1,000,002 by 256: the quotient is the block.",
+        "The remainder is the thread's position inside that block."
+      ]
+    },
+    {
+      "id": "cuda-002-q04",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "block-size",
+        "warps"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A kernel is launched with 100 threads per block. What does each block cost the hardware, and why?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "100 lanes, because the SM schedules each thread on its own until the block is done.",
+          "correct": false,
+          "feedback": "Threads are not scheduled one by one: the SM issues instructions to whole warps of 32."
+        },
+        {
+          "key": "b",
+          "text": "128 lanes, four warps of 32, because the hardware runs threads in whole warps.",
+          "correct": true,
+          "feedback": "Yes. 100 threads need four warps, 128 lanes, and 28 of them do nothing for the life of the block."
+        },
+        {
+          "key": "c",
+          "text": "1,024 lanes, because every block reserves the maximum block size on its SM.",
+          "correct": false,
+          "feedback": "A block reserves what it asks for in warps, registers and shared memory, not the maximum block size."
+        },
+        {
+          "key": "d",
+          "text": "96 lanes, three warps, with the last 4 threads folded into the third warp.",
+          "correct": false,
+          "feedback": "A warp has 32 lanes; 4 threads cannot be folded into a full warp. They need a fourth one."
+        }
+      ],
+      "explanation": "Section 2: the hardware runs a block's threads in warps of 32, so a block of 100 threads occupies $\\lceil 100 / 32 \\rceil = 4$ warps, 128 lanes, and wastes 28. A multiple of 32 such as 128 or 256 wastes none.",
+      "hints": [
+        "Round 100 up to whole warps of 32."
+      ]
+    },
+    {
+      "id": "cuda-002-q05",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "host-device",
+        "copy-cycle"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Put the host program's steps for one vector addition in the order `snippets/vector_add.cu` runs them.",
+      "items": [
+        {
+          "key": "a",
+          "text": "copy the result `d_C` back to `h_C`"
+        },
+        {
+          "key": "b",
+          "text": "allocate `d_A`, `d_B` and `d_C` with `cudaMalloc`"
+        },
+        {
+          "key": "c",
+          "text": "launch `vectorAdd` and check `cudaGetLastError()`"
+        },
+        {
+          "key": "d",
+          "text": "free the device arrays with `cudaFree`"
+        },
+        {
+          "key": "e",
+          "text": "copy `h_A` and `h_B` to the device"
+        },
+        {
+          "key": "f",
+          "text": "wait with `cudaDeviceSynchronize()`"
+        }
+      ],
+      "answer": [
+        "b",
+        "e",
+        "c",
+        "f",
+        "a",
+        "d"
+      ],
+      "partial_credit": true,
+      "explanation": "Section 3: allocate, copy the inputs in, launch, synchronize, copy the result out, free. The device arrays must exist before anything is copied into them, and the result can be copied out only after the kernel has written it.",
+      "hints": [
+        "Nothing can be copied into device memory that has not been allocated.",
+        "Freeing comes last."
+      ]
+    },
+    {
+      "id": "cuda-002-q06",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "8",
+      "est_minutes": 3,
+      "tags": [
+        "error-checking",
+        "launch"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A program launches `vectorAdd<<<blocks, 2048>>>` on the GTX 1650 and checks only `cudaDeviceSynchronize()`, which returns `cudaSuccess`. What happened?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The kernel ran correctly: the driver split each block of 2,048 into two blocks of 1,024.",
+          "correct": false,
+          "feedback": "The driver never resizes a launch. A block above 1,024 threads is an invalid configuration."
+        },
+        {
+          "key": "b",
+          "text": "The kernel ran, but only the first 1,024 threads of every block did their work.",
+          "correct": false,
+          "feedback": "Nothing ran. A block that exceeds the limit is rejected at launch, not trimmed."
+        },
+        {
+          "key": "c",
+          "text": "The kernel never ran: the launch was refused, and only `cudaGetLastError()` would say so.",
+          "correct": true,
+          "feedback": "Yes. The post reproduced it: `cudaDeviceSynchronize()` reports `no error`, `cudaGetLastError()` reports `invalid configuration argument`."
+        },
+        {
+          "key": "d",
+          "text": "The kernel crashed the device, and the synchronize call reset it before returning success.",
+          "correct": false,
+          "feedback": "A bad configuration does not crash anything; the launch is refused and the error is recorded for `cudaGetLastError()`."
+        }
+      ],
+      "explanation": "Sections 3 and 8: a launch whose configuration is invalid never runs, and the error is reported by `cudaGetLastError()` right after the launch. `cudaDeviceSynchronize()` reports faults from kernels that did run, so it returned success, and the program read back whatever `d_C` held. Each check catches what the other misses.",
+      "hints": [
+        "Was the launch accepted at all? 2,048 is twice the limit of threads per block.",
+        "Which of the two calls reports a problem with the launch itself?"
+      ]
+    },
+    {
+      "id": "cuda-002-q07",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "pinned-memory",
+        "transfers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`cudaMallocHost` allocates host memory that the operating system will not page out, so the GPU can copy it directly. What is this kind of host memory called?",
+      "answer": {
+        "model": "Pinned (page-locked) memory.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not|rather than|instead of)\\s+(the\\s+)?(pinned|page[\\s-]?locked)\\b)(?![\\s\\S]*\\bnon-?(pinned|page[\\s-]?locked)\\b)(?![\\s\\S]*\\bor\\s+(the\\s+)?(pageable|paged|virtual|swap)\\b)(?![\\s\\S]*(?<!not )(?<!not the )(?<!than )(?<!opposite of )(?<!unlike )(?<!to )(?<!from )(?<!instead of )\\b(pageable|paged)\\b)[\\s\\S]*\\b(pinned|page[\\s-]?locked)\\b"
+        ]
+      },
+      "explanation": "Section 4 and section 8: pinned, or page-locked, memory. On the author's laptop a 40 MB copy ran at 11.6 GB/s from pinned memory against 3.5 GB/s from ordinary pageable memory, which the driver first copies into a pinned staging buffer.",
+      "hints": [
+        "It is the opposite of pageable memory."
+      ]
+    },
+    {
+      "id": "cuda-002-q08",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "memory-bound",
+        "arithmetic-intensity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Vector addition does one floating-point addition for every 12 bytes it moves. Name the hardware resource whose limit sets the kernel's run time for large arrays.",
+      "answer": {
+        "model": "The memory (DRAM) bandwidth: the kernel is memory bound.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not|rather than|instead of)\\s+(the\\s+)?(dram\\s+|global\\s+|device\\s+)?(memory|bandwidth|dram)\\b)(?![\\s\\S]*\\b(both|either)\\b)(?=[\\s\\S]*\\b(bandwidth|memory|dram)\\b)(?:(?!(?<!not )(?<!not the )(?<!than )(?<!than the )(?<!of )(?<!instead of )\\b(compute|arithmetic|flops?(?!\\s+(per|for)\\b)|cores?|alus?|clock)\\b(?!\\s+(units?\\s+|cores?\\s+)?(are\\s+|is\\s+|sit\\s+|sits\\s+|stay\\s+|stays\\s+)?(wait|waits|waiting|idle|starved|stalled|stall)\\b))[\\s\\S])*$"
+        ]
+      },
+      "explanation": "Section 5: at $I = 1/12$ FLOP per byte the arithmetic units wait on memory, so the run time is the bytes moved divided by the memory bandwidth. At 10 million elements the kernel moves 145.0 GB/s, 91% of the 160 GB/s peak.",
+      "hints": [
+        "Compare one addition with 12 bytes: which of the two does the card run out of first?"
+      ]
+    },
+    {
+      "id": "cuda-002-q09",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth",
+        "percent-of-peak"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The benchmark timed the kernel alone at 827.8 µs over $N = 10{,}000{,}000$ elements. Counting the bytes the kernel moves, what bandwidth did it achieve in GB/s, and what percentage is that of the GTX 1650's theoretical 160 GB/s?",
+      "answer": {
+        "parts": [
+          {
+            "label": "achieved bandwidth",
+            "value": 145.0,
+            "tolerance": 0.3,
+            "unit": "GB/s"
+          },
+          {
+            "label": "share of peak",
+            "value": 90.6,
+            "tolerance": 0.3,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "12 bytes x 10,000,000 = 120,000,000 bytes; 120,000,000 / 827.8e-6 s = 144.96e9 B/s, about 145.0 GB/s (the kernel GB/s column of vector_add_bench); 145.0 / 160 = 90.6%. Counting only the two reads (8 bytes) gives 96.6 GB/s and 60.4%.",
+      "explanation": "Each element reads `A[i]` and `B[i]` and writes `C[i]`: 12 bytes. The kernel moved 120 MB in 827.8 µs, about 145.0 GB/s, which is 90.6% of $\\beta = 160$ GB/s (section 5). A memory-bound kernel is judged by this percentage.",
+      "hints": [
+        "Count the bytes per element: two reads and one write of 4 bytes each.",
+        "Divide total bytes by the time in seconds, then compare with 160 GB/s."
+      ]
+    },
+    {
+      "id": "cuda-002-q10",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth-floor",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Use the traffic model of `snippets/vector_add.py` for $N = 50{,}000{,}000$ elements. (a) What is the shortest time the kernel could take at the theoretical 160 GB/s, in milliseconds? (b) What time does the kernel's measured 145.0 GB/s predict?",
+      "stimulus": {
+        "kind": "code",
+        "language": "python",
+        "content": "n = 50_000_000\nfor gbs in (160, 145.0):\n    print(n * BYTES_PER_ELEM / (gbs * 1e9) * 1e3, \"ms\")",
+        "caption": "The model's floor formula, with BYTES_PER_ELEM = 12 from snippets/vector_add.py."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "floor at 160 GB/s",
+            "value": 3.75,
+            "tolerance": 0.02,
+            "unit": "ms"
+          },
+          {
+            "label": "at 145.0 GB/s",
+            "value": 4.14,
+            "tolerance": 0.02,
+            "unit": "ms"
+          }
+        ]
+      },
+      "precision_note": "50,000,000 x 12 = 600,000,000 bytes; 600e6 / 160e9 = 3.75 ms and 600e6 / 145.0e9 = 4.138 ms. Counting 8 bytes per element gives 2.5 ms and 2.76 ms.",
+      "explanation": "The kernel moves 12 bytes per element, 600 MB in all. At the 160 GB/s ceiling that takes 3.75 ms; at the 145.0 GB/s the kernel reached at 10 million elements it takes about 4.14 ms. The time grows in proportion to N, which is what memory bound means (section 5).",
+      "hints": [
+        "Multiply N by 12 bytes.",
+        "Divide by the bandwidth in bytes per second and convert to milliseconds."
+      ]
+    },
+    {
+      "id": "cuda-002-q11",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "pcie",
+        "transfers",
+        "one-off"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "For one vector addition over 10,000,000 floats, the copies move `A` and `B` to the device and `C` back, 120 MB in all. Using the post's measured copy rates on the author's laptop, how long do the copies take (a) from pinned memory at 11.6 GB/s and (b) from pageable memory at 3.5 GB/s, in milliseconds?",
+      "answer": {
+        "parts": [
+          {
+            "label": "pinned",
+            "value": 10.34,
+            "tolerance": 0.1,
+            "unit": "ms"
+          },
+          {
+            "label": "pageable",
+            "value": 34.3,
+            "tolerance": 0.3,
+            "unit": "ms"
+          }
+        ]
+      },
+      "precision_note": "120e6 B / 11.6e9 B/s = 10.34 ms; 120e6 / 3.5e9 = 34.29 ms (the rates are the host-to-device line of vector_add_bench, taken for both directions). Counting only the two input copies (80 MB) gives 6.90 ms and 22.9 ms.",
+      "explanation": "Three arrays of 40 MB cross the bus: 120 MB. At 11.6 GB/s that is about 10.3 ms, against 827.8 µs for the kernel itself, which is why the measured end-to-end time (12.76 ms) is close to the CPU's (section 6). From pageable memory the copies alone would take about 34 ms.",
+      "hints": [
+        "Which arrays cross the bus, and in which directions?",
+        "Divide 120 MB by each rate."
+      ]
+    },
+    {
+      "id": "cuda-002-q12",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o2",
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 8,
+      "tags": [
+        "launch",
+        "guard",
+        "simulation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`vector_add_grid(A, B, block_size)` simulates the vector-addition launch on a CPU: it starts whole blocks of `block_size` threads, and every thread computes its global index `i = block_idx * block_size + thread_idx` and adds one element. The version below leaves elements unwritten whenever `len(A)` is not a multiple of `block_size`. Fix it so that every element is written exactly once and no thread touches an index past the end.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def vector_add_grid(A, B, block_size):\n    \"\"\"Simulate vectorAdd<<<blocks, block_size>>>: every thread computes its global index and adds one element.\"\"\"\n    n = len(A)\n    blocks = n // block_size\n    C = [None] * n\n    for block_idx in range(blocks):\n        for thread_idx in range(block_size):\n            i = block_idx * block_size + thread_idx\n            C[i] = A[i] + B[i]\n    return C\n",
+      "solution": "def vector_add_grid(A, B, block_size):\n    \"\"\"Simulate vectorAdd<<<blocks, block_size>>>: every thread computes its global index and adds one element.\"\"\"\n    n = len(A)\n    blocks = (n + block_size - 1) // block_size\n    C = [None] * n\n    for block_idx in range(blocks):\n        for thread_idx in range(block_size):\n            i = block_idx * block_size + thread_idx\n            if i < n:\n                C[i] = A[i] + B[i]\n    return C\n",
+      "tests": "# the post's small launch: N = 6 in blocks of 4 (two surplus threads)\nassert vector_add_grid([1, 2, 3, 4, 5, 6], [10, 20, 30, 40, 50, 60], 4) == [11, 22, 33, 44, 55, 66]\n# an exact multiple of the block size\nassert vector_add_grid([1, 2, 3, 4], [1, 1, 1, 1], 2) == [2, 3, 4, 5]\n# fewer elements than one block\nassert vector_add_grid([7], [8], 256) == [15]\n# no elements: no work, no error\nassert vector_add_grid([], [], 32) == []\n# a size that is not a multiple of 256, as in the post's launch of 1,000,003\nn = 1000\nA, B = list(range(n)), [0.5] * n\nassert vector_add_grid(A, B, 256) == [a + b for a, b in zip(A, B)]\nassert vector_add_grid(A, B, 96) == [a + b for a, b in zip(A, B)]\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Two changes, as in section 2: the block count is a ceiling division, `(n + block_size - 1) // block_size`, and every thread guards its write with `if i < n`. Rounding up alone sends the surplus threads past the end of the list (an `IndexError` here, an out-of-bounds write on a GPU); the guard alone still leaves the tail unwritten.",
+      "hints": [
+        "Count the blocks the post's way when `n` is not a multiple of `block_size`.",
+        "Once the grid is rounded up, some threads have no element: what must they do?"
+      ]
+    },
+    {
+      "id": "cuda-002-q13",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "8",
+      "est_minutes": 2,
+      "tags": [
+        "timing",
+        "asynchronous-launch"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A program reads `std::chrono::steady_clock` just before and just after `vectorAdd<<<...>>>` over 10 million elements, with no synchronization between the launch and the second reading. It reports 12 to 15 µs. What did it measure?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The kernel itself, which runs from cache because the same arrays were used in the previous launch.",
+          "correct": false,
+          "feedback": "120 MB does not fit in the 1,024 KB L2 cache; the kernel needs about 828 µs, and the clock stopped long before that."
+        },
+        {
+          "key": "b",
+          "text": "The time to queue the launch: the call returns to the CPU well before the GPU has run the kernel.",
+          "correct": true,
+          "feedback": "Yes. A launch is asynchronous; with `cudaDeviceSynchronize()` before the second reading the same clock reads about 875 µs."
+        },
+        {
+          "key": "c",
+          "text": "The kernel time minus the copies, which the host clock subtracts automatically for a launch line.",
+          "correct": false,
+          "feedback": "A host clock knows nothing about copies or kernels; it measures wall time between two readings on the CPU."
+        },
+        {
+          "key": "d",
+          "text": "The first launch's start-up cost, which the warm-up of a correct benchmark would have removed.",
+          "correct": false,
+          "feedback": "The first launch is slower, not faster; the 12 to 15 µs is the queueing time and appears on every launch."
+        }
+      ],
+      "explanation": "Section 3 and section 8: the CPU queues the kernel and runs on, so a host clock stopped right after the launch measures the queueing. Synchronize before stopping the clock, or time the kernel with CUDA events, as the benchmark does.",
+      "hints": [
+        "Does the launch line wait for the kernel to finish?",
+        "Compare 12 µs with the bytes the kernel must move at 145 GB/s."
+      ]
+    },
+    {
+      "id": "cuda-002-q14",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "8",
+      "est_minutes": 2,
+      "tags": [
+        "warm-up",
+        "timing"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Timed with CUDA events, the first launch of `vectorAdd` over 10 million elements took 15.5 ms and the next three took 0.81 ms each. What should a benchmark do about it?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Report 15.5 ms, because the first launch is what a user waits for on every run.",
+          "correct": false,
+          "feedback": "The extra cost is paid once per program, not per launch; it says nothing about how fast the kernel is."
+        },
+        {
+          "key": "b",
+          "text": "Average all four launches, so that the one-time cost is spread over the repetitions.",
+          "correct": false,
+          "feedback": "Averaging a one-time cost into the result makes the number depend on how many repetitions were run."
+        },
+        {
+          "key": "c",
+          "text": "Run one untimed launch first, then time the following repetitions and report their average.",
+          "correct": true,
+          "feedback": "Yes. The first launch pays one-time start-up costs; the warm-up absorbs them, as in `vector_add_bench.cu`."
+        },
+        {
+          "key": "d",
+          "text": "Switch to a host clock, because CUDA events include start-up costs that a host clock leaves out.",
+          "correct": false,
+          "feedback": "A host clock around the same launches would include the same start-up cost, and the asynchronous launch on top."
+        }
+      ],
+      "explanation": "Section 4 and section 8: the first launch carries one-time start-up costs (such as loading the kernel onto the device), so an honest benchmark runs every variant once untimed and averages the repetitions after it.",
+      "hints": [
+        "Is the extra 14.7 ms a property of the kernel or of the first time it is used?"
+      ]
+    },
+    {
+      "id": "cuda-002-q15",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3",
+        "o4"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "cuda-api"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Match each CUDA runtime call to what it does in the post's programs.",
+      "left": [
+        {
+          "key": "1",
+          "text": "`cudaMalloc`"
+        },
+        {
+          "key": "2",
+          "text": "`cudaMemcpy`"
+        },
+        {
+          "key": "3",
+          "text": "`cudaGetLastError`"
+        },
+        {
+          "key": "4",
+          "text": "`cudaDeviceSynchronize`"
+        },
+        {
+          "key": "5",
+          "text": "`cudaEventElapsedTime`"
+        }
+      ],
+      "right": [
+        {
+          "key": "a",
+          "text": "reserves an array in the device's global memory"
+        },
+        {
+          "key": "b",
+          "text": "moves bytes between host memory and device memory"
+        },
+        {
+          "key": "c",
+          "text": "reports an error in the launch configuration"
+        },
+        {
+          "key": "d",
+          "text": "makes the host wait until the device has finished its work"
+        },
+        {
+          "key": "e",
+          "text": "gives the milliseconds between two points on the GPU's own clock"
+        },
+        {
+          "key": "f",
+          "text": "splits a launch into blocks of at most 1,024 threads"
+        },
+        {
+          "key": "g",
+          "text": "reserves page-locked memory on the host"
+        }
+      ],
+      "answer": {
+        "1": "a",
+        "2": "b",
+        "3": "c",
+        "4": "d",
+        "5": "e"
+      },
+      "explanation": "Sections 3 and 4: `cudaMalloc` allocates device memory, `cudaMemcpy` copies across the bus, `cudaGetLastError` reports a bad launch at once, `cudaDeviceSynchronize` waits for the device and reports a fault inside the kernel, and `cudaEventElapsedTime` times work between two events. Page-locked host memory is `cudaMallocHost`'s job, and no call resizes a launch.",
+      "hints": [
+        "One distractor describes `cudaMallocHost`; another describes something no call does."
+      ]
+    },
+    {
+      "id": "cuda-002-q16",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 12,
+      "tags": [
+        "fusion",
+        "memory-bound",
+        "bytes-moved"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "connects": [
+        "cuda-014"
+      ],
+      "prompt": "A pipeline computes `D = A + B + C` over 10 million floats already on the device with two vector additions: `T = A + B`, then `D = T + C`. Count the bytes each version moves per element, compare it with a single fused kernel that computes `D[i] = A[i] + B[i] + C[i]`, and estimate both times on the GTX 1650 from the bandwidth the post measured. Explain why fusing helps a memory-bound kernel. Post 14 takes the idea further.",
+      "kind": "connect",
+      "solution": "Each element of the two-kernel version is touched twice. The first kernel reads `A[i]` and `B[i]` and writes `T[i]`: 12 bytes. The second reads `T[i]` and `C[i]` and writes `D[i]`: another 12 bytes. That is 24 bytes per element, 240 MB for 10 million elements. The fused kernel reads `A[i]`, `B[i]` and `C[i]` and writes `D[i]`: 16 bytes per element, 160 MB, and the temporary `T` never exists in global memory.\n\nBoth versions are memory bound (two additions per 16 bytes is still far below what the card needs to be compute bound), so the time is the bytes divided by the bandwidth. At the 145 GB/s the post measured, the two kernels take about $240 / 145 \\approx 1.66$ ms and the fused one about $160 / 145 \\approx 1.10$ ms: a third less time from removing traffic, with the same arithmetic. Fusion helps a memory-bound kernel because it deletes the write and the re-read of an intermediate, which is exactly the resource the kernel waits on; it would not help a compute-bound kernel in the same way. Post 14 applies this to longer elementwise chains.",
+      "rubric": [
+        {
+          "criterion": "Counts 12 + 12 = 24 bytes per element for the two kernels, including the write and re-read of T",
+          "points": 2
+        },
+        {
+          "criterion": "Counts 16 bytes per element for the fused kernel",
+          "points": 2
+        },
+        {
+          "criterion": "Estimates both times from bytes divided by the measured bandwidth (about 1.66 ms against 1.10 ms)",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that fusion removes memory traffic, the resource a memory-bound kernel waits on, without changing the arithmetic",
+          "points": 2
+        }
+      ],
+      "answer_length": "two paragraphs",
+      "explanation": "Section 5: a kernel at low arithmetic intensity runs at the speed of memory, so its time is bytes over bandwidth. Two kernels write and re-read the intermediate `T`; a fused kernel keeps it in a register, the lever post 14 pulls.",
+      "hints": [
+        "List every array each kernel reads and writes, at 4 bytes per element.",
+        "Divide the total bytes by about 145 GB/s for each version."
+      ]
+    },
+    {
+      "id": "cuda-002-q17",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4",
+        "o5"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "benchmarking",
+        "speedup-claims"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A report says: \"Our GPU vector addition is 16 times faster than the CPU at 10 million elements.\" On the author's laptop, the post's benchmark agrees with that number for one pair of columns and contradicts it for another. Explain which comparison gives 16 times and which gives roughly 1 time, say when each is the right number to quote, and list what the report must state for its figure to be trusted.",
+      "kind": "explain",
+      "solution": "The 16 times compares the kernel alone (827.8 µs) with one CPU thread (13.66 ms) at 10 million elements: $13.66 / 0.8278 \\approx 16.5$. It assumes the data is already in device memory and stays there, which is right for a step inside a pipeline of kernels. The end-to-end comparison includes copying `A` and `B` in and `C` out across the PCIe bus: 12.76 ms on the GPU against 13.66 ms on one CPU thread and 12.15 ms with OpenMP, roughly a tie, because the copies move 120 MB at about 10 GB/s, and the CPU loop moves the same bytes through its own memory at about the same rate. That is the right number for one-off work whose data starts and ends on the host.\n\nTo be trusted, the report must name the GPU (with its compute capability), the CPU, the toolkit and the date; say whether the GPU time includes the copies, and whether the host memory was pinned; say the CPU baseline (one thread or all threads); time the GPU with CUDA events or a synchronized clock after an untimed warm-up, averaged over repetitions; and check every element of the result so that neither side can skip work.",
+      "rubric": [
+        {
+          "criterion": "Identifies kernel-only against one CPU thread as the 16 times comparison (about 13.66 ms against 827.8 µs)",
+          "points": 2
+        },
+        {
+          "criterion": "Identifies the end-to-end time with copies (12.76 ms) as roughly equal to the CPU times, and gives the bus as the reason",
+          "points": 2
+        },
+        {
+          "criterion": "Says kernel-only fits a resident pipeline and end-to-end fits one-off work",
+          "points": 2
+        },
+        {
+          "criterion": "Lists the method: named hardware and toolkit, copies included or not, pinned memory, CUDA events or synchronization, warm-up, averaging, full correctness check",
+          "points": 2
+        }
+      ],
+      "answer_length": "two paragraphs",
+      "explanation": "Sections 4 and 6: the benchmark reports the kernel alone and the end-to-end time apart, because they answer different questions. At 10 million elements the first is 16.5 times faster than one CPU thread, the second roughly ties the CPU.",
+      "hints": [
+        "Which GPU column contains the copies across the bus?",
+        "For which kind of workload is the data already on the device?"
+      ]
+    },
+    {
+      "id": "cuda-002-q18",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "memory-bound",
+        "optimization"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A newer card has twice the arithmetic throughput of the GTX 1650 but the same memory bandwidth. What happens to the time of the vector-addition kernel at 10 million elements?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It halves, because the kernel performs half as many cycles of arithmetic per element.",
+          "correct": false,
+          "feedback": "The arithmetic was never the bottleneck: one addition per 12 bytes leaves the arithmetic units idle most of the time."
+        },
+        {
+          "key": "b",
+          "text": "It stays about the same, because the kernel waits on memory bandwidth, not on arithmetic.",
+          "correct": true,
+          "feedback": "Yes. At $I = 1/12$ the time is the bytes divided by the bandwidth, which did not change."
+        },
+        {
+          "key": "c",
+          "text": "It doubles, because the faster arithmetic units drain the shared caches twice as quickly.",
+          "correct": false,
+          "feedback": "Faster arithmetic does not slow the memory; the time is set by the bandwidth, which is unchanged."
+        },
+        {
+          "key": "d",
+          "text": "It falls by a quarter, the share of the time that the kernel spends on its single addition.",
+          "correct": false,
+          "feedback": "There is no fixed arithmetic share to remove; with memory as the limit, faster arithmetic changes almost nothing."
+        }
+      ],
+      "explanation": "Section 5: the kernel is memory bound, running at 91% of the card's peak bandwidth; doubling the arithmetic leaves the bytes and the bandwidth, and so the time, unchanged.",
+      "hints": [
+        "What limits a kernel that does one addition per 12 bytes?"
+      ]
+    }
+  ]
+}
