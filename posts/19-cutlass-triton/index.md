@@ -119,4 +119,4 @@ Full citations in [REFERENCES.md](../../REFERENCES.md).
 ## What to read next
 
 - **[Post 18, FlashAttention](../18-flash-attention/index.md)**: the algorithm whose official implementations are written in exactly these tools.
-- **[Post 01, Introduction to CUDA](../01-introduction-to-cuda/index.md)**: the beginning of the ladder — worth a second read now that you can see the whole climb.
+- **[Post 01 - Why GPUs exist: the CUDA execution model from the ground up](../01-introduction-to-cuda/index.md)**: the beginning of the ladder — worth a second read now that you can see the whole climb.

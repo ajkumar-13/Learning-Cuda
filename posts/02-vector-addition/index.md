@@ -226,6 +226,6 @@ Full citations in [REFERENCES.md](../../REFERENCES.md).
 
 ## What to read next
 
-- **[Post 01, Introduction to CUDA](../01-introduction-to-cuda/index.md)**: if grids, warps, and the host/device model were new here, this is the hardware tour they come from.
+- **[Post 01 - Why GPUs exist: the CUDA execution model from the ground up](../01-introduction-to-cuda/index.md)**: if grids, warps, and the host/device model were new here, this is the hardware tour they come from.
 - **[Post 03, Matrix multiplication](../03-matrix-multiplication/index.md)**: the first *compute-bound* kernel, where tiling and shared memory finally matter and the lessons here invert.
 - **[Post 04, Reduction](../04-reduction/index.md)**: what changes when threads must cooperate instead of each owning one independent element.

@@ -11,7 +11,7 @@ A GPU runs the same instruction across thousands of data elements at once. A ker
 ```
 grid    -> made of blocks
 block   -> made of threads, up to 1024
-threads -> scheduled in warps of 32 that run in lockstep
+threads -> scheduled in warps of 32 that share one instruction
 ```
 
 A launch is `kernel<<<blocksPerGrid, blockSize>>>(args)`.

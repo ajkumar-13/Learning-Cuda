@@ -6,7 +6,7 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 ## Execution model
 
-**Block (thread block).** A group of up to 1024 threads that runs on one streaming multiprocessor, shares that SM's on-chip shared memory, and can synchronize with `__syncthreads()`. Its size is `blockDim.x` (and `.y`, `.z`), chosen as a multiple of 32. See [post 01](posts/01-introduction-to-cuda/index.md).
+**Block (thread block).** A group of up to 1,024 threads that runs on one streaming multiprocessor, shares that SM's on-chip shared memory, and can synchronize with `__syncthreads()`. Its size is `blockDim.x` (and `.y`, `.z`), chosen as a multiple of 32. See [post 01](posts/01-introduction-to-cuda/index.md).
 
 **Compute capability.** The version number of a GPU's architecture and feature set, written `major.minor` (7.5 for the GTX 1650, 8.6 for the RTX 3080, 8.0 for the A100). It decides which instructions a kernel may use and the `-arch=sm_XX` flag it is built with. See [post 01](posts/01-introduction-to-cuda/index.md).
 
@@ -28,7 +28,7 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Thread.** One instance of a kernel, the smallest unit of execution; it finds its data through `threadIdx` and `blockIdx`. See [post 01](posts/01-introduction-to-cuda/index.md).
 
-**Warp.** A group of 32 threads of one block that the hardware schedules together and that execute the same instruction in lockstep. See [post 01](posts/01-introduction-to-cuda/index.md).
+**Warp.** A group of 32 threads of one block that the hardware schedules together and that issue one instruction at a time; from compute capability 7.0 each thread keeps its own program counter, so the lanes are not guaranteed to stay in lockstep. See [post 01](posts/01-introduction-to-cuda/index.md).
 
 **Warp divergence.** The cost of a branch that splits a warp: the hardware runs each taken path in turn with the other lanes idle, so a two-way split roughly halves throughput for that code. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 04](posts/04-reduction/index.md).
 
