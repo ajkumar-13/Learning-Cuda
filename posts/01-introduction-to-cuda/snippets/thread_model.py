@@ -1,43 +1,84 @@
-"""thread_model.py — a CPU model of two ideas from this post.
+"""thread_model.py: a CPU model of the execution ideas of post 01 (no GPU needed).
 
-CUDA cannot run in this blog's test environment, so this NumPy-free model
-reproduces, in plain Python, two things the hardware does:
+It reproduces, in plain Python, four things the hardware does, and prints only counts it derives:
 
-1. The global-index mapping i = blockIdx.x * blockDim.x + threadIdx.x, and the
-   fact that a launch covers every element exactly once (with surplus threads
-   guarded by i < N).
-2. Warp divergence: threads run in lockstep groups of 32, so when threads in the
-   same warp take different branches the hardware runs both paths in series.
+1. A launch of N = 1000 elements in blocks of 256 threads: the number of blocks (a ceiling division),
+   the surplus threads, and that the guarded launch covers every element exactly once.
+2. The global index i = blockIdx.x * blockDim.x + threadIdx.x for a few threads, with the warp and
+   lane each one lands in and whether it passes the guard i < N.
+3. Warp divergence in one 256-thread block: a warp runs one instruction for all 32 lanes at a time, so
+   a warp whose lanes take two different paths runs both paths, one pass each.
+4. Latency hiding, with illustrative timings: a warp issues 4 instructions and then waits 12 cycles
+   for memory; the scheduler issues from any ready warp, so enough warps keep it busy.
 
-It prints only real, derived counts. Run: python snippets/thread_model.py  (from the post directory)
+Run from the series root:  uv run python posts/01-introduction-to-cuda/snippets/thread_model.py
 """
 WARP = 32
-grid_dim, block_dim, N = 4, 32, 120     # 4 blocks x 32 threads = 128 threads
-total = grid_dim * block_dim
+N, BLOCK = 1000, 256
 
-# 1. global index + coverage
-idx = [b * block_dim + t for b in range(grid_dim) for t in range(block_dim)]
-in_range = [i for i in idx if i < N]
-covered_once = sorted(in_range) == list(range(N))
 
-# 2. divergence: passes per warp = number of distinct branch outcomes in it
-def total_passes(branch):
-    passes = 0
-    for w in range(total // WARP):
-        outcomes = {branch(w * WARP + lane) for lane in range(WARP)}
-        passes += len(outcomes)         # 1 if the whole warp agrees, else 2
-    return passes
+def global_index(block_idx, thread_idx, block_dim=BLOCK):
+    return block_idx * block_dim + thread_idx
 
-ideal = total // WARP                                  # one pass per warp
-checker = total_passes(lambda i: i % 2 == 0)           # alternating lanes
-warp_uniform = total_passes(lambda i: (i // WARP) % 2) # whole-warp branch
 
-print("thread model")
-print(f"  launch            = {grid_dim} blocks x {block_dim} threads = {total} threads")
-print(f"  N                 = {N}  (surplus {total - N} guarded by i < N)")
-print(f"  covers 0..N-1 once= {covered_once}")
-print(f"  warps             = {total // WARP}  (32 threads each)")
-print("  divergence (passes over all warps, lower is better):")
-print(f"    no branch              = {ideal}")
-print(f"    branch on (i % 2)      = {checker}   -> every warp splits, ~2x cost")
-print(f"    branch on whole warp   = {warp_uniform}   -> no divergence")
+def passes(branch, warp_starts):
+    """Passes a set of warps needs: one per distinct path its 32 lanes take."""
+    total = 0
+    for start in warp_starts:
+        paths = {branch(start + lane) for lane in range(WARP)}
+        total += len(paths)          # 1 when the whole warp agrees, 2 when it splits
+    return total
+
+
+def schedule(n_warps, cycles, work=4, wait=12):
+    """Which warp issues on each cycle (None = idle): a warp issues `work` instructions in a row,
+    then waits `wait` cycles for its load; the scheduler switches to the next ready warp."""
+    ready_at = [0] * n_warps         # cycle at which each warp may issue again
+    left = [work] * n_warps          # instructions left before its next load
+    current, issued = 0, []
+    for t in range(cycles):
+        order = [(current + k) % n_warps for k in range(n_warps)]
+        w = next((w for w in order if ready_at[w] <= t), None)
+        issued.append(w)
+        if w is None:
+            continue
+        current = w
+        left[w] -= 1
+        if left[w] == 0:             # the load goes out; the warp sleeps until it returns
+            left[w], ready_at[w] = work, t + 1 + wait
+    return issued
+
+
+def busy_share(n_warps, cycles=1600):
+    issued = schedule(n_warps, cycles)
+    return sum(w is not None for w in issued) / cycles
+
+
+grid = (N + BLOCK - 1) // BLOCK                 # ceil(N / BLOCK)
+threads = grid * BLOCK
+covered = sorted(i for b in range(grid) for t in range(BLOCK) if (i := global_index(b, t)) < N)
+
+print("thread model (derived on the CPU)")
+print()
+print(f"1. launch: N = {N}, blockDim.x = {BLOCK}")
+print(f"  gridDim.x   = ceil({N} / {BLOCK}) = {grid} blocks")
+print(f"  threads     = {grid} x {BLOCK} = {threads}")
+print(f"  surplus     = {threads} - {N} = {threads - N}  (fail the guard i < N)")
+print(f"  every element covered exactly once: {covered == list(range(N))}")
+print()
+print("2. i = blockIdx.x * blockDim.x + threadIdx.x")
+print("  blockIdx.x  threadIdx.x     i  warp  lane  i < N")
+for b, t in [(0, 0), (1, 5), (3, 5), (3, 231), (3, 232), (3, 255)]:
+    i = global_index(b, t)
+    print(f"  {b:>10}  {t:>11}  {i:>4}  {t // WARP:>4}  {t % WARP:>4}  {str(i < N):>5}")
+print()
+warps = range(0, BLOCK, WARP)                   # the first lane of each warp of block 0
+print(f"3. divergence in one block of {BLOCK} threads ({BLOCK // WARP} warps of {WARP}), passes:")
+print(f"  no branch                  = {passes(lambda i: 0, warps)}")
+print(f"  branch on i % 2            = {passes(lambda i: i % 2, warps)}  (every warp splits)")
+print(f"  branch on (i / 32) % 2     = {passes(lambda i: (i // WARP) % 2, warps)}  (whole warps agree)")
+print()
+print("4. latency hiding (illustrative: 4 instructions, then a 12-cycle wait)")
+print("  warps  scheduler busy")
+for w in (1, 2, 4, 8):
+    print(f"  {w:>5}  {busy_share(w):>13.0%}")

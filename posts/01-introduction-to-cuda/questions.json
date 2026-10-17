@@ -1,0 +1,810 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-001",
+  "next_ordinal": 19,
+  "questions": [
+    {
+      "id": "cuda-001-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "cpu-vs-gpu",
+        "chip-area"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Why does a GPU devote far more of its transistors to arithmetic units than a CPU does?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Each GPU thread runs its own instruction stream faster than a CPU core, so it needs more arithmetic units to keep up.",
+          "correct": false,
+          "feedback": "The opposite: a GPU thread is slower than a CPU thread. The GPU wins by running many threads, not by speeding up one."
+        },
+        {
+          "key": "b",
+          "text": "It assumes the same operation on many independent elements, so caching and control for one thread would be wasted.",
+          "correct": true,
+          "feedback": "Yes. The GPU bets on throughput over many independent elements, so its area goes to arithmetic instead of caches and flow control."
+        },
+        {
+          "key": "c",
+          "text": "Its clock rate is several times a CPU's, so each arithmetic unit needs less supporting cache and control logic around it.",
+          "correct": false,
+          "feedback": "GPU clocks are not higher than CPU clocks; the GTX 1650 runs well under 2 GHz. The difference is how the area is spent, not the clock."
+        },
+        {
+          "key": "d",
+          "text": "Its caches are larger than a CPU's, so data rarely waits in memory and the rest of the chip can go to arithmetic.",
+          "correct": false,
+          "feedback": "A CPU spends more of its area on cache, not less. The GPU's L2 on this card is 1,024 KB, small next to a CPU's cache hierarchy."
+        }
+      ],
+      "explanation": "Section 1: a CPU is a latency machine that spends transistors on caches, branch prediction, and out-of-order execution for one stream; a GPU assumes data-parallel work and, in the Programming Guide's words, devotes more transistors to data processing rather than data caching and flow control.",
+      "hints": [
+        "Think about what kind of workload each chip is designed for."
+      ]
+    },
+    {
+      "id": "cuda-001-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1",
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "latency-hiding",
+        "warps"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "One warp on an SM issues a load from global memory, which will take hundreds of cycles to return. What does the SM's scheduler do next?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It predicts the loaded value and keeps issuing the same warp's instructions speculatively until the load returns.",
+          "correct": false,
+          "feedback": "That is a CPU's strategy (prediction and speculation). A GPU spends little area on such control."
+        },
+        {
+          "key": "b",
+          "text": "It issues from another resident warp that is ready, and comes back to the first warp when its data arrives.",
+          "correct": true,
+          "feedback": "Yes. Switching to a ready warp is latency hiding: the wait costs nothing while another warp has work."
+        },
+        {
+          "key": "c",
+          "text": "It stalls the whole SM until the load returns, because all the warps of a block share a single instruction stream.",
+          "correct": false,
+          "feedback": "Only the 32 lanes of one warp share an instruction. Other warps are independent and can issue while it waits."
+        },
+        {
+          "key": "d",
+          "text": "It moves the stalled warp's block to an idle SM, so that the original SM is free to start a new block meanwhile.",
+          "correct": false,
+          "feedback": "A block runs on one SM; the hardware does not shuffle blocks between SMs to hide a load. It switches warps within the SM."
+        }
+      ],
+      "explanation": "Section 2: an SM keeps many warps resident and each clock issues from any warp that is ready, so when one stalls on a load another runs. The Programming Guide calls this hiding memory access latencies with computation.",
+      "hints": [
+        "The SM holds many warps at once; what can it do with the others?"
+      ]
+    },
+    {
+      "id": "cuda-001-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 5,
+      "tags": [
+        "latency-hiding",
+        "warps",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In the post's scheduler model a warp issues 4 instructions and then waits for its load. Suppose the wait is 28 cycles instead of 12 (still illustrative). (a) What is the smallest number of warps that keeps the scheduler busy on every cycle? (b) With only 4 warps, what percentage of cycles is the scheduler busy?",
+      "stimulus": {
+        "kind": "code",
+        "language": "python",
+        "content": "issued = schedule(n_warps, 3200, work=4, wait=28)\nprint(sum(w is not None for w in issued) / 3200)",
+        "caption": "A call to snippets/thread_model.py that answers both parts."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "warps needed for a busy scheduler",
+            "value": 8,
+            "tolerance": 0,
+            "unit": "warps"
+          },
+          {
+            "label": "busy share with 4 warps",
+            "value": 50,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "One cycle of a warp is 4 issue cycles plus 28 waiting, 32 in all, so ceil(32 / 4) = 8 warps fill it; 4 warps issue 4 x 4 = 16 of every 32 cycles, 50%. schedule(n, 3200, work=4, wait=28) gives 1.0 for 8 warps and 0.5 for 4. Dividing the wait alone by the work (28 / 4 = 7) is one warp short.",
+      "explanation": "While one warp waits 28 cycles, the other warps must supply 28 cycles of issue, 4 each, so 7 more warps are needed: 8 in all, $(4 + 28) / 4$. With 4 warps only 16 of every 32 cycles have an instruction to issue, so the scheduler is busy 50% of the time. The longer the wait, the more resident warps an SM needs.",
+      "hints": [
+        "Count the cycles in one full round of a warp: its issue cycles plus its wait.",
+        "Each warp fills 4 of those cycles; how many warps fill all of them?"
+      ]
+    },
+    {
+      "id": "cuda-001-q04",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "hardware",
+        "sm"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A launch hands each of its blocks, whole, to one hardware unit of the GPU, which runs the block's threads as warps. Name that unit.",
+      "answer": {
+        "model": "A streaming multiprocessor (SM).",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not|rather than|instead of)\\s+(on\\s+)?(an?\\s+|the\\s+|one\\s+)?(sm|sms|streaming\\s+multi-?processors?|multi-?processors?)\\b)(?![\\s\\S]*\\bor\\s+(an?\\s+|the\\s+)?(warp|lane|grid|core|cuda core)s?\\b)(?:(?!\\b(sm|sms|streaming\\s+multi-?processors?|multi-?processors?)\\b)(?!(?<!not a )(?<!not an )(?<!not the )(?<!not on a )(?<!not a cuda )(?<!not the cuda )\\b(warp|lane|grid|core)s?\\b)[\\s\\S])*\\b(sm|sms|streaming\\s+multi-?processors?|multi-?processors?)\\b"
+        ]
+      },
+      "explanation": "Section 5: the GPU is a set of streaming multiprocessors, and a launch hands whole blocks to SMs that have room; inside an SM the block's threads run in warps of 32. The GTX 1650 has 14 of them.",
+      "hints": [
+        "The device query of section 7 prints how many of these the card has."
+      ]
+    },
+    {
+      "id": "cuda-001-q05",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "hierarchy",
+        "hardware-mapping"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Match each unit of a CUDA launch to how the hardware runs it.",
+      "left": [
+        {
+          "key": "1",
+          "text": "grid"
+        },
+        {
+          "key": "2",
+          "text": "block"
+        },
+        {
+          "key": "3",
+          "text": "warp"
+        },
+        {
+          "key": "4",
+          "text": "thread"
+        }
+      ],
+      "right": [
+        {
+          "key": "a",
+          "text": "all the blocks of one launch, spread over the GPU's SMs"
+        },
+        {
+          "key": "b",
+          "text": "runs whole on one SM, possibly sharing it with other blocks"
+        },
+        {
+          "key": "c",
+          "text": "32 consecutive threads that issue one instruction together"
+        },
+        {
+          "key": "d",
+          "text": "one copy of the kernel, carried out in one lane of its warp"
+        },
+        {
+          "key": "e",
+          "text": "split across several SMs so that its threads finish sooner"
+        },
+        {
+          "key": "f",
+          "text": "the host program that issues the launch"
+        }
+      ],
+      "answer": {
+        "1": "a",
+        "2": "b",
+        "3": "c",
+        "4": "d"
+      },
+      "explanation": "Section 5: software says grid, block, thread, and the hardware runs it as SMs, warps, and lanes. A grid's blocks are spread over the SMs; a block runs whole on one SM; a warp is 32 consecutive threads sharing an instruction; a thread occupies one lane of its warp. A block is never split across SMs, and the host is not part of the device hierarchy.",
+      "hints": [
+        "One of the distractors describes something a block never does.",
+        "Work from the bottom: a thread lives in a warp, a warp in a block, a block on an SM."
+      ]
+    },
+    {
+      "id": "cuda-001-q06",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "launch",
+        "ceiling-division",
+        "surplus"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A kernel processes $N = 5{,}000$ elements with 256 threads per block. How many blocks must the launch have, and how many surplus threads fail the guard `i < N`?",
+      "answer": {
+        "parts": [
+          {
+            "label": "blocks",
+            "value": 20,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "surplus threads",
+            "value": 120,
+            "tolerance": 0,
+            "unit": "threads"
+          }
+        ]
+      },
+      "precision_note": "ceil(5000 / 256) = ceil(19.53) = 20 blocks, 20 x 256 = 5,120 threads, 5,120 - 5,000 = 120 surplus; (N + 255) / 256 in integer arithmetic gives 20. A floor division gives 19 blocks, 4,864 threads, and leaves 136 elements untouched.",
+      "explanation": "Blocks come whole, so the launch needs the ceiling of $5000 / 256$, which is 20 blocks, or $20 \\times 256 = 5{,}120$ threads. The last $5{,}120 - 5{,}000 = 120$ compute an index of 5,000 or more and return at the guard, as in section 4's launch of 1,000 elements.",
+      "hints": [
+        "Blocks come whole: round the division up, not down.",
+        "Multiply the block count by 256 and subtract N."
+      ]
+    },
+    {
+      "id": "cuda-001-q07",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o3",
+        "o2"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "global-index",
+        "warp",
+        "lane"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A 1D launch uses `blockDim.x = 128`. For the thread with `blockIdx.x = 6` and `threadIdx.x = 37`, give its global index `i`, the warp within its block that it belongs to (counting from 0), and its lane within that warp.",
+      "answer": {
+        "parts": [
+          {
+            "label": "global index i",
+            "value": 805,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "warp within the block",
+            "value": 1,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "lane within the warp",
+            "value": 5,
+            "tolerance": 0,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "i = blockIdx.x * blockDim.x + threadIdx.x = 6 x 128 + 37 = 805 (global_index(6, 37, 128) in snippets/thread_model.py); warp = 37 // 32 = 1; lane = 37 % 32 = 5. Using the global index for the warp (805 // 32 = 25) gives the warp's number across the whole grid, not within the block.",
+      "explanation": "The index is $6 \\times 128 + 37 = 805$. Warps are formed from consecutive `threadIdx.x` values within a block, 32 at a time, so thread 37 is in warp $\\lfloor 37 / 32 \\rfloor = 1$ at lane $37 \\bmod 32 = 5$, the same split section 4's table prints for thread 5 of block 3.",
+      "hints": [
+        "Apply `blockIdx.x * blockDim.x + threadIdx.x` first.",
+        "For the warp and lane, divide `threadIdx.x` by 32 and keep the quotient and the remainder."
+      ]
+    },
+    {
+      "id": "cuda-001-q08",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 8,
+      "tags": [
+        "launch",
+        "ceiling-division",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`launch_plan(n, threads)` should return `(blocks, surplus)` for a 1D launch that covers `n` elements with `threads` threads per block: the fewest whole blocks that cover every element, and the number of launched threads that fail the guard `i < n`. The version below leaves elements unprocessed whenever `n` is not a multiple of `threads`. Fix it.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def launch_plan(n, threads):\n    \"\"\"(blocks, surplus) for a 1D launch covering n elements, threads per block.\"\"\"\n    blocks = n // threads\n    surplus = blocks * threads - n\n    return blocks, surplus\n",
+      "solution": "def launch_plan(n, threads):\n    \"\"\"(blocks, surplus) for a 1D launch covering n elements, threads per block.\"\"\"\n    blocks = (n + threads - 1) // threads\n    surplus = blocks * threads - n\n    return blocks, surplus\n",
+      "tests": "# the post's launch, and section 9's floor-division mistake must not come back\nassert launch_plan(1000, 256) == (4, 24)\n# an exact multiple needs no extra block\nassert launch_plan(1024, 256) == (4, 0)\nassert launch_plan(32, 32) == (1, 0)\n# one element past a multiple needs a whole extra block\nassert launch_plan(1025, 256) == (5, 255)\nassert launch_plan(1, 128) == (1, 127)\nassert launch_plan(5000, 256) == (20, 120)\n# post 02's launch\nassert launch_plan(1_000_003, 256) == (3907, 189)\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Blocks come whole, so the count is the ceiling of `n / threads`, written `(n + threads - 1) // threads` in integer arithmetic (section 4). The floor division of the starter gives 3 blocks for 1,000 elements, 768 threads, and the last 232 elements are never touched, which is the first mistake of section 9. `math.ceil(n / threads)` and `-(-n // threads)` are equally correct.",
+      "hints": [
+        "Which way should the division round when `n` is not a multiple of `threads`?",
+        "Add `threads - 1` to `n` before the integer division."
+      ]
+    },
+    {
+      "id": "cuda-001-q09",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "9",
+      "est_minutes": 3,
+      "tags": [
+        "launch",
+        "floor-division",
+        "symptoms"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A kernel with the guard `if (i < N)` is launched over $N = 1{,}000$ elements with `N / 256` blocks of 256 threads, using integer division. What happens on the GTX 1650?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The launch fails with an error, because the grid is too small to cover all N elements.",
+          "correct": false,
+          "feedback": "The runtime does not know what N means to the kernel; 3 blocks of 256 is a valid launch and no error is reported."
+        },
+        {
+          "key": "b",
+          "text": "The kernel runs without any error, and the last 232 elements are never processed.",
+          "correct": true,
+          "feedback": "Yes. N / 256 is 3 in integer arithmetic, 768 threads, so elements 768 to 999 have no thread; section 9 reproduced exactly this."
+        },
+        {
+          "key": "c",
+          "text": "The guard `i < N` makes the surplus threads of the last block cover the missing elements.",
+          "correct": false,
+          "feedback": "The guard only stops threads whose index is too large. It cannot create threads that were never launched."
+        },
+        {
+          "key": "d",
+          "text": "The last block reads past the end of the array, which compute-sanitizer then reports.",
+          "correct": false,
+          "feedback": "That is the missing-guard mistake. Here every launched thread has an index below 768, so nothing reads out of bounds."
+        }
+      ],
+      "explanation": "Section 9: a floor division gives 3 blocks, 768 threads, and the program runs normally while elements 768 to 999 are never touched (`768 of 1000` in `add_one.cu`'s check). The block count must be the ceiling of $N / 256$.",
+      "hints": [
+        "Compute 1000 / 256 in integer arithmetic.",
+        "How many threads does that launch start, and which indices do they cover?"
+      ]
+    },
+    {
+      "id": "cuda-001-q10",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "divergence",
+        "passes",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A block of 256 threads runs a kernel with the branch `if (i < 40) doA(); else doB();`, where `i` runs from 0 to 255 in this block. Counting one pass per distinct path a warp's 32 lanes take, as the post's model does, how many passes do the block's 8 warps need in total?",
+      "stimulus": {
+        "kind": "code",
+        "language": "python",
+        "content": "print(passes(lambda i: i < 40, range(0, 256, 32)))",
+        "caption": "A call to the passes function of snippets/thread_model.py."
+      },
+      "answer": {
+        "value": 9,
+        "tolerance": 0,
+        "unit": "passes"
+      },
+      "precision_note": "Warp 0 (i = 0 to 31) all take doA: 1 pass. Warp 1 (i = 32 to 63) splits at 40: 2 passes. Warps 2 to 7 all take doB: 1 pass each, 6. Total 1 + 2 + 6 = 9; passes(lambda i: i < 40, range(0, 256, 32)) prints 9. Counting every warp as split gives 16; counting none gives 8.",
+      "explanation": "Only the warp whose lanes straddle the condition diverges. Warp 1 holds threads 32 to 63, of which 32 to 39 take `doA()` and the rest `doB()`, so it needs 2 passes; the other 7 warps agree and need 1 each, for $1 + 2 + 6 = 9$ (section 5). A branch costs extra passes only in the warps it splits.",
+      "hints": [
+        "Find which warps contain threads on both sides of 40.",
+        "Count 2 passes for each such warp and 1 for every other warp."
+      ]
+    },
+    {
+      "id": "cuda-001-q11",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "divergence",
+        "warp-uniform"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "In a block of 256 threads (`threadIdx.x` from 0 to 255), which of these branches makes at least one warp run both of its paths?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`if (threadIdx.x < 128)`",
+          "correct": false,
+          "feedback": "Threads 0 to 127 are warps 0 to 3 and threads 128 to 255 are warps 4 to 7, so every warp agrees: no divergence."
+        },
+        {
+          "key": "b",
+          "text": "`if (threadIdx.x % 2 == 0)`",
+          "correct": true,
+          "feedback": "Yes. Even and odd lanes sit side by side in every warp, so all 8 warps split and need 2 passes each."
+        },
+        {
+          "key": "c",
+          "text": "`if (blockIdx.x == 0)`",
+          "correct": false,
+          "feedback": "Every thread of a block has the same `blockIdx.x`, so the whole block, and every warp in it, takes one path."
+        },
+        {
+          "key": "d",
+          "text": "`if ((threadIdx.x / 32) % 2 == 0)`",
+          "correct": false,
+          "feedback": "`threadIdx.x / 32` is the warp number, so whole warps agree; this is the post's warp-uniform fix."
+        }
+      ],
+      "explanation": "Section 5: divergence happens only inside a warp, when its 32 consecutive threads disagree. A condition on the lane's parity splits every warp; conditions on the half-block, on the block, or on the warp number are uniform across each warp.",
+      "hints": [
+        "Write out which threads form warp 0: `threadIdx.x` 0 to 31.",
+        "For each condition, ask whether threads 0 to 31 can disagree."
+      ]
+    },
+    {
+      "id": "cuda-001-q12",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 2,
+      "tags": [
+        "memory-hierarchy"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Order these memory tiers of a GPU from fastest to reach (closest to the lanes) to slowest.",
+      "items": [
+        {
+          "key": "a",
+          "text": "global memory (DRAM)"
+        },
+        {
+          "key": "b",
+          "text": "registers"
+        },
+        {
+          "key": "c",
+          "text": "L2 cache"
+        },
+        {
+          "key": "d",
+          "text": "shared memory"
+        }
+      ],
+      "answer": [
+        "b",
+        "d",
+        "c",
+        "a"
+      ],
+      "partial_credit": true,
+      "explanation": "Section 6's ladder: registers (one thread, about a cycle), shared memory (one block, on chip beside L1), the L2 cache (the whole GPU), and global memory, off-chip DRAM, at hundreds of cycles. Speed falls as the scope widens, from one thread to one block to the whole GPU; size does not order them on this card, since an SM's 65,536 registers (256 KB) outweigh the 48 KB of shared memory a block gets.",
+      "hints": [
+        "Start with the tier private to one thread.",
+        "The only off-chip tier is last."
+      ]
+    },
+    {
+      "id": "cuda-001-q13",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 1,
+      "tags": [
+        "memory-hierarchy",
+        "shared-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Which memory tier is a scratchpad that a kernel fills and reuses by hand, visible to every thread of one block and to no other block?",
+      "answer": {
+        "model": "Shared memory (declared with __shared__).",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not|rather than|instead of)\\s+(the\\s+)?(__shared__|shared)\\b)(?![\\s\\S]*\\bor\\s+(the\\s+)?(registers?|l1|l2|global|constant|local|cache)\\b)(?:(?!(__shared__|\\bshared(\\s+|-)?mem(ory)?\\b|\\bsmem\\b|\\bshared\\b))(?!(?<!not )(?<!not the )\\b(registers?|l1|l2|global|constant|local|cache|dram)\\b)[\\s\\S])*(__shared__|\\bshared(\\s+|-)?mem(ory)?\\b|\\bsmem\\b|\\bshared\\b)"
+        ]
+      },
+      "explanation": "Section 6: shared memory is the one tier a kernel controls by hand. Its scope is one block, it sits on chip beside the L1 cache, and the device query reports 48 KB of it per block on the GTX 1650. Loading a tile into it once and reusing it is the engine of later posts.",
+      "hints": [
+        "It is the tier the post's table describes as filled and reused by hand."
+      ]
+    },
+    {
+      "id": "cuda-001-q14",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "7",
+      "est_minutes": 2,
+      "tags": [
+        "device-query",
+        "bandwidth",
+        "kinds-of-number"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "The device query prints `peak bandwidth : 160 GB/s (theoretical)` on the GTX 1650. What kind of number is this line?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A measured bandwidth: how fast a real kernel moved data across this card's memory bus.",
+          "correct": false,
+          "feedback": "No kernel moved any data. The program only read properties and did arithmetic on two of them; post 02 measures achieved bandwidth."
+        },
+        {
+          "key": "b",
+          "text": "A theoretical peak, computed from the memory clock and bus width the driver reports.",
+          "correct": true,
+          "feedback": "Yes. 2 transfers per clock x 16 bytes x 5,001 MHz is 160 GB/s, an upper bound no kernel is promised to reach."
+        },
+        {
+          "key": "c",
+          "text": "A published figure that the program copies from NVIDIA's specification sheet for the card.",
+          "correct": false,
+          "feedback": "The program computes it from `cudaGetDeviceProperties`; nothing is looked up or copied."
+        },
+        {
+          "key": "d",
+          "text": "A count derived on the CPU by the post's model, `thread_model.py`, without the GPU.",
+          "correct": false,
+          "feedback": "The CPU model knows nothing about the card's memory; the line comes from `device_query.cu`."
+        }
+      ],
+      "explanation": "Section 7: every line of the device query but the last is a property the driver reports; the last is derived from two of them, the 128-bit bus (16 bytes per transfer) and the 5,001 MHz memory clock at two transfers per clock. It is a theoretical peak, not a measurement.",
+      "hints": [
+        "Did any kernel run to produce this line?",
+        "Look at how `device_query.cu` computes `bw`: which two of the reported properties does it combine?"
+      ]
+    },
+    {
+      "id": "cuda-001-q15",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "bandwidth",
+        "device-query"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "Another card reports a 256-bit memory bus and a memory clock of 7,000 MHz. Using the same formula as `device_query.cu` (two transfers per clock, bus width in bytes per transfer), what theoretical peak bandwidth does it print, in GB/s?",
+      "answer": {
+        "value": 448,
+        "tolerance": 0.5,
+        "unit": "GB/s"
+      },
+      "precision_note": "2 x (256 / 8) bytes x 7,000e6 per second / 1e9 = 2 x 32 x 7.0 = 448 GB/s, the bw line of device_query.cu. Dropping the factor 2 gives 224; leaving the bus in bits gives 3,584.",
+      "explanation": "The formula of section 7 is $2 \\times (\\text{bus width} / 8) \\times \\text{memory clock}$: $2 \\times 32 \\text{ B} \\times 7.0 \\times 10^{9} \\text{ /s} = 448$ GB/s. On the GTX 1650 the same arithmetic, $2 \\times 16 \\times 5.001 \\times 10^{9}$, gives 160 GB/s.",
+      "hints": [
+        "Convert the bus width from bits to bytes per transfer.",
+        "Multiply by 2 transfers per clock and by the clock in transfers per second."
+      ]
+    },
+    {
+      "id": "cuda-001-q16",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "7",
+      "est_minutes": 2,
+      "tags": [
+        "compute-capability",
+        "nvcc",
+        "arch"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "`add_one.cu` is built with `-arch=sm_86` (Ampere) and run on the GTX 1650 (compute capability 7.5). What happens?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It runs correctly, because newer architectures are backward compatible with older cards.",
+          "correct": false,
+          "feedback": "Compatibility runs the other way: code for an older compute capability can run on a newer card, not code for a newer one on an older card."
+        },
+        {
+          "key": "b",
+          "text": "The launch fails with `no kernel image is available for execution on the device`.",
+          "correct": true,
+          "feedback": "Yes. The binary holds code for compute capability 8.6 only, which a 7.5 card cannot run; section 9 reproduced this error."
+        },
+        {
+          "key": "c",
+          "text": "nvcc refuses to compile, because the build machine's card is only 7.5.",
+          "correct": false,
+          "feedback": "nvcc compiles for any target architecture regardless of the card in the machine; the failure comes at run time."
+        },
+        {
+          "key": "d",
+          "text": "The driver just-in-time compiles the code for 7.5, so it runs, only slower to start.",
+          "correct": false,
+          "feedback": "Just-in-time compilation needs PTX for a compute capability at or below the card's; PTX for 8.6 cannot be compiled down to 7.5."
+        }
+      ],
+      "explanation": "Section 7: `-arch=sm_XX` is the compute capability with the dot dropped, and PTX for one compute capability can be compiled only to binary code of greater or equal capability. A build for `sm_86` therefore has nothing the GTX 1650 can run, and section 9 shows the launch error it gives.",
+      "hints": [
+        "Which direction does PTX compatibility go: up or down in compute capability?"
+      ]
+    },
+    {
+      "id": "cuda-001-q17",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o2",
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "blocks",
+        "synchronization",
+        "independence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "connects": [
+        "cuda-009"
+      ],
+      "prompt": "A kernel launched with 4 blocks needs block 3 to use a value that block 0 computes. The author writes `__syncthreads()` in block 3 before the read, expecting it to wait for block 0. Explain why this cannot work, using what this post says about blocks and SMs, and describe two correct ways to get the value to block 3. Post 09 treats this case in full.",
+      "kind": "connect",
+      "solution": "`__syncthreads()` is a barrier for the threads of one block only: it makes block 3's threads wait for each other, and it says nothing about block 0. Blocks must be able to run independently and in any order (section 4): the hardware hands whole blocks to SMs as they have room, so block 3 may run before block 0, after it, or at the same time on another SM, and on a small GPU the two may never be resident together. A block that waited for another block could therefore wait forever, which is why CUDA has no barrier across the grid inside an ordinary kernel.\n\nTwo correct designs:\n\n1. **Split the kernel at the dependency.** The first launch computes the value (block 0 writes it to global memory); a second launch reads it. Launches in one stream run in order, so the second kernel sees the first kernel's writes.\n2. **Use an atomic or a design that does not need the order.** If the value is a reduction (a sum, a maximum), every block can contribute with an atomic operation such as `atomicAdd` on one global location, and the consumer reads it after the kernel ends; post 09 explains what atomics and fences guarantee.\n\n(Cooperative launches can provide a true grid-wide barrier, but only when every block is resident at once; post 09 names it as a specialist tool.)",
+      "rubric": [
+        {
+          "criterion": "States that __syncthreads() synchronizes only the threads of one block",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that blocks run independently, in any order, possibly not co-resident, so a cross-block wait can deadlock",
+          "points": 2
+        },
+        {
+          "criterion": "Gives a second kernel launch as a correct way to order the dependency",
+          "points": 2
+        },
+        {
+          "criterion": "Gives atomics (or another order-free design) as the second way, pointing to post 09",
+          "points": 2
+        }
+      ],
+      "answer_length": "two paragraphs",
+      "explanation": "Sections 4 and 5 and pitfall 2: a block runs whole on one SM, blocks have no guaranteed order and no barrier between them, and `__syncthreads()` synchronizes one block. Coordination across blocks needs a second launch or atomics, the subject of post 09.",
+      "hints": [
+        "What set of threads does `__syncthreads()` wait for?",
+        "Could block 0 and block 3 be scheduled at different times, or never together? What would a waiting block 3 then do?"
+      ]
+    },
+    {
+      "id": "cuda-001-q18",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o1",
+        "o4"
+      ],
+      "section": "1",
+      "est_minutes": 12,
+      "tags": [
+        "cpu-vs-gpu",
+        "divergence",
+        "workload-fit"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-17",
+      "prompt": "A colleague moves a serial algorithm to the GPU unchanged: one thread walks a linked list, and at each node it takes one of several branches depending on the node's data. They expect a large speedup because the GPU has 896 arithmetic lanes. Critique the plan using chip area, latency hiding, and warp divergence, and say what property a workload needs for the GPU to win.",
+      "kind": "critique",
+      "solution": "The plan uses one thread, so it occupies one lane of one warp on one SM: 895 of the 896 lanes do nothing, and the GPU's advantage, many lanes, is unused. That one thread is also slower than a CPU thread, because the GPU spent its area on arithmetic rather than on the caches, branch prediction, and out-of-order execution that make a single stream fast (section 1).\n\nLatency hiding needs other ready warps (section 2). A linked-list walk is a chain of dependent loads from global memory, each costing hundreds of cycles, and with a single warp there is nothing to switch to, so the scheduler sits idle for almost every cycle, as the model's one-warp row shows at 25% even with a 12-cycle wait.\n\nDivergence (section 5) would hurt even if the work were spread over many threads in this shape: threads of one warp that take different branches at each node run those paths one after another, so a warp with several paths costs several passes.\n\nThe GPU wins when the workload is data-parallel: many independent elements, enough threads to fill the SMs with warps, the same operation on each, and control flow that whole warps agree on. A serial, pointer-chasing, branch-heavy task belongs on the CPU.",
+      "rubric": [
+        {
+          "criterion": "Notes that one thread uses one lane and that a GPU thread is slower than a CPU thread (chip area spent on arithmetic, not control)",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that dependent global loads with no other ready warp cannot be hidden",
+          "points": 2
+        },
+        {
+          "criterion": "Explains how branching per element would cause divergence and serialized passes",
+          "points": 2
+        },
+        {
+          "criterion": "States the needed property: many independent elements, same operation, warp-uniform control flow",
+          "points": 2
+        }
+      ],
+      "answer_length": "three short paragraphs",
+      "explanation": "Sections 1, 2, and 5 and pitfall 1: the GPU does not speed up one thread; it runs many. Its bet pays only with many independent threads to hide latency and uniform control flow within each warp.",
+      "hints": [
+        "How many of the 896 lanes does one thread use?",
+        "With one warp resident, what can the scheduler do while that warp waits on memory?"
+      ]
+    }
+  ]
+}

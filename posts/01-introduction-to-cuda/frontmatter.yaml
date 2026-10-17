@@ -1,8 +1,28 @@
 id: cuda-001
 slug: 01-introduction-to-cuda
-title: "01 · Why GPUs exist — the CUDA execution model from the ground up"
+title: "01 - Why GPUs exist: the CUDA execution model from the ground up"
+summary: "Why a GPU spends its chip on arithmetic and hides memory latency with many threads, and how a CUDA launch of grid, blocks, and threads maps onto streaming multiprocessors and warps of 32."
 date: 2026-06-28
-tags: [first-kernels, cuda, gpu-architecture]
-hero: diagrams/01-cpu-vs-gpu.svg
-reading_time: 15
+updated: 2026-10-17
+status: complete
 part: "Part I - First Kernels"
+level: beginner
+reading_time: 17
+tags: [cuda, gpu-architecture, execution-model, warps, memory-hierarchy, first-kernels]
+hero: diagrams/01-cpu-vs-gpu.svg
+prerequisites: []
+code: included
+outcomes:
+  - id: o1
+    text: "Explain why a GPU beats a CPU on data-parallel work, in terms of chip area and latency hiding."
+  - id: o2
+    text: "Map thread, block, and grid onto the hardware that runs them: streaming multiprocessors, warps of 32, and their lanes."
+  - id: o3
+    text: "Compute any thread's global index by hand, size a launch with a ceiling division, and say what the surplus threads do."
+  - id: o4
+    text: "Predict how many passes a warp needs when its lanes branch, and when warp divergence halves throughput."
+  - id: o5
+    text: "Name the memory tiers from registers to global memory with the scope of each, and read a card's limits from a device query."
+recommended: [cmp-002]
+compute: gpu-small
+hardware: gtx-1650

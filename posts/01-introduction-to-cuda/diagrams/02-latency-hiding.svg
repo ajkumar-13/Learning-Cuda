@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-02-latency-hiding-title" aria-describedby="cuda-02-latency-hiding-desc">
+<title id="cuda-02-latency-hiding-title">Enough ready warps keep the scheduler busy</title>
+<desc id="cuda-02-latency-hiding-desc">Two timelines of 32 cycles on one SM scheduler, with illustrative timings from snippets/thread_model.py: a warp issues 4 instructions in orange and then waits 12 cycles for its load, in green. With one warp, the scheduler row issues on 8 of the 32 cycles and is idle, in red, on the other 24: 25 percent busy. With four warps, each issues while the other three wait, and the scheduler row issues on all 32 cycles, numbered by the warp it serves: 100 percent busy.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .f-surface-bg { fill: var(--cuda-surface); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-red { stroke: var(--cuda-red); }
+  .s-rule { stroke: var(--cuda-rule); }
+</style>
+<defs>
+<marker id="cuda-02-latency-hiding-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="554">Enough ready warps keep the scheduler busy</text>
+<text x="40" y="76" class="t-subtitle" data-w="671">Derived by snippets/thread_model.py; illustrative timings: 4 instructions, then a 12-cycle wait.</text>
+<text x="40" y="120" class="t-head" data-w="348">1 warp: scheduler busy 8 of 32 cycles, 25%</text>
+<g data-grid="skip">
+<rect x="168" y="136" width="736" height="32" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="168" y="136" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="260" y="136" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="536" y="136" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="628" y="136" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<path d="M191,136V168M214,136V168M237,136V168M260,136V168M283,136V168M306,136V168M329,136V168M352,136V168M375,136V168M398,136V168M421,136V168M444,136V168M467,136V168M490,136V168M513,136V168M536,136V168M559,136V168M582,136V168M605,136V168M628,136V168M651,136V168M674,136V168M697,136V168M720,136V168M743,136V168M766,136V168M789,136V168M812,136V168M835,136V168M858,136V168M881,136V168" class="rule1"/>
+</g>
+<rect x="168" y="136" width="736" height="32" class="frame" data-fit="skip"/>
+</g>
+<text x="40" y="156" class="t-label" data-w="45">warp 0</text>
+<g data-grid="skip">
+<rect x="168" y="176" width="736" height="32" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="168" y="176" width="92" height="32" class="f-orange-soft" data-fit="skip"/>
+<rect x="260" y="176" width="276" height="32" class="f-red-soft" data-fit="skip"/>
+<rect x="536" y="176" width="92" height="32" class="f-orange-soft" data-fit="skip"/>
+<rect x="628" y="176" width="276" height="32" class="f-red-soft" data-fit="skip"/>
+<path d="M191,176V208M214,176V208M237,176V208M260,176V208M283,176V208M306,176V208M329,176V208M352,176V208M375,176V208M398,176V208M421,176V208M444,176V208M467,176V208M490,176V208M513,176V208M536,176V208M559,176V208M582,176V208M605,176V208M628,176V208M651,176V208M674,176V208M697,176V208M720,176V208M743,176V208M766,176V208M789,176V208M812,176V208M835,176V208M858,176V208M881,176V208" class="rule1"/>
+</g>
+<rect x="168" y="176" width="736" height="32" class="frame" data-fit="skip"/>
+<text x="179.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="202.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="225.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="248.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="547.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="570.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="593.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="616.5" y="197" text-anchor="middle" class="t-tick" data-w="8">0</text>
+</g>
+<text x="40" y="196" class="t-label" data-w="66">scheduler</text>
+<text x="40" y="240" class="t-head" data-w="377">4 warps: scheduler busy 32 of 32 cycles, 100%</text>
+<g data-grid="skip">
+<rect x="168" y="256" width="736" height="128" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="168" y="256" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="260" y="256" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="536" y="256" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="628" y="256" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="260" y="288" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="352" y="288" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="628" y="288" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="720" y="288" width="184" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="352" y="320" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="444" y="320" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="720" y="320" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="812" y="320" width="92" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="444" y="352" width="92" height="32" class="f-orange" data-fit="skip"/>
+<rect x="536" y="352" width="276" height="32" class="f-green-soft" data-fit="skip"/>
+<rect x="812" y="352" width="92" height="32" class="f-orange" data-fit="skip"/>
+<path d="M191,256V384M214,256V384M237,256V384M260,256V384M283,256V384M306,256V384M329,256V384M352,256V384M375,256V384M398,256V384M421,256V384M444,256V384M467,256V384M490,256V384M513,256V384M536,256V384M559,256V384M582,256V384M605,256V384M628,256V384M651,256V384M674,256V384M697,256V384M720,256V384M743,256V384M766,256V384M789,256V384M812,256V384M835,256V384M858,256V384M881,256V384M168,288H904M168,320H904M168,352H904" class="rule1"/>
+</g>
+<rect x="168" y="256" width="736" height="128" class="frame" data-fit="skip"/>
+</g>
+<text x="40" y="276" class="t-label" data-w="45">warp 0</text>
+<text x="40" y="308" class="t-label" data-w="45">warp 1</text>
+<text x="40" y="340" class="t-label" data-w="45">warp 2</text>
+<text x="40" y="372" class="t-label" data-w="45">warp 3</text>
+<g data-grid="skip">
+<rect x="168" y="392" width="736" height="32" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="168" y="392" width="736" height="32" class="f-orange-soft" data-fit="skip"/>
+<path d="M191,392V424M214,392V424M237,392V424M260,392V424M283,392V424M306,392V424M329,392V424M352,392V424M375,392V424M398,392V424M421,392V424M444,392V424M467,392V424M490,392V424M513,392V424M536,392V424M559,392V424M582,392V424M605,392V424M628,392V424M651,392V424M674,392V424M697,392V424M720,392V424M743,392V424M766,392V424M789,392V424M812,392V424M835,392V424M858,392V424M881,392V424" class="rule1"/>
+</g>
+<rect x="168" y="392" width="736" height="32" class="frame" data-fit="skip"/>
+<text x="179.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="202.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="225.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="248.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="271.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="294.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="317.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="340.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="363.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="386.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="409.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="432.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="455.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="478.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="501.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="524.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="547.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="570.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="593.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="616.5" y="413" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="639.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="662.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="685.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="708.5" y="413" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="731.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="754.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="777.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="800.5" y="413" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="823.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="846.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="869.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="892.5" y="413" text-anchor="middle" class="t-tick" data-w="8">3</text>
+</g>
+<text x="40" y="412" class="t-label" data-w="66">scheduler</text>
+<g data-grid="skip">
+<text x="168" y="444" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="352" y="444" text-anchor="middle" class="t-tick" data-w="8">8</text>
+<text x="536" y="444" text-anchor="middle" class="t-tick" data-w="16">16</text>
+<text x="720" y="444" text-anchor="middle" class="t-tick" data-w="16">24</text>
+<text x="904" y="444" text-anchor="middle" class="t-tick" data-w="16">32</text>
+</g>
+<text x="40" y="444" class="t-tick" data-w="32">cycle</text>
+<rect x="168" y="464" width="16" height="16" class="f-orange s-orange w1"/>
+<text x="200" y="476" class="t-label" data-w="79">warp issues</text>
+<rect x="312" y="464" width="16" height="16" class="f-green-soft s-green w1"/>
+<text x="344" y="476" class="t-label" data-w="103">its load in flight</text>
+<rect x="480" y="464" width="16" height="16" class="s-rule w15 nofill"/>
+<text x="512" y="476" class="t-label" data-w="96">ready, queued</text>
+<rect x="632" y="464" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="664" y="476" class="t-label" data-w="94">scheduler idle</text>
+<text x="40" y="504" class="t-note" data-w="385">A stall costs nothing while another warp is ready to issue.</text>
+</svg>

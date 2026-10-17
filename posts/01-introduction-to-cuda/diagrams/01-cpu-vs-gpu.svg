@@ -1,43 +1,375 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">A CPU spends its chip area on a few powerful cores plus large caches and control; a GPU spends almost all of it on many small cores</title>
-  <desc id="d">Two panels comparing chip area. On the left, the CPU: four large cores filled in the compute colour sit beside a large cache block and above a wide control strip, both drawn in neutral grey. Most of the CPU's area is grey cache and control, which is how it makes a single thread fast. On the right, the GPU: a thin grey control strip on top, a thin grey L2 cache strip on the bottom, and between them a dense grid of many small cores, almost all filled in the compute colour. Almost all of the GPU's area is blue compute. The takeaway is that the GPU is not a faster CPU; it trades single-thread speed for running the same operation across thousands of elements at once.</desc>
-  <style><![CDATA[
-    :root{--ts-bg:#FAFAF7;--ts-surface:#FFFFFF;--ts-ink:#1A1A1A;--ts-ink-muted:#5C5C5C;--ts-border:#D9D9D4;--ts-primary:#5B7FBF;--ts-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--ts-bg:#0E0F12;--ts-surface:#16181C;--ts-ink:#F2F2EE;--ts-ink-muted:#B4B4AE;--ts-border:#2A2D33;--ts-primary:#8BA8E0;--ts-grid:#23262D;}}
-    .bg{fill:var(--ts-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--ts-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--ts-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--ts-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--ts-primary);}
-    .panel{fill:none;stroke:var(--ts-border);stroke-width:1;}
-    .core{fill:var(--ts-primary);fill-opacity:0.18;stroke:var(--ts-primary);stroke-width:1.5;}
-    .coreS{fill:var(--ts-primary);fill-opacity:0.18;stroke:var(--ts-primary);stroke-width:1;}
-    .mem{fill:var(--ts-ink-muted);fill-opacity:0.12;stroke:var(--ts-border);stroke-width:1;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="40">The GPU is not a faster CPU: it is mostly compute</text>
-
-  <!-- CPU: a little compute (blue), mostly cache + control (grey) -->
-  <rect class="panel" x="40" y="72" width="420" height="430" rx="10"/>
-  <text class="label" x="60" y="104">CPU — a few powerful cores (latency)</text>
-  <rect class="core" x="64"  y="120" width="92" height="90" rx="6"/><text class="mono" x="110" y="171" text-anchor="middle">core</text>
-  <rect class="core" x="168" y="120" width="92" height="90" rx="6"/><text class="mono" x="214" y="171" text-anchor="middle">core</text>
-  <rect class="core" x="64"  y="222" width="92" height="90" rx="6"/><text class="mono" x="110" y="273" text-anchor="middle">core</text>
-  <rect class="core" x="168" y="222" width="92" height="90" rx="6"/><text class="mono" x="214" y="273" text-anchor="middle">core</text>
-  <rect class="mem" x="276" y="120" width="160" height="192" rx="6"/><text class="small" x="356" y="206" text-anchor="middle">Cache</text><text class="small" x="356" y="224" text-anchor="middle">L1 / L2 / L3</text>
-  <rect class="mem" x="64" y="330" width="372" height="150" rx="6"/><text class="small" x="250" y="400" text-anchor="middle">Control</text><text class="small" x="250" y="420" text-anchor="middle">branch prediction, out-of-order execution</text>
-
-  <!-- GPU: almost all compute (a dense grid of blue cores), thin grey control + L2 -->
-  <rect class="panel" x="500" y="72" width="420" height="430" rx="10"/>
-  <text class="label" x="520" y="104">GPU — thousands of small cores (throughput)</text>
-  <rect class="mem" x="520" y="120" width="380" height="26" rx="4"/><text class="small" x="710" y="138" text-anchor="middle">Control (small)</text>
-  <g>
-    <rect class="coreS" x="520" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="158" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="158" width="27" height="38" rx="2"/>
-    <rect class="coreS" x="520" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="204" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="204" width="27" height="38" rx="2"/>
-    <rect class="coreS" x="520" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="250" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="250" width="27" height="38" rx="2"/>
-    <rect class="coreS" x="520" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="296" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="296" width="27" height="38" rx="2"/>
-    <rect class="coreS" x="520" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="342" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="342" width="27" height="38" rx="2"/>
-    <rect class="coreS" x="520" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="552" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="584" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="616" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="648" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="680" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="712" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="744" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="776" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="808" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="840" y="388" width="27" height="38" rx="2"/><rect class="coreS" x="872" y="388" width="27" height="38" rx="2"/>
-  </g>
-  <rect class="mem" x="520" y="448" width="380" height="26" rx="4"/><text class="small" x="710" y="466" text-anchor="middle">L2 cache</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-cpu-vs-gpu-title" aria-describedby="cuda-01-cpu-vs-gpu-desc">
+<title id="cuda-01-cpu-vs-gpu-title">A CPU spends area on control; a GPU spends it on lanes</title>
+<desc id="cuda-01-cpu-vs-gpu-desc">Two panels. On the left, a schematic CPU: four large blue cores, a large green cache block and a gray control block for branch prediction and out-of-order execution, with no numbers because it is not to scale. On the right, the GTX 1650: 14 streaming multiprocessors in two rows of 7, each a tile of 64 small orange lanes, 896 in all, above one green L2 cache of 1,024 KB shared by every SM. The SM count and the L2 size are measured by device_query; the 64 lanes per SM are cited from the CUDA Programming Guide.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-blue-soft { fill: var(--cuda-blue-soft); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-surface-bg { fill: var(--cuda-surface); }
+  .s-blue-line { stroke: var(--cuda-blue-line); }
+  .s-green-line { stroke: var(--cuda-green-line); }
+  .s-orange-line { stroke: var(--cuda-orange-line); }
+</style>
+<defs>
+<marker id="cuda-01-cpu-vs-gpu-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="686">A CPU spends area on control; a GPU spends it on lanes</text>
+<text x="40" y="76" class="t-subtitle" data-w="784">GTX 1650 (compute capability 7.5), CUDA 12.3, October 2026: SMs and L2 measured; 64 lanes per SM cited.</text>
+<text x="40" y="120" class="t-head" data-w="129">CPU, schematic</text>
+<rect x="40" y="136" width="136" height="72" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="56" y="168" class="t-head" data-w="36">core</text>
+<text x="56" y="192" class="t-note" data-w="105">one fast stream</text>
+<rect x="192" y="136" width="136" height="72" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="208" y="168" class="t-head" data-w="36">core</text>
+<text x="208" y="192" class="t-note" data-w="105">one fast stream</text>
+<rect x="40" y="224" width="136" height="72" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="56" y="256" class="t-head" data-w="36">core</text>
+<text x="56" y="280" class="t-note" data-w="105">one fast stream</text>
+<rect x="192" y="224" width="136" height="72" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="208" y="256" class="t-head" data-w="36">core</text>
+<text x="208" y="280" class="t-note" data-w="105">one fast stream</text>
+<rect x="40" y="312" width="288" height="72" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="56" y="344" class="t-head" data-w="48">cache</text>
+<text x="56" y="368" class="t-note" data-w="66">L1, L2, L3</text>
+<rect x="40" y="400" width="288" height="72" rx="8" class="card"/>
+<text x="56" y="432" class="t-head" data-w="59">control</text>
+<text x="56" y="456" class="t-note" data-w="205">branch prediction, out of order</text>
+<text x="376" y="120" class="t-head" data-w="345">GTX 1650: 14 SMs × 64 lanes (cited) = 896</text>
+<rect x="376" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="412" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 0</text>
+<rect x="384" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="384" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M391,184V240M398,184V240M405,184V240M412,184V240M419,184V240M426,184V240M433,184V240M384,191H440M384,198H440M384,205H440M384,212H440M384,219H440M384,226H440M384,233H440" class="fine"/>
+</g>
+<rect x="384" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="456" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="492" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 1</text>
+<rect x="464" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="464" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M471,184V240M478,184V240M485,184V240M492,184V240M499,184V240M506,184V240M513,184V240M464,191H520M464,198H520M464,205H520M464,212H520M464,219H520M464,226H520M464,233H520" class="fine"/>
+</g>
+<rect x="464" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="536" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="572" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 2</text>
+<rect x="544" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="544" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M551,184V240M558,184V240M565,184V240M572,184V240M579,184V240M586,184V240M593,184V240M544,191H600M544,198H600M544,205H600M544,212H600M544,219H600M544,226H600M544,233H600" class="fine"/>
+</g>
+<rect x="544" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="616" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="652" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 3</text>
+<rect x="624" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="624" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M631,184V240M638,184V240M645,184V240M652,184V240M659,184V240M666,184V240M673,184V240M624,191H680M624,198H680M624,205H680M624,212H680M624,219H680M624,226H680M624,233H680" class="fine"/>
+</g>
+<rect x="624" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="696" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="732" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 4</text>
+<rect x="704" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="704" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M711,184V240M718,184V240M725,184V240M732,184V240M739,184V240M746,184V240M753,184V240M704,191H760M704,198H760M704,205H760M704,212H760M704,219H760M704,226H760M704,233H760" class="fine"/>
+</g>
+<rect x="704" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="776" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="812" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 5</text>
+<rect x="784" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="784" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M791,184V240M798,184V240M805,184V240M812,184V240M819,184V240M826,184V240M833,184V240M784,191H840M784,198H840M784,205H840M784,212H840M784,219H840M784,226H840M784,233H840" class="fine"/>
+</g>
+<rect x="784" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="856" y="136" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="892" y="156" text-anchor="middle" class="t-tick" data-w="33">SM 6</text>
+<rect x="864" y="184" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="864" y="184" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="191" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="198" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="205" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="212" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="219" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="226" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="233" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M871,184V240M878,184V240M885,184V240M892,184V240M899,184V240M906,184V240M913,184V240M864,191H920M864,198H920M864,205H920M864,212H920M864,219H920M864,226H920M864,233H920" class="fine"/>
+</g>
+<rect x="864" y="184" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="376" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="412" y="284" text-anchor="middle" class="t-tick" data-w="33">SM 7</text>
+<rect x="384" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="384" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="384" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M391,312V368M398,312V368M405,312V368M412,312V368M419,312V368M426,312V368M433,312V368M384,319H440M384,326H440M384,333H440M384,340H440M384,347H440M384,354H440M384,361H440" class="fine"/>
+</g>
+<rect x="384" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="456" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="492" y="284" text-anchor="middle" class="t-tick" data-w="33">SM 8</text>
+<rect x="464" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="464" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="464" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M471,312V368M478,312V368M485,312V368M492,312V368M499,312V368M506,312V368M513,312V368M464,319H520M464,326H520M464,333H520M464,340H520M464,347H520M464,354H520M464,361H520" class="fine"/>
+</g>
+<rect x="464" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="536" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="572" y="284" text-anchor="middle" class="t-tick" data-w="33">SM 9</text>
+<rect x="544" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="544" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="544" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M551,312V368M558,312V368M565,312V368M572,312V368M579,312V368M586,312V368M593,312V368M544,319H600M544,326H600M544,333H600M544,340H600M544,347H600M544,354H600M544,361H600" class="fine"/>
+</g>
+<rect x="544" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="616" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="652" y="284" text-anchor="middle" class="t-tick" data-w="41">SM 10</text>
+<rect x="624" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="624" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="624" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M631,312V368M638,312V368M645,312V368M652,312V368M659,312V368M666,312V368M673,312V368M624,319H680M624,326H680M624,333H680M624,340H680M624,347H680M624,354H680M624,361H680" class="fine"/>
+</g>
+<rect x="624" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="696" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="732" y="284" text-anchor="middle" class="t-tick" data-w="41">SM 11</text>
+<rect x="704" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="704" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="704" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M711,312V368M718,312V368M725,312V368M732,312V368M739,312V368M746,312V368M753,312V368M704,319H760M704,326H760M704,333H760M704,340H760M704,347H760M704,354H760M704,361H760" class="fine"/>
+</g>
+<rect x="704" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="776" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="812" y="284" text-anchor="middle" class="t-tick" data-w="41">SM 12</text>
+<rect x="784" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="784" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="784" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M791,312V368M798,312V368M805,312V368M812,312V368M819,312V368M826,312V368M833,312V368M784,319H840M784,326H840M784,333H840M784,340H840M784,347H840M784,354H840M784,361H840" class="fine"/>
+</g>
+<rect x="784" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="856" y="264" width="72" height="120" rx="8" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="892" y="284" text-anchor="middle" class="t-tick" data-w="41">SM 13</text>
+<rect x="864" y="312" width="56" height="56" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="864" y="312" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="319" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="326" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="333" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="340" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="347" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="354" width="56" height="7" class="f-orange" data-fit="skip"/>
+<rect x="864" y="361" width="56" height="7" class="f-orange" data-fit="skip"/>
+<path d="M871,312V368M878,312V368M885,312V368M892,312V368M899,312V368M906,312V368M913,312V368M864,319H920M864,326H920M864,333H920M864,340H920M864,347H920M864,354H920M864,361H920" class="fine"/>
+</g>
+<rect x="864" y="312" width="56" height="56" class="frame" data-fit="skip"/>
+<rect x="376" y="400" width="552" height="72" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="392" y="432" class="t-head" data-w="73">L2 cache</text>
+<text x="392" y="456" class="t-note" data-w="202">1,024 KB, shared by every SM</text>
+<text x="40" y="504" class="t-note" data-w="569">Less control per thread, far more arithmetic: the GPU needs many threads to pay off.</text>
 </svg>
