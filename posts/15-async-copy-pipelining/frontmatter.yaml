@@ -1,8 +1,28 @@
 id: cuda-015
 slug: 15-async-copy-pipelining
-title: "15 · Asynchronous copy and software pipelining — cp.async, double buffering, and hiding memory latency"
+title: "15 - Asynchronous copy and software pipelining: cp.async, double buffering, and hiding memory latency"
+summary: "How a tiled matrix multiply stops waiting for its next tile: double buffering, the cp.async copy of Ampere cards (compiled but not run on the author's Turing card), a model of the latency it hides, and when pipelining pays."
 date: 2026-07-20
-tags: [systems, cuda, performance]
-hero: diagrams/01-stall-vs-pipeline.svg
-reading_time: 16
+updated: 2026-10-18
+status: complete
 part: "Part IV - Systems & Execution"
+level: advanced
+reading_time: 18
+tags: [cuda, cp-async, software-pipelining, double-buffering, shared-memory, matrix-multiplication]
+hero: diagrams/01-stall-vs-pipeline.svg
+prerequisites: [cuda-003]
+code: included
+outcomes:
+  - id: o1
+    text: "Point at the stall in a synchronous tiled kernel and say when other resident blocks hide it and when they do not."
+  - id: o2
+    text: "Use the cp.async model of issue, commit and wait, and read `__pipeline_wait_prior(n)` as a count of committed groups."
+  - id: o3
+    text: "Write a double-buffered tile loop that issues the copy of tile t + 1 before computing tile t, with the barriers it needs."
+  - id: o4
+    text: "Predict the latency-hiding speedup from the load-to-compute ratio and the tile count, and read a measured speedup through that model."
+  - id: o5
+    text: "State the Ampere (sm_80) requirement of cp.async and what the same intrinsics compile to on an older card."
+recommended: [cuda-010, cuda-014]
+compute: gpu-small
+hardware: gtx-1650

@@ -1,0 +1,742 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-015",
+  "next_ordinal": 17,
+  "questions": [
+    {
+      "id": "cuda-015-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "stall",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In post 03's tiled kernel, why do the block's multiply-adds sit idle while a tile is loaded from global memory?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The multiply-adds run on the copy engine, which is busy with the load.",
+          "correct": false,
+          "feedback": "Copy engines serve host-device transfers; the multiply-adds run on the SM's arithmetic units."
+        },
+        {
+          "key": "b",
+          "text": "Each thread waits at the shared-memory store for its loaded value, and the barrier then holds the block until the slowest load has landed.",
+          "correct": true,
+          "feedback": "Right: the store needs the register the load fills, and `__syncthreads()` keeps every thread from computing before the whole tile is in shared memory."
+        },
+        {
+          "key": "c",
+          "text": "Shared memory cannot be read and written in the same clock cycle, so reads stop during the load.",
+          "correct": false,
+          "feedback": "Shared memory serves reads and writes every cycle; what blocks the math is the data dependence and the barrier."
+        },
+        {
+          "key": "d",
+          "text": "The compiler serializes every global load with every multiply-add in the program.",
+          "correct": false,
+          "feedback": "The compiler reorders freely where data allows; here the math depends on the tile, so it must wait."
+        }
+      ],
+      "explanation": "Section 1: `s_A[...] = A[...]` is a load into a register and a store from it, so the thread stalls at the store, and the first `__syncthreads()` keeps the block from computing until every thread's copy has landed.",
+      "hints": [
+        "Ask what the multiply-adds read, and what has to happen before that data exists in shared memory."
+      ]
+    },
+    {
+      "id": "cuda-015-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "occupancy",
+        "latency-hiding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "With four 256-thread blocks per SM on the GTX 1650, the synchronous kernel ran at 332 GFLOP/s and the register-staged pipeline at 323. What explains the missing speedup?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The register-staged pipeline needs `cp.async`, so on compute capability 7.5 it falls back to synchronous copies.",
+          "correct": false,
+          "feedback": "The register-staged kernel uses ordinary loads and no pipeline intrinsics; it is the `__pipeline_*` kernel that falls back."
+        },
+        {
+          "key": "b",
+          "text": "At 1,024 cubed the kernel is limited by the PCIe link, so neither version can go faster.",
+          "correct": false,
+          "feedback": "The timed launches read matrices already in device memory; PCIe is not involved."
+        },
+        {
+          "key": "c",
+          "text": "While one block waits at its barrier for a tile, the other resident blocks compute, so the SM already hides most of the stall.",
+          "correct": true,
+          "feedback": "Right: 32 warps from four blocks give the schedulers other work; the stall only shows when one block's 8 warps are all the SM has."
+        },
+        {
+          "key": "d",
+          "text": "Double buffering halves the number of tiles, so the pipeline does half the work and loses its gain to overhead.",
+          "correct": false,
+          "feedback": "Both kernels walk the same 64 tiles; double buffering changes when a tile is loaded, not how many there are."
+        }
+      ],
+      "explanation": "Section 5: with four blocks per SM the synchronous kernel was the fastest of the three, and with one block per SM it fell from 332 to 174 GFLOP/s while the register pipeline reached 281, 1.61 times faster.",
+      "hints": [
+        "Compare the same kernels at one block per SM.",
+        "Think about what other warps on the SM do while one block waits."
+      ]
+    },
+    {
+      "id": "cuda-015-q03",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "cp-async",
+        "wait-group"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A thread has committed groups 0 to 6, one per tile, and calls `__pipeline_wait_prior(1)`. By the Programming Guide's rule, what is true when the call returns?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Only group 1 has completed.",
+          "correct": false,
+          "feedback": "The argument is a count of groups allowed to remain in flight, not the index of a group."
+        },
+        {
+          "key": "b",
+          "text": "Every group of every thread in the block has completed.",
+          "correct": false,
+          "feedback": "The wait covers this thread's own groups only; the block needs a `__syncthreads()` as well."
+        },
+        {
+          "key": "c",
+          "text": "Groups 0 to 6 have all completed.",
+          "correct": false,
+          "feedback": "That is `__pipeline_wait_prior(0)`; with 1, the newest group may still be running."
+        },
+        {
+          "key": "d",
+          "text": "Groups 0 to 5 have completed; group 6 may still be in flight.",
+          "correct": true,
+          "feedback": "Right: with commits numbered 0 to L = 6, the call waits for every group up to L - 1 = 5."
+        }
+      ],
+      "explanation": "Section 2 quotes the Guide: with commits numbered $0$ to $L$, `__pipeline_wait_prior(N)` waits for completion of batches up to and including $L - N$, so only the newest $N$ groups may still be in flight.",
+      "hints": [
+        "Number the commits 0 to L and subtract the argument."
+      ]
+    },
+    {
+      "id": "cuda-015-q04",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "fallback",
+        "sm-75"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`async_pipeline_sm75.cu` builds the `__pipeline_*` kernel with `-arch=sm_75` and it runs correctly on the GTX 1650. What does `cuda_pipeline.h` compile `__pipeline_memcpy_async`, `__pipeline_commit` and `__pipeline_wait_prior` to there?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A load into a register followed by a store to shared memory; commit and wait compile to nothing.",
+          "correct": true,
+          "feedback": "Right: below `__CUDA_ARCH__` 800 the header calls `pipeline_memcpy_sync`, and the SASS shows LDG then STS with no wait instruction."
+        },
+        {
+          "key": "b",
+          "text": "A software emulation of `cp.async` that runs the copy on a helper warp in the background.",
+          "correct": false,
+          "feedback": "No helper warp exists; the copy is done by the issuing thread before it moves on."
+        },
+        {
+          "key": "c",
+          "text": "`LDGSTS`, which Turing supports but only without the L1 cache.",
+          "correct": false,
+          "feedback": "`LDGSTS` appears only in the sm_80 build; the sm_75 SASS has LDG and STS."
+        },
+        {
+          "key": "d",
+          "text": "A trap at run time, since the program checks that the card has compute capability 8.0.",
+          "correct": false,
+          "feedback": "The sm_75 build runs and checks its results; only the sm_80 binary fails on this card, with no kernel image."
+        }
+      ],
+      "explanation": "Section 5: `cuda_pipeline_helpers.h` sets `_CUDA_PIPELINE_HAS_ASYNC_COPY` only from `__CUDA_ARCH__ >= 800`; below that the copy is `pipeline_memcpy_sync` and commit and wait are empty. The logic is checked on Turing, but the copy is not asynchronous.",
+      "hints": [
+        "Look at what the header does when `__CUDA_ARCH__` is below 800.",
+        "Compare the two SASS listings in section 5."
+      ]
+    },
+    {
+      "id": "cuda-015-q05",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "barriers",
+        "double-buffering"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Someone deletes the second `__syncthreads()` of `matmulPipelined`, the one after the multiply-adds. What can now go wrong?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Nothing: `__pipeline_wait_prior` already orders the block's reads and writes of shared memory.",
+          "correct": false,
+          "feedback": "The wait covers one thread's own copies; it says nothing about other warps still reading a buffer."
+        },
+        {
+          "key": "b",
+          "text": "The kernel deadlocks, because the number of barriers per iteration becomes odd.",
+          "correct": false,
+          "feedback": "Barriers do not need to come in pairs; every thread still reaches the remaining one."
+        },
+        {
+          "key": "c",
+          "text": "A fast warp issues the copies of tile t + 2 into buffer `cur` while a slower warp is still reading tile t from it.",
+          "correct": true,
+          "feedback": "Right: that barrier keeps the next iteration's prefetch out of the buffer until every warp has finished its multiply-adds."
+        },
+        {
+          "key": "d",
+          "text": "The last tile is never waited for, so the final sum misses one tile.",
+          "correct": false,
+          "feedback": "The last tile is drained by `__pipeline_wait_prior(0)` and the first barrier; the second barrier does not affect it."
+        }
+      ],
+      "explanation": "Section 3: the first barrier makes tile t complete before anyone reads it; the second keeps the next iteration from issuing tile t + 2 into buffer `cur` while a slower warp still reads it, the race the Guide forbids between issuing a copy and waiting for it.",
+      "hints": [
+        "Which buffer does iteration t + 1 issue its copies into?",
+        "Can every warp of a block be at the same iteration at once without a barrier?"
+      ]
+    },
+    {
+      "id": "cuda-015-q06",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "2",
+      "est_minutes": 1,
+      "tags": [
+        "cp-async",
+        "compute-capability"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "What is the lowest compute capability on which `cp.async` exists as an instruction?",
+      "answer": {
+        "model": "Compute capability 8.0 (sm_80), Ampere.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no|without)\\b\\W+(\\w+\\W+){0,2}(8\\.0|sm_?80|ampere)\\b)(?![\\s\\S]*\\b(8\\.0|sm_?80|ampere)\\W+(is\\s+(wrong|incorrect|not)|isn't))(?:\\b(?:not|than|unlike|over|below|before|no|nor)\\s+(?:on\\s+)?(?:the\\s+|a\\s+)?(?:\\d\\.\\d|sm_?\\d\\d|volta|turing|pascal)\\b(?:'s)?(?:\\s*\\(\\d\\.\\d\\))?(?:\\s*(?:or|and|,)\\s*(?:\\d\\.\\d|sm_?\\d\\d|volta|turing|pascal)\\b(?:\\s*\\(\\d\\.\\d\\))?)*|(?!\\b(?:\\d\\.\\d|sm_?\\d\\d|volta|turing|ampere|hopper|ada|pascal|compute capability \\d\\b))[\\s\\S])*?\\b(8\\.0|sm_?80|ampere|compute capability 8)\\b"
+        ]
+      },
+      "explanation": "Section 2: the asynchronous copy arrived with the A100 (Ampere, compute capability 8.0, `sm_80`). Built for an older card the same intrinsics still compile, but below 8.0 they are an ordinary copy.",
+      "hints": [
+        "It arrived with the A100."
+      ]
+    },
+    {
+      "id": "cuda-015-q07",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 1,
+      "tags": [
+        "sass",
+        "cp-async"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Built for `sm_80`, which SASS instruction does `__pipeline_memcpy_async` (the PTX `cp.async`) become in `cuobjdump -sass`?",
+      "answer": {
+        "model": "LDGSTS (LDGSTS.E in the listing), a load from global memory that stores to shared memory.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\b\\W+ldgsts)(?![\\s\\S]*ldgsts\\W+(is\\s+(not|wrong)|isn't))[\\s\\S]*\\bldgsts(\\.e)?\\b"
+        ]
+      },
+      "explanation": "Sections 2 and 5: the sm_80 SASS of `matmulPipelined` shows `LDGSTS.E` for each copy, `LDGDEPBAR` for the commit and `DEPBAR.LE SB0, 0x1` for the wait.",
+      "hints": [
+        "Its name joins a global load and a shared store."
+      ]
+    },
+    {
+      "id": "cuda-015-q08",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "model",
+        "makespan"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A double-buffered loop walks 16 tiles, each taking 10 units to load and 10 to compute. Give (a) the synchronous makespan, (b) the pipelined makespan, and (c) the speedup, to three decimals.",
+      "answer": {
+        "parts": [
+          {
+            "label": "synchronous makespan",
+            "value": 320,
+            "tolerance": 0,
+            "unit": "units"
+          },
+          {
+            "label": "pipelined makespan",
+            "value": 170,
+            "tolerance": 0,
+            "unit": "units"
+          },
+          {
+            "label": "speedup",
+            "value": 1.882,
+            "tolerance": 0.001,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "T_sync = 16 x (10 + 10) = 320; T_pipe = L_0 + 15 x max(10, 10) + C_15 = 10 + 150 + 10 = 170; 320 / 170 = 1.8824. pipeline_model.makespans([10] * 16, [10] * 16) returns (320, 170).",
+      "explanation": "Section 4: the pipelined loop pays the prologue load, one `max(L, C)` per overlapped step ($n - 1$ of them) and the epilogue compute. A plain $n \\max(L, C)$ gives 160 and misses the two ends.",
+      "hints": [
+        "The steady state has one step fewer than the tile count.",
+        "Add the first load and the last compute to the overlapped steps."
+      ]
+    },
+    {
+      "id": "cuda-015-q09",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 5,
+      "tags": [
+        "model",
+        "memory-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A loop of 64 tiles takes 12 units to load each tile and 8 to compute it. Give (a) the speedup of the double-buffered loop over the synchronous one, to three decimals, and (b) the limit of the speedup as the tile count grows without bound, to three decimals.",
+      "answer": {
+        "parts": [
+          {
+            "label": "speedup at 64 tiles",
+            "value": 1.649,
+            "tolerance": 0.001,
+            "unit": ""
+          },
+          {
+            "label": "limit",
+            "value": 1.667,
+            "tolerance": 0.001,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "T_sync = 64 x 20 = 1,280; T_pipe = 12 + 63 x max(12, 8) + 8 = 776; 1280 / 776 = 1.6495. Limit (L + C) / max(L, C) = 20 / 12 = 1.6667. Checked with pipeline_model.makespans.",
+      "explanation": "Section 4: each overlapped step costs the longer stage, here the load, so the loop runs at load speed; the speedup tends to $(L + C) / \\max(L, C)$, which is below 2 whenever the stages are unbalanced.",
+      "hints": [
+        "Which stage sets the cost of an overlapped step?",
+        "For the limit, compare one synchronous step with one overlapped step."
+      ]
+    },
+    {
+      "id": "cuda-015-q10",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o1",
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "measured",
+        "gflops"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the section 5 table, with one block per SM the register-staged pipeline took 7.640 ms per launch at $M = N = K = 1{,}024$ and the synchronous kernel 12.310 ms. Give (a) the pipeline's rate in GFLOP/s, counting $2MNK$ FLOP per product, and (b) its speedup over the synchronous kernel, to two decimals.",
+      "answer": {
+        "parts": [
+          {
+            "label": "rate",
+            "value": 281.0,
+            "tolerance": 1.0,
+            "unit": "GFLOP/s"
+          },
+          {
+            "label": "speedup",
+            "value": 1.61,
+            "tolerance": 0.005,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "2 x 1024^3 = 2,147,483,648 FLOP; / 7.640e-3 s = 281.1e9 FLOP/s; 12.310 / 7.640 = 1.611. The program prints 281 and 1.61x.",
+      "explanation": "Section 5: GFLOP/s is $2MNK$ over the time, and the speedup is the ratio of the times; the program prints 281 GFLOP/s and 1.61x for this row.",
+      "hints": [
+        "$2 \\times 1{,}024^3$ is about 2.15 billion.",
+        "Divide by the time in seconds, then by $10^9$."
+      ]
+    },
+    {
+      "id": "cuda-015-q11",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "double-buffering",
+        "steady-state"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of one steady-state iteration $t$ of `matmulPipelined` in order, for a tile that is not the last.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Issue this thread's copies of tile t + 1 into buffer `next`."
+        },
+        {
+          "key": "b",
+          "text": "`__pipeline_commit()` the copies of tile t + 1 as one group."
+        },
+        {
+          "key": "c",
+          "text": "`__pipeline_wait_prior(1)`: this thread's copies of tile t have landed."
+        },
+        {
+          "key": "d",
+          "text": "`__syncthreads()`: every thread's copies of tile t are visible."
+        },
+        {
+          "key": "e",
+          "text": "The 16 multiply-adds from buffer `cur`."
+        },
+        {
+          "key": "f",
+          "text": "`__syncthreads()`: no warp still reads `cur`."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "explanation": "Section 3: the copy of tile t + 1 must be in flight before the math, the wait and the first barrier make tile t complete, and the second barrier protects `cur` from the next iteration's copies.",
+      "hints": [
+        "The next tile's copy is issued before anything waits.",
+        "The thread's own wait comes before the block-wide barrier."
+      ]
+    },
+    {
+      "id": "cuda-015-q12",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2",
+        "o5"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "ptx",
+        "intrinsics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each call in an `sm_80` build to the PTX that `nvcc` emits for it in this post's kernel.",
+      "left": [
+        {
+          "key": "a",
+          "text": "`__pipeline_memcpy_async(dst, src, 4)`"
+        },
+        {
+          "key": "b",
+          "text": "`__pipeline_commit()`"
+        },
+        {
+          "key": "c",
+          "text": "`__pipeline_wait_prior(1)`"
+        },
+        {
+          "key": "d",
+          "text": "`__syncthreads()`"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "`cp.async.ca.shared.global`"
+        },
+        {
+          "key": "q",
+          "text": "`cp.async.commit_group`"
+        },
+        {
+          "key": "r",
+          "text": "`cp.async.wait_group 1`"
+        },
+        {
+          "key": "s",
+          "text": "`bar.sync 0`"
+        },
+        {
+          "key": "t",
+          "text": "`cp.async.cg.shared.global`"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s"
+      },
+      "explanation": "Section 2's table: a 4-byte copy is `cp.async.ca` (the header uses `.cg`, which caches only in L2, for 16-byte copies), commit is `cp.async.commit_group`, and the wait is `cp.async.wait_group n`; `__syncthreads()` is the barrier `bar.sync 0`.",
+      "hints": [
+        "One PTX form on the right is for 16-byte copies only."
+      ]
+    },
+    {
+      "id": "cuda-015-q13",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3",
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "model",
+        "makespan",
+        "python"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `pipe_time(loads, comps)`: the makespan of a double-buffered tile loop in which tile $t$ takes `loads[t]` to load and `comps[t]` to compute, the load of tile $t + 1$ overlaps the compute of tile $t$, the first load runs alone and the last compute runs alone. The lists have the same length, at least 1, and the tiles may differ.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def pipe_time(loads, comps):\n    \"\"\"Makespan of a double-buffered loop: loads[t] and comps[t] are tile t's load and compute times.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def pipe_time(loads, comps):\n    \"\"\"Makespan of a double-buffered loop: loads[t] and comps[t] are tile t's load and compute times.\"\"\"\n    assert len(loads) == len(comps) and loads\n    t = loads[0]                                  # prologue\n    for i in range(len(loads) - 1):               # steady state: load i + 1 beside compute i\n        t += max(loads[i + 1], comps[i])\n    return t + comps[-1]                          # epilogue\n",
+      "tests": "assert pipe_time([10] * 8, [10] * 8) == 90\nassert pipe_time([4] * 8, [10] * 8) == 84\nassert pipe_time([10] * 8, [4] * 8) == 84\nassert pipe_time([7], [3]) == 10\nassert pipe_time([5, 1, 9], [2, 7, 3]) == 19\nassert pipe_time([2, 8, 1, 6], [5, 3, 4, 2]) == 21\nassert pipe_time([10] * 64, [12] * 64) == 10 + 63 * 12 + 12\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 4: $T_\\text{pipe} = L_0 + \\sum_{t=0}^{n-2} \\max(L_{t+1}, C_t) + C_{n-1}$. The overlapped step pairs the next tile's load with this tile's compute; pairing a tile's load with its own compute, dropping the epilogue, or overlapping $n$ steps are the usual slips, and the uneven tests catch each.",
+      "hints": [
+        "Write down which load runs beside compute $t$.",
+        "The first load and the last compute are not overlapped with anything.",
+        "With one tile the answer is just load plus compute."
+      ]
+    },
+    {
+      "id": "cuda-015-q14",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o1",
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 15,
+      "tags": [
+        "occupancy",
+        "latency-hiding",
+        "roofline"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 10 says latency is hidden by having enough warps resident. Use it to explain section 5's table: (1) why the synchronous kernel lost almost half its speed going from four blocks per SM to one, (2) why the register-staged pipeline recovered most of it while the `__pipeline_*` build on the same card did not, and (3) what the model's reading of 1.61 times over 64 tiles says, and what it cannot say.",
+      "kind": "connect",
+      "connects": [
+        "cuda-010",
+        "cuda-003"
+      ],
+      "solution": "1. A 256-thread block has 8 warps, and all of them wait at the same barrier for the same tile. With four blocks per SM, 32 warps, the schedulers issue from other blocks while one waits, which is post 10's latency hiding through occupancy, so the stall is mostly covered (332 GFLOP/s). With one block per SM only those 8 warps exist; when they wait, the SM idles, and the rate falls to 174 GFLOP/s. (The one-block run may also have a smaller L1 cache, since 64 KB of the SM's 96 KB go to shared memory, but that applies to all three kernels.)\n2. The register-staged kernel issues the loads of tile $t + 1$ into registers before the 16 multiply-adds of tile $t$ and consumes them only at the stores after the math, so each warp has independent work while its loads are in flight: instruction-level parallelism replaces the missing warps, and it reached 281 GFLOP/s, 1.61 times faster. The `__pipeline_*` build on compute capability 7.5 compiles the copy to a load and an immediate store, so each thread still waits for its load before the math; its structure is double-buffered but its copy is synchronous, and it ran at 175.\n3. Section 4's model, which assumes a perfect overlap and here the load as the longer stage, gives 1.61 times over 64 tiles when compute takes 0.63 of a load's time; at that share many tiles would tend to $1 + 0.63 = 1.63$ times, the most a two-stage overlap can give. The fit assumes the overlap it would need to test, so it cannot show how complete the real overlap was; that needs the load and compute times measured apart. Past that limit only more loads in flight at once (more warps, or more stages, which the two-stage model does not describe) or fewer bytes per FLOP (post 03's larger reuse) shorten the load stage.",
+      "rubric": [
+        {
+          "criterion": "Explains the drop from four blocks to one with warps per SM and the shared barrier, citing 332 and 174 GFLOP/s",
+          "points": 3
+        },
+        {
+          "criterion": "Explains the register pipeline's gain as loads in flight across the math, and why the sm_75 fallback has no such overlap",
+          "points": 3
+        },
+        {
+          "criterion": "Reads 1.61 times through the model as a compute share of about 0.63 with a limit near 1.63, and says the fit assumes the overlap rather than testing it",
+          "points": 2
+        },
+        {
+          "criterion": "Connects to post 10's occupancy and latency hiding correctly",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 1, 4 and 5 with post 10: occupancy hides the stall across blocks; a pipeline hides it inside a block, but only if the copy is really in flight across the math; the model bounds what overlap can give.",
+      "hints": [
+        "Count the warps per SM in each configuration and ask which of them can run while a block waits.",
+        "Ask where each kernel's warp first waits for its loaded value.",
+        "The model's ceiling is $(L + C) / \\max(L, C)$."
+      ]
+    },
+    {
+      "id": "cuda-015-q15",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 5,
+      "outcomes": [
+        "o3",
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 25,
+      "tags": [
+        "multi-stage",
+        "design"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Design a three-stage version of `matmulPipelined`: two tiles in flight while one is computed. Give the shared-memory declarations and their size for `TILE` 16, the prologue, which tile the steady-state iteration $t$ issues and into which buffer, the `__pipeline_wait_prior` count in the steady state and in the last two iterations, where the barriers go, and what the program does differently when built for `sm_75`.",
+      "kind": "design",
+      "solution": "1. Buffers: `__shared__ float s_A[3][TILE][TILE], s_B[3][TILE][TILE];`, $2 \\times 3 \\times 16 \\times 16 \\times 4 = 6{,}144$ bytes per block, against 4,096 for two stages.\n2. Prologue: issue tile 0 into buffer 0 and commit, then tile 1 into buffer 1 and commit (when there are at least two tiles): two groups in flight.\n3. Steady state, iteration $t$: issue tile $t + 2$ into buffer $(t + 2) \\bmod 3$ and commit, if $t + 2 <$ `numTiles`; compute from buffer $t \\bmod 3$.\n4. Wait: after the issue, groups up to $t + 2$ are committed and group $t$ must be complete, so `__pipeline_wait_prior(2)`, which is $s - 1$ for $s = 3$ stages. In iteration `numTiles - 2` nothing new is issued, the newest group is $t + 1$, so the count is 1; in the last iteration it is 0. In general the count is the number of groups committed after tile $t$'s.\n5. Barriers: one `__syncthreads()` after the wait, so every thread's copies of tile $t$ are visible, and one after the math, so the issue in iteration $t + 1$, into buffer $(t + 3) \\bmod 3 = t \\bmod 3$, cannot overwrite the tile a slower warp still reads.\n6. On `sm_75`: `cuda_pipeline.h` compiles each copy to a load and a store done at once and the commit and wait to nothing, so the program still computes the right answer and can be checked against post 03's kernel, but nothing is in flight across the math; a Turing pipeline would stage the two tiles ahead in registers instead (the register-staged kernel with one more register per operand, two in all, for each extra stage).",
+      "rubric": [
+        {
+          "criterion": "Three buffers per operand and 6,144 bytes of shared memory",
+          "points": 1
+        },
+        {
+          "criterion": "A prologue that issues and commits two tiles",
+          "points": 1
+        },
+        {
+          "criterion": "Steady state issues tile t + 2 into buffer (t + 2) mod 3 and computes from t mod 3",
+          "points": 2
+        },
+        {
+          "criterion": "Wait count 2 in the steady state, then 1 and 0 at the end, derived from the Guide's rule",
+          "points": 2
+        },
+        {
+          "criterion": "Both barriers placed and justified, including the reuse of buffer t mod 3 by iteration t + 1",
+          "points": 2
+        },
+        {
+          "criterion": "States that the sm_75 build is correct but synchronous, and what a Turing pipeline would do instead",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 3, 5 and 6: with $s$ stages the loop keeps $s - 1$ groups in flight, so the steady-state wait is $s - 1$ and it falls to 0 as the loop drains; the barriers play the same two roles as in the two-stage kernel, and the sm_75 build keeps the logic but not the overlap.",
+      "hints": [
+        "Count how many groups are committed after tile t's group in each iteration.",
+        "Ask which buffer iteration t + 1 issues into, and who might still be reading it.",
+        "Section 5 says what the intrinsics become below compute capability 8.0."
+      ]
+    },
+    {
+      "id": "cuda-015-q16",
+      "type": "numeric",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 6,
+      "tags": [
+        "model",
+        "inverse"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A double-buffered kernel with 32 equal tiles, whose loads take longer than its computes, measures 1.50 times faster than its synchronous version. Assuming the overlap is perfect, as section 4's model does, give (a) the compute time as a share of the load time, to three decimals, and (b) the largest speedup the same loop could reach with infinitely many tiles, to three decimals.",
+      "answer": {
+        "parts": [
+          {
+            "label": "compute share C / L",
+            "value": 0.525,
+            "tolerance": 0.002,
+            "unit": ""
+          },
+          {
+            "label": "limit",
+            "value": 1.525,
+            "tolerance": 0.002,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "With L >= C, T_sync / T_pipe = n (L + C) / (n L + C); with r = C / L, 32 (1 + r) / (32 + r) = 1.5 gives r = 32 x 0.5 / 30.5 = 0.5246; the limit is 1 + r = 1.5246. pipeline_model.compute_share(1.5, 32) returns 0.5246.",
+      "explanation": "Section 4: when the load is the longer stage the pipelined loop costs $nL + C$, so the speedup $n(1 + r)/(n + r)$ can be solved for $r = C/L$; the limit $(L + C)/L = 1 + r$ is what a perfect overlap could ever give that loop.",
+      "hints": [
+        "Write $T_\\text{pipe}$ for $L \\ge C$: the first load, $n - 1$ loads, and the last compute.",
+        "Divide through by $L$ and solve the linear equation for $r$."
+      ]
+    }
+  ]
+}

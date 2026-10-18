@@ -1,82 +1,63 @@
-"""pipeline_model.py — a CPU model of software-pipelined tile loading.
+"""pipeline_model.py: a CPU model of a software-pipelined tile loop.
 
-CUDA cannot run in this blog's test environment, so this model computes the
-real makespan of a tiled loop two ways and reports the speedup. It is the
-verified artifact for this post: the .cu kernel ships as a compilable reference,
-but the latency-hiding numbers quoted in the post come from here.
+The loop walks n tiles. Tile t needs two things:
+  - load[t]:    fetch tile t from global memory  (load_t time units)
+  - compute[t]: the multiply-adds on tile t      (comp_t time units)
 
-The loop has K iterations. Iteration k does two things:
-  - load[k]:    fetch tile k from global memory  (takes load_t time units)
-  - compute[k]: do the math on tile k            (takes comp_t time units)
+(a) Synchronous (post 03's tiled matmul): load[t] and compute[t] cannot overlap, because compute[t]
+    reads the very tile load[t] just wrote and a __syncthreads() sits between them:
+        T_sync = sum over t of (load_t + comp_t)
+(b) Double-buffered (pipelined): load[t + 1] goes into the other buffer while compute[t] runs, so each
+    steady-state step costs only the slower of the two. With a one-tile prologue and a one-tile epilogue:
+        T_pipe = load_0 + sum over t = 0 .. n - 2 of max(load_{t+1}, comp_t) + comp_{n-1}
 
-(a) Synchronous (post 03's tiled matmul): load[k] and compute[k] cannot
-    overlap, because compute[k] reads the very tile load[k] just wrote and a
-    __syncthreads() sits between them. Makespan is the full sum:
-        T_sync = sum_k (load_t + comp_t) = K * (load_t + comp_t)
-
-(b) Double-buffered / pipelined (cp.async): load[k+1] is prefetched into the
-    other buffer WHILE compute[k] runs, so each steady-state step costs only the
-    slower of the two. With a one-tile prologue and a one-tile epilogue:
-        T_pipe = load_0  +  sum_{k=0..K-2} max(load_{k+1}, comp_k)  +  comp_{last}
-
-Both are exact integer/float arithmetic. No timing, no invented bandwidth.
-Run: python pipeline_model.py
+Both are exact arithmetic in abstract time units: the model assumes the overlap is perfect and costs
+nothing, and measures nothing. Post 15's async_pipeline.cu measures a real kernel; the last lines below
+read one of its measured speed-ups back through the model.
+Run: uv run python posts/15-async-copy-pipelining/snippets/pipeline_model.py   (from the series root)
 """
 
 
 def makespans(loads, comps):
-    """Return (synchronous, pipelined) makespan for per-tile load/compute times."""
-    assert len(loads) == len(comps)
-    k = len(loads)
-
-    # (a) synchronous: every load and every compute serialized, end to end.
-    t_sync = sum(loads) + sum(comps)
-
-    # (b) pipelined: prologue loads tile 0; in steady state, prefetch of tile
-    # k+1 overlaps compute of tile k, so the step costs max(load[k+1], comp[k]);
-    # epilogue computes the last tile with nothing left to prefetch.
-    t_pipe = loads[0]
-    for kk in range(k - 1):
-        t_pipe += max(loads[kk + 1], comps[kk])
-    t_pipe += comps[k - 1]
+    """Return (synchronous, pipelined) makespan for per-tile load and compute times."""
+    assert len(loads) == len(comps) and loads
+    n = len(loads)
+    t_sync = sum(loads) + sum(comps)              # every load and every compute in series
+    t_pipe = loads[0]                             # prologue: tile 0's load, nothing to compute yet
+    for t in range(n - 1):                        # steady state: load t + 1 alongside compute t
+        t_pipe += max(loads[t + 1], comps[t])
+    t_pipe += comps[n - 1]                        # epilogue: the last compute, nothing left to load
     return t_sync, t_pipe
 
 
-def report(name, load_t, comp_t, k=8):
-    loads = [load_t] * k
-    comps = [comp_t] * k
-    t_sync, t_pipe = makespans(loads, comps)
-    speedup = t_sync / t_pipe
-    # Steady-state hidden time: how much of each load disappears behind compute.
-    hidden = min(load_t, comp_t)
-    print(f"  {name}")
-    print(f"    per tile          : load={load_t}, compute={comp_t}  (K={k} tiles)")
-    print(f"    synchronous        = {t_sync}  units   (sum of all loads + computes)")
-    print(f"    pipelined          = {t_pipe}  units   (load_0 + overlap + compute_last)")
-    print(f"    speedup            = {speedup:.2f}x")
-    print(f"    hidden per step    = {hidden} units of load tucked behind compute")
+def row(name, load_t, comp_t, tiles):
+    t_sync, t_pipe = makespans([load_t] * tiles, [comp_t] * tiles)
+    print(f"  {name:<14}{load_t:>5}{comp_t:>9}{tiles:>7}{t_sync:>13}{t_pipe:>11}{t_sync / t_pipe:>9.2f}x")
+
+
+def compute_share(speedup, tiles):
+    """The compute time, as a share of the load time, at which a loop of `tiles` equal tiles whose
+    load is the longer stage gains `speedup`: T_sync / T_pipe = n (L + C) / (n L + C), solved for C / L."""
+    return tiles * (speedup - 1) / (tiles - speedup)
 
 
 if __name__ == "__main__":
-    print("software-pipelining model (double-buffered tile loop)\n")
+    print("software-pipelining model (double-buffered tile loop), times in model units")
+    print(f"  {'case':<14}{'load':>5}{'compute':>9}{'tiles':>7}{'synchronous':>13}{'pipelined':>11}{'speedup':>10}")
+    row("balanced", 10, 10, 8)
+    row("compute-bound", 4, 10, 8)
+    row("memory-bound", 10, 4, 8)
+    # The limit: for equal tiles the speedup tends to (L + C) / max(L, C), 2 when the stages are balanced.
+    for n in (64, 1024):
+        row("balanced", 10, 10, n)
 
-    # Case 1: load == compute. Each step costs max(L, C) = one unit instead of
-    # two, so the loop nearly halves -> ~2x in the large-K limit.
-    report("balanced  (load == compute)", load_t=10, comp_t=10)
-    print()
-
-    # Case 2: compute-bound. The load is shorter than the compute, so the whole
-    # load hides: pipelined makespan is dominated by compute, ~no load cost.
-    report("compute-bound (load <  compute)", load_t=4, comp_t=10)
-    print()
-
-    # Case 3: memory-bound. The load is longer than the compute, so compute
-    # hides instead; you still win, but the load latency now sets the pace.
-    report("memory-bound  (load >  compute)", load_t=10, comp_t=4)
-    print()
-
-    # The asymptotic rule, stated exactly for the balanced case as K grows.
-    for k in (8, 64, 1024):
-        ts, tp = makespans([10] * k, [10] * k)
-        print(f"  balanced, K={k:>4}: speedup = {ts / tp:.4f}x  "
-              f"(-> 2.0000x as K -> infinity)")
+    # async_pipeline.cu at M = N = K = 1024 walks 1024 / 16 = 64 tiles. Its register-staged pipeline ran
+    # 1.61 times faster than the synchronous kernel with one block per SM (post 15, section 5: the
+    # author's GTX 1650, October 2026). Read through the model, assuming perfect overlap:
+    measured, tiles = 1.61, 1024 // 16
+    share = compute_share(measured, tiles)
+    t_sync, t_pipe = makespans([1.0] * tiles, [share] * tiles)
+    assert abs(t_sync / t_pipe - measured) < 1e-9
+    print(f"  a measured {measured:.2f}x over {tiles} tiles: the model's speedup when compute takes "
+          f"{share:.2f} of a load's time")
+    print(f"  at that share many tiles tend to {(1 + share):.2f}x; the fit assumes a perfect overlap, so it cannot test one")

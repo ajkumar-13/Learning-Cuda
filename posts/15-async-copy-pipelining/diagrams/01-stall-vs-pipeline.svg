@@ -1,71 +1,303 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">A synchronous tile loop stalls while each tile loads; a pipelined loop hides the load behind compute</title>
-  <desc id="d">Two timelines for a four-tile loop. The top, synchronous like post 03's tiled matmul, alternates a load block, then a red stall bubble where the compute units wait for the load to arrive, then a compute block, repeated four times, so the row is long. The bottom, pipelined with cp.async, runs the loads on their own row staggered ahead of the computes on a second row, so that every load after the first overlaps a compute; a green band marks the steady state where load and compute happen at once and the stall bubbles are gone. The pipelined timeline finishes much sooner because the load latency is hidden behind compute instead of being waited on.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#7E9CD0;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
-    .load{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
-    .comp{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
-    .stall{fill:none;stroke:var(--cuda-alert);stroke-width:1.5;stroke-dasharray:4 3;}
-    .band{fill:none;stroke:var(--cuda-success);stroke-width:1.5;stroke-dasharray:5 3;}
-    .divider{stroke:var(--cuda-grid);stroke-width:1;}
-    .axis{stroke:var(--cuda-ink-muted);stroke-width:1;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="42">The stall, and the pipeline that hides it</text>
-
-  <!-- SYNCHRONOUS -->
-  <text class="label" x="40" y="92">Synchronous (post 03): wait for every load</text>
-  <g>
-    <!-- tile 0 -->
-    <rect class="load" x="160" y="104" width="60" height="30"/><text class="mono" x="190" y="123" text-anchor="middle">load 0</text>
-    <rect class="stall" x="220" y="104" width="42" height="30"/>
-    <rect class="comp" x="262" y="104" width="60" height="30"/><text class="mono" x="292" y="123" text-anchor="middle">comp 0</text>
-    <!-- tile 1 -->
-    <rect class="load" x="322" y="104" width="60" height="30"/><text class="mono" x="352" y="123" text-anchor="middle">load 1</text>
-    <rect class="stall" x="382" y="104" width="42" height="30"/>
-    <rect class="comp" x="424" y="104" width="60" height="30"/><text class="mono" x="454" y="123" text-anchor="middle">comp 1</text>
-    <!-- tile 2 -->
-    <rect class="load" x="484" y="104" width="60" height="30"/><text class="mono" x="514" y="123" text-anchor="middle">load 2</text>
-    <rect class="stall" x="544" y="104" width="42" height="30"/>
-    <rect class="comp" x="586" y="104" width="60" height="30"/><text class="mono" x="616" y="123" text-anchor="middle">comp 2</text>
-    <!-- tile 3 -->
-    <rect class="load" x="646" y="104" width="60" height="30"/><text class="mono" x="676" y="123" text-anchor="middle">load 3</text>
-    <rect class="stall" x="706" y="104" width="42" height="30"/>
-    <rect class="comp" x="748" y="104" width="60" height="30"/><text class="mono" x="778" y="123" text-anchor="middle">comp 3</text>
-  </g>
-  <text class="small" x="241" y="158" text-anchor="middle" fill="var(--cuda-alert)">stall</text>
-  <line class="axis" x1="160" y1="180" x2="808" y2="180"/>
-  <text class="small" x="160" y="200">compute units idle inside each red bubble, waiting on global memory</text>
-
-  <line class="divider" x1="40" y1="232" x2="920" y2="232"/>
-
-  <!-- PIPELINED -->
-  <text class="label" x="40" y="272">Pipelined (cp.async): prefetch the next tile</text>
-  <text class="small" x="40" y="322">load</text>
-  <text class="small" x="40" y="372">compute</text>
-  <!-- steady-state band -->
-  <rect class="band" x="280" y="300" width="288" height="92" rx="6"/>
-  <text class="small" x="424" y="412" text-anchor="middle" fill="var(--cuda-success)">load and compute overlap</text>
-  <!-- load row (staggered one step ahead) -->
-  <g>
-    <rect class="load" x="160" y="306" width="96" height="28"/><text class="mono" x="208" y="324" text-anchor="middle">load 0</text>
-    <rect class="load" x="280" y="306" width="96" height="28"/><text class="mono" x="328" y="324" text-anchor="middle">load 1</text>
-    <rect class="load" x="400" y="306" width="96" height="28"/><text class="mono" x="448" y="324" text-anchor="middle">load 2</text>
-    <rect class="load" x="520" y="306" width="96" height="28"/><text class="mono" x="568" y="324" text-anchor="middle">load 3</text>
-  </g>
-  <!-- compute row -->
-  <g>
-    <rect class="comp" x="280" y="356" width="96" height="28"/><text class="mono" x="328" y="374" text-anchor="middle">comp 0</text>
-    <rect class="comp" x="400" y="356" width="96" height="28"/><text class="mono" x="448" y="374" text-anchor="middle">comp 1</text>
-    <rect class="comp" x="520" y="356" width="96" height="28"/><text class="mono" x="568" y="374" text-anchor="middle">comp 2</text>
-    <rect class="comp" x="640" y="356" width="96" height="28"/><text class="mono" x="688" y="374" text-anchor="middle">comp 3</text>
-  </g>
-  <line class="axis" x1="160" y1="404" x2="736" y2="404"/>
-  <text class="small" x="40" y="470">Same work, far less wall-clock time: every load after the first hides behind a compute.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-stall-vs-pipeline-title" aria-describedby="cuda-01-stall-vs-pipeline-desc">
+<title id="cuda-01-stall-vs-pipeline-title">Pipelining hides each load behind the previous tile's math</title>
+<desc id="cuda-01-stall-vs-pipeline-desc">Two timelines in model units with a load lane and a compute lane, for 8 tiles that take 10 units to load and 10 to compute. Synchronous: load and compute alternate, the compute lane stalls in red during each of the 8 loads, and the loop ends at 160 units. Pipelined: load 0 alone is the prologue, then the load of tile t + 1 runs beside the compute of tile t for 7 steps, then compute 7 alone is the epilogue; the compute lane stalls only during the first load and the loop ends at 90 units, 1.78 times sooner.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-red { stroke: var(--cuda-red); }
+  .s-rule { stroke: var(--cuda-rule); }
+</style>
+<defs>
+<marker id="cuda-01-stall-vs-pipeline-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="704">Pipelining hides each load behind the previous tile's math</text>
+<text x="40" y="76" class="t-subtitle" data-w="679">Model units from snippets/pipeline_model.py: 8 tiles, 10 units to load and 10 to compute each.</text>
+<text x="40" y="124" class="t-head" data-w="390">Synchronous, as post 03: load, barrier, compute</text>
+<text x="40" y="156" class="t-label" data-w="54">load tile</text>
+<text x="40" y="196" class="t-label" data-w="84">compute tile</text>
+<g data-grid="skip">
+<rect x="160" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="160" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="181" y="157" text-anchor="middle" class="t-label" data-w="9">0</text>
+<rect x="244" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="244" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="265" y="157" text-anchor="middle" class="t-label" data-w="9">1</text>
+<rect x="328" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="328" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="349" y="157" text-anchor="middle" class="t-label" data-w="9">2</text>
+<rect x="412" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="412" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="433" y="157" text-anchor="middle" class="t-label" data-w="9">3</text>
+<rect x="496" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="496" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="517" y="157" text-anchor="middle" class="t-label" data-w="9">4</text>
+<rect x="580" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="580" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="601" y="157" text-anchor="middle" class="t-label" data-w="9">5</text>
+<rect x="664" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="664" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="685" y="157" text-anchor="middle" class="t-label" data-w="9">6</text>
+<rect x="748" y="136" width="42" height="32" class="f-green-soft"/>
+<rect x="748" y="136" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="769" y="157" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="160" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="160" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="244" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="244" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="328" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="328" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="412" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="412" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="496" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="496" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="580" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="580" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="664" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="664" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="748" y="176" width="42" height="32" class="f-red-soft"/>
+<rect x="748" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="202" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="202" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="223" y="197" text-anchor="middle" class="t-label" data-w="9">0</text>
+<rect x="286" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="286" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="307" y="197" text-anchor="middle" class="t-label" data-w="9">1</text>
+<rect x="370" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="370" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="391" y="197" text-anchor="middle" class="t-label" data-w="9">2</text>
+<rect x="454" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="454" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="475" y="197" text-anchor="middle" class="t-label" data-w="9">3</text>
+<rect x="538" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="538" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="559" y="197" text-anchor="middle" class="t-label" data-w="9">4</text>
+<rect x="622" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="622" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="643" y="197" text-anchor="middle" class="t-label" data-w="9">5</text>
+<rect x="706" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="706" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="727" y="197" text-anchor="middle" class="t-label" data-w="9">6</text>
+<rect x="790" y="176" width="42" height="32" class="f-orange-soft"/>
+<rect x="790" y="176" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="811" y="197" text-anchor="middle" class="t-label" data-w="9">7</text>
+<text x="844" y="197" class="t-value" data-w="66">160 units</text>
+</g>
+<text x="40" y="256" class="t-head" data-w="374">Pipelined: load tile t + 1 while computing tile t</text>
+<text x="40" y="288" class="t-label" data-w="54">load tile</text>
+<text x="40" y="328" class="t-label" data-w="84">compute tile</text>
+<g data-grid="skip">
+<rect x="160" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="160" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="181" y="289" text-anchor="middle" class="t-label" data-w="9">0</text>
+<rect x="202" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="202" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="223" y="289" text-anchor="middle" class="t-label" data-w="9">1</text>
+<rect x="244" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="244" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="265" y="289" text-anchor="middle" class="t-label" data-w="9">2</text>
+<rect x="286" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="286" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="307" y="289" text-anchor="middle" class="t-label" data-w="9">3</text>
+<rect x="328" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="328" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="349" y="289" text-anchor="middle" class="t-label" data-w="9">4</text>
+<rect x="370" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="370" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="391" y="289" text-anchor="middle" class="t-label" data-w="9">5</text>
+<rect x="412" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="412" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="433" y="289" text-anchor="middle" class="t-label" data-w="9">6</text>
+<rect x="454" y="268" width="42" height="32" class="f-green-soft"/>
+<rect x="454" y="268" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="475" y="289" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="160" y="308" width="42" height="32" class="f-red-soft"/>
+<rect x="160" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="202" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="202" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="223" y="329" text-anchor="middle" class="t-label" data-w="9">0</text>
+<rect x="244" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="244" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="265" y="329" text-anchor="middle" class="t-label" data-w="9">1</text>
+<rect x="286" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="286" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="307" y="329" text-anchor="middle" class="t-label" data-w="9">2</text>
+<rect x="328" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="328" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="349" y="329" text-anchor="middle" class="t-label" data-w="9">3</text>
+<rect x="370" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="370" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="391" y="329" text-anchor="middle" class="t-label" data-w="9">4</text>
+<rect x="412" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="412" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="433" y="329" text-anchor="middle" class="t-label" data-w="9">5</text>
+<rect x="454" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="454" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="475" y="329" text-anchor="middle" class="t-label" data-w="9">6</text>
+<rect x="496" y="308" width="42" height="32" class="f-orange-soft"/>
+<rect x="496" y="308" width="42" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="517" y="329" text-anchor="middle" class="t-label" data-w="9">7</text>
+<text x="550" y="329" class="t-value" data-w="106">90 units, 1.78×</text>
+</g>
+<g data-grid="skip">
+<path d="M160,348 Q160,352 168,352 L173,352 Q181,352 181,356 Q181,352 189,352 L194,352 Q202,352 202,348" class="brace"/>
+<g data-grid="skip">
+<text x="181" y="376" text-anchor="middle" class="t-note" data-w="60">prologue</text>
+</g>
+<path d="M202,348 Q202,352 210,352 L341,352 Q349,352 349,356 Q349,352 357,352 L488,352 Q496,352 496,348" class="brace"/>
+<g data-grid="skip">
+<text x="349" y="376" text-anchor="middle" class="t-note" data-w="197">steady state: both lanes busy</text>
+</g>
+<path d="M496,348 Q496,352 504,352 L509,352 Q517,352 517,356 Q517,352 525,352 L530,352 Q538,352 538,348" class="brace"/>
+<g data-grid="skip">
+<text x="517" y="376" text-anchor="middle" class="t-note" data-w="58">epilogue</text>
+</g>
+</g>
+<g data-grid="skip">
+<path d="M160,412 L832,412" class="s-ink-muted w1 nofill"/>
+<path d="M160,412 L160,418" class="s-ink-muted w1 nofill"/>
+<text x="160" y="436" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<path d="M328,412 L328,418" class="s-ink-muted w1 nofill"/>
+<text x="328" y="436" text-anchor="middle" class="t-tick" data-w="16">40</text>
+<path d="M496,412 L496,418" class="s-ink-muted w1 nofill"/>
+<text x="496" y="436" text-anchor="middle" class="t-tick" data-w="16">80</text>
+<path d="M664,412 L664,418" class="s-ink-muted w1 nofill"/>
+<text x="664" y="436" text-anchor="middle" class="t-tick" data-w="23">120</text>
+<path d="M832,412 L832,418" class="s-ink-muted w1 nofill"/>
+<text x="832" y="436" text-anchor="middle" class="t-tick" data-w="23">160</text>
+</g>
+<text x="40" y="436" class="t-tick" data-w="66">time, units</text>
+<rect x="160" y="452" width="16" height="16" class="f-green-soft s-green w1"/>
+<text x="192" y="464" class="t-label" data-w="222">load of a tile into shared memory</text>
+<rect x="440" y="452" width="16" height="16" class="f-orange-soft s-orange w1"/>
+<text x="472" y="464" class="t-label" data-w="149">multiply-adds on a tile</text>
+<rect x="656" y="452" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="688" y="464" class="t-label" data-w="116">arithmetic stalled</text>
+<text x="40" y="504" class="t-note" data-w="373">Eight balanced tiles: one exposed load instead of eight.</text>
 </svg>
