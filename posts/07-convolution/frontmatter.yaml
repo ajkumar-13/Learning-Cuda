@@ -1,8 +1,27 @@
 id: cuda-007
 slug: 07-convolution
-title: "07 · Convolution — constant memory, shared-memory halos, and separable filters"
+title: "07 - Convolution: constant memory, shared-memory halos, and separable filters"
+summary: "How a stencil kernel's overlapping reads are served by constant memory for the filter, a shared-memory tile with a halo for the pixels, and separable passes, and which of them pays off on a cached GPU."
 date: 2026-07-10
-tags: [parallel-patterns, cuda, shared-memory]
-hero: diagrams/01-stencil.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 16
+tags: [cuda, convolution, stencil, constant-memory, shared-memory, parallel-patterns]
+hero: diagrams/01-stencil.svg
+prerequisites: [cuda-006]
+code: included
+outcomes:
+  - id: o1
+    text: "Write a 2D stencil kernel from one thread's point of view and count the redundant reads that overlapping windows cause."
+  - id: o2
+    text: "Put a filter in constant memory with `__constant__` and `cudaMemcpyToSymbol`, and say when a warp's read is one broadcast and when it splits."
+  - id: o3
+    text: "Size and load a shared-memory tile with its halo, launch the grid by output tiles, and compute the tile's reuse factor."
+  - id: o4
+    text: "Recognize a separable filter and count the multiply-adds per pixel of its two 1D passes against the 2D filter."
+  - id: o5
+    text: "Read a measured convolution table and say which fix pays off for which filter size, and why the caches change the answer."
+compute: gpu-small
+hardware: gtx-1650

@@ -1,76 +1,259 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Each output pixel of a convolution is a weighted sum of a small neighbourhood of the input under the filter</title>
-  <desc id="d">On the left, a 5 by 5 input image; the central 3 by 3 neighbourhood is highlighted in green. In the middle, a 3 by 3 filter. The output pixel equals the sum over the neighbourhood of each input value times the matching filter weight, shown on the right as one output cell. The note explains that adjacent output pixels read overlapping neighbourhoods, so a naive kernel re-reads most pixels: the CPU model counts 2,304 global reads for a 16 by 16 output tile with a 3 by 3 filter versus only 324 if the input tile is loaded once, a 7.1 times reuse factor.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .win{fill:none;stroke:var(--cuda-success);stroke-width:1.5;}
-    .out{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .op{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:24px;fill:var(--cuda-ink-muted);}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">A convolution is a weighted sum of a neighbourhood</text>
-  <text class="small" x="40" y="66">Every output pixel reads a small window of the input and multiplies it by the filter.</text>
-
-  <!-- input image 5x5 -->
-  <text class="label" x="100" y="116">input image</text>
-  <g>
-    <rect class="cell" x="100" y="130" width="52" height="52"/><text class="mono" x="126" y="161" text-anchor="middle">1</text>
-    <rect class="cell" x="152" y="130" width="52" height="52"/><text class="mono" x="178" y="161" text-anchor="middle">2</text>
-    <rect class="cell" x="204" y="130" width="52" height="52"/><text class="mono" x="230" y="161" text-anchor="middle">3</text>
-    <rect class="cell" x="256" y="130" width="52" height="52"/><text class="mono" x="282" y="161" text-anchor="middle">4</text>
-    <rect class="cell" x="308" y="130" width="52" height="52"/><text class="mono" x="334" y="161" text-anchor="middle">5</text>
-    <rect class="cell" x="100" y="182" width="52" height="52"/><text class="mono" x="126" y="213" text-anchor="middle">6</text>
-    <rect class="cell" x="152" y="182" width="52" height="52"/><text class="mono" x="178" y="213" text-anchor="middle">7</text>
-    <rect class="cell" x="204" y="182" width="52" height="52"/><text class="mono" x="230" y="213" text-anchor="middle">8</text>
-    <rect class="cell" x="256" y="182" width="52" height="52"/><text class="mono" x="282" y="213" text-anchor="middle">9</text>
-    <rect class="cell" x="308" y="182" width="52" height="52"/><text class="mono" x="334" y="213" text-anchor="middle">10</text>
-    <rect class="cell" x="100" y="234" width="52" height="52"/><text class="mono" x="126" y="265" text-anchor="middle">11</text>
-    <rect class="cell" x="152" y="234" width="52" height="52"/><text class="mono" x="178" y="265" text-anchor="middle">12</text>
-    <rect class="cell" x="204" y="234" width="52" height="52"/><text class="mono" x="230" y="265" text-anchor="middle">13</text>
-    <rect class="cell" x="256" y="234" width="52" height="52"/><text class="mono" x="282" y="265" text-anchor="middle">14</text>
-    <rect class="cell" x="308" y="234" width="52" height="52"/><text class="mono" x="334" y="265" text-anchor="middle">15</text>
-    <rect class="cell" x="100" y="286" width="52" height="52"/><text class="mono" x="126" y="317" text-anchor="middle">16</text>
-    <rect class="cell" x="152" y="286" width="52" height="52"/><text class="mono" x="178" y="317" text-anchor="middle">17</text>
-    <rect class="cell" x="204" y="286" width="52" height="52"/><text class="mono" x="230" y="317" text-anchor="middle">18</text>
-    <rect class="cell" x="256" y="286" width="52" height="52"/><text class="mono" x="282" y="317" text-anchor="middle">19</text>
-    <rect class="cell" x="308" y="286" width="52" height="52"/><text class="mono" x="334" y="317" text-anchor="middle">20</text>
-    <rect class="cell" x="100" y="338" width="52" height="52"/><text class="mono" x="126" y="369" text-anchor="middle">21</text>
-    <rect class="cell" x="152" y="338" width="52" height="52"/><text class="mono" x="178" y="369" text-anchor="middle">22</text>
-    <rect class="cell" x="204" y="338" width="52" height="52"/><text class="mono" x="230" y="369" text-anchor="middle">23</text>
-    <rect class="cell" x="256" y="338" width="52" height="52"/><text class="mono" x="282" y="369" text-anchor="middle">24</text>
-    <rect class="cell" x="308" y="338" width="52" height="52"/><text class="mono" x="334" y="369" text-anchor="middle">25</text>
-  </g>
-  <rect class="win" x="148" y="178" width="160" height="160" rx="4"/>
-  <text class="small" x="228" y="410" text-anchor="middle" fill="var(--cuda-success)">3x3 neighbourhood</text>
-
-  <text class="op" x="408" y="270" text-anchor="middle">x</text>
-
-  <!-- filter -->
-  <text class="label" x="450" y="186">filter</text>
-  <g>
-    <rect class="cell" x="450" y="200" width="46" height="46"/><text class="mono" x="473" y="228" text-anchor="middle">1</text>
-    <rect class="cell" x="496" y="200" width="46" height="46"/><text class="mono" x="519" y="228" text-anchor="middle">1</text>
-    <rect class="cell" x="542" y="200" width="46" height="46"/><text class="mono" x="565" y="228" text-anchor="middle">1</text>
-    <rect class="cell" x="450" y="246" width="46" height="46"/><text class="mono" x="473" y="274" text-anchor="middle">1</text>
-    <rect class="cell" x="496" y="246" width="46" height="46"/><text class="mono" x="519" y="274" text-anchor="middle">1</text>
-    <rect class="cell" x="542" y="246" width="46" height="46"/><text class="mono" x="565" y="274" text-anchor="middle">1</text>
-    <rect class="cell" x="450" y="292" width="46" height="46"/><text class="mono" x="473" y="320" text-anchor="middle">1</text>
-    <rect class="cell" x="496" y="292" width="46" height="46"/><text class="mono" x="519" y="320" text-anchor="middle">1</text>
-    <rect class="cell" x="542" y="292" width="46" height="46"/><text class="mono" x="565" y="320" text-anchor="middle">1</text>
-  </g>
-  <text class="small" x="496" y="358" text-anchor="middle">x 1/9 (box blur)</text>
-
-  <text class="op" x="628" y="270" text-anchor="middle">=</text>
-
-  <!-- output -->
-  <text class="label" x="700" y="240">output</text>
-  <rect class="out" x="680" y="246" width="60" height="46"/><text class="mono" x="710" y="274" text-anchor="middle">sum</text>
-  <text class="small" x="760" y="274">one pixel</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-stencil-title" aria-describedby="cuda-01-stencil-desc">
+<title id="cuda-01-stencil-title">Each output pixel sums a window; neighbors overlap</title>
+<desc id="cuda-01-stencil-desc">A 5 by 5 input with a 3 by 3 window, shaded orange, around pixel (2, 2), and a dashed window around its right neighbor (2, 3); the two windows share 6 of their 9 pixels. The window is multiplied by a 3 by 3 filter of ones times 1/9, the box blur, and summed: out[2][2] = 45 / 9 = 5, and the neighbor's window gives out[2][3] = 36 / 9 = 4.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .s-orange { stroke: var(--cuda-orange); }
+</style>
+<defs>
+<marker id="cuda-01-stencil-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="645">Each output pixel sums a window; neighbors overlap</text>
+<text x="40" y="76" class="t-subtitle" data-w="550">A 3 × 3 box blur, radius 1; every value computed from the 5 × 5 input shown.</text>
+<text x="80" y="136" class="t-head" data-w="67">in: [5, 5]</text>
+<rect x="80" y="168" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="168" width="48" height="48" class="cell f-green-soft"/>
+<rect x="176" y="168" width="48" height="48" class="cell f-green-soft"/>
+<rect x="224" y="168" width="48" height="48" class="cell f-green-soft"/>
+<rect x="272" y="168" width="48" height="48" class="cell f-green-soft"/>
+<rect x="80" y="216" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="216" width="48" height="48" class="cell f-green-soft"/>
+<rect x="176" y="216" width="48" height="48" class="cell f-green-soft"/>
+<rect x="224" y="216" width="48" height="48" class="cell f-green-soft"/>
+<rect x="272" y="216" width="48" height="48" class="cell f-green-soft"/>
+<rect x="80" y="264" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="264" width="48" height="48" class="cell f-green-soft"/>
+<rect x="176" y="264" width="48" height="48" class="cell f-green-soft"/>
+<rect x="224" y="264" width="48" height="48" class="cell f-green-soft"/>
+<rect x="272" y="264" width="48" height="48" class="cell f-green-soft"/>
+<rect x="80" y="312" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="312" width="48" height="48" class="cell f-green-soft"/>
+<rect x="176" y="312" width="48" height="48" class="cell f-green-soft"/>
+<rect x="224" y="312" width="48" height="48" class="cell f-green-soft"/>
+<rect x="272" y="312" width="48" height="48" class="cell f-green-soft"/>
+<rect x="80" y="360" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="360" width="48" height="48" class="cell f-green-soft"/>
+<rect x="176" y="360" width="48" height="48" class="cell f-green-soft"/>
+<rect x="224" y="360" width="48" height="48" class="cell f-green-soft"/>
+<rect x="272" y="360" width="48" height="48" class="cell f-green-soft"/>
+<rect x="128" y="216" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="176" y="216" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="224" y="216" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="128" y="264" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="176" y="264" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="224" y="264" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="128" y="312" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="176" y="312" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="224" y="312" width="48" height="48" class="cell f-orange-soft" data-fit="skip"/>
+<rect x="80" y="168" width="240" height="240" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="104" y="198" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="152" y="198" text-anchor="middle" class="t-cell18" data-w="11">3</text>
+<text x="200" y="198" text-anchor="middle" class="t-cell18" data-w="11">2</text>
+<text x="248" y="198" text-anchor="middle" class="t-cell18" data-w="11">4</text>
+<text x="296" y="198" text-anchor="middle" class="t-cell18" data-w="11">0</text>
+<text x="104" y="246" text-anchor="middle" class="t-cell18" data-w="11">2</text>
+<text x="152" y="246" text-anchor="middle" class="t-cell18" data-w="11">5</text>
+<text x="200" y="246" text-anchor="middle" class="t-cell18" data-w="11">4</text>
+<text x="248" y="246" text-anchor="middle" class="t-cell18" data-w="11">5</text>
+<text x="296" y="246" text-anchor="middle" class="t-cell18" data-w="11">3</text>
+<text x="104" y="294" text-anchor="middle" class="t-cell18" data-w="11">0</text>
+<text x="152" y="294" text-anchor="middle" class="t-cell18" data-w="11">6</text>
+<text x="200" y="294" text-anchor="middle" class="t-cell18" data-w="11">5</text>
+<text x="248" y="294" text-anchor="middle" class="t-cell18" data-w="11">3</text>
+<text x="296" y="294" text-anchor="middle" class="t-cell18" data-w="11">2</text>
+<text x="104" y="342" text-anchor="middle" class="t-cell18" data-w="11">3</text>
+<text x="152" y="342" text-anchor="middle" class="t-cell18" data-w="11">4</text>
+<text x="200" y="342" text-anchor="middle" class="t-cell18" data-w="11">7</text>
+<text x="248" y="342" text-anchor="middle" class="t-cell18" data-w="11">6</text>
+<text x="296" y="342" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="104" y="390" text-anchor="middle" class="t-cell18" data-w="11">2</text>
+<text x="152" y="390" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="200" y="390" text-anchor="middle" class="t-cell18" data-w="11">0</text>
+<text x="248" y="390" text-anchor="middle" class="t-cell18" data-w="11">5</text>
+<text x="296" y="390" text-anchor="middle" class="t-cell18" data-w="11">4</text>
+</g>
+<rect x="128" y="216" width="144" height="144" class="emph s-orange" data-fit="skip"/>
+<rect x="180" y="220" width="136" height="136" class="w15 nofill s-orange d-lead" data-fit="skip"/>
+<g data-grid="skip">
+<text x="104" y="160" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="152" y="160" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="200" y="160" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="248" y="160" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="296" y="160" text-anchor="middle" class="t-tick" data-w="8">4</text>
+</g>
+<g data-grid="skip">
+<text x="72" y="197" text-anchor="end" class="t-tick" data-w="8">0</text>
+<text x="72" y="245" text-anchor="end" class="t-tick" data-w="8">1</text>
+<text x="72" y="293" text-anchor="end" class="t-tick" data-w="8">2</text>
+<text x="72" y="341" text-anchor="end" class="t-tick" data-w="8">3</text>
+<text x="72" y="389" text-anchor="end" class="t-tick" data-w="8">4</text>
+</g>
+<text x="80" y="440" class="t-note" data-w="342">thread (2, 3)'s window, dashed, shares 6 of 9 pixels</text>
+<text x="360" y="296" text-anchor="middle" class="t-op" data-w="18">×</text>
+<text x="400" y="136" class="t-head" data-w="95">mask: [3, 3]</text>
+<rect x="400" y="216" width="48" height="48" class="cell"/>
+<rect x="448" y="216" width="48" height="48" class="cell"/>
+<rect x="496" y="216" width="48" height="48" class="cell"/>
+<rect x="400" y="264" width="48" height="48" class="cell"/>
+<rect x="448" y="264" width="48" height="48" class="cell"/>
+<rect x="496" y="264" width="48" height="48" class="cell"/>
+<rect x="400" y="312" width="48" height="48" class="cell"/>
+<rect x="448" y="312" width="48" height="48" class="cell"/>
+<rect x="496" y="312" width="48" height="48" class="cell"/>
+<rect x="400" y="216" width="144" height="144" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="424" y="246" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="472" y="246" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="520" y="246" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="424" y="294" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="472" y="294" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="520" y="294" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="424" y="342" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="472" y="342" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+<text x="520" y="342" text-anchor="middle" class="t-cell18" data-w="11">1</text>
+</g>
+<text x="400" y="392" class="t-note" data-w="121">each weight × 1/9</text>
+<text x="584" y="296" text-anchor="middle" class="t-op" data-w="18">=</text>
+<text x="624" y="136" class="t-head" data-w="121">out: two pixels</text>
+<rect x="624" y="264" width="48" height="48" class="cell"/>
+<rect x="672" y="264" width="48" height="48" class="cell"/>
+<rect x="624" y="264" width="96" height="48" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="648" y="294" text-anchor="middle" class="t-cell18" data-w="11">5</text>
+<text x="696" y="294" text-anchor="middle" class="t-cell18" data-w="11">4</text>
+</g>
+<rect x="624" y="264" width="48" height="48" class="emph s-orange" data-fit="skip"/>
+<rect x="676" y="268" width="40" height="40" class="w15 nofill s-orange d-lead" data-fit="skip"/>
+<g data-grid="skip">
+<text x="648" y="256" text-anchor="middle" class="t-tick" data-w="32">[2][2]</text>
+<text x="696" y="256" text-anchor="middle" class="t-tick" data-w="32">[2][3]</text>
+</g>
+<text x="624" y="344" class="t-label" data-w="140">out[2][2] = 45 / 9 = 5</text>
+<text x="624" y="368" class="t-label" data-w="140">out[2][3] = 36 / 9 = 4</text>
+<text x="40" y="504" class="t-note" data-w="474">A naive kernel reads every shared pixel once per window that covers it.</text>
 </svg>

@@ -1,0 +1,829 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-007",
+  "next_ordinal": 19,
+  "questions": [
+    {
+      "id": "cuda-007-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "stencil",
+        "reuse"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "With a 3 x 3 filter, thread `(row, col)` and thread `(row, col + 1)` each read a 3 x 3 window of the input. How many input pixels lie in both windows?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "6",
+          "correct": true,
+          "feedback": "Yes. The windows cover columns col - 1 to col + 1 and col to col + 2, so they share two columns of three rows."
+        },
+        {
+          "key": "b",
+          "text": "3",
+          "correct": false,
+          "feedback": "That is one shared column; the windows overlap by two columns, not one."
+        },
+        {
+          "key": "c",
+          "text": "9",
+          "correct": false,
+          "feedback": "The windows are shifted by one column, so three of each window's nine pixels are not in the other."
+        },
+        {
+          "key": "d",
+          "text": "0",
+          "correct": false,
+          "feedback": "Neighboring outputs read overlapping windows; that overlap is the reuse the post is about."
+        }
+      ],
+      "explanation": "Section 1 and the hero figure: two horizontally adjacent outputs of a 3 x 3 stencil share two of the three columns of their windows, 6 of 9 pixels, which is why a naive kernel re-reads most of the input.",
+      "hints": [
+        "Write down the columns each window covers."
+      ]
+    },
+    {
+      "id": "cuda-007-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "reuse",
+        "halo"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A tiled stencil kernel computes an 8 x 8 output tile with a 5 x 5 filter. (a) How many pixel reads do the 64 threads of a naive kernel make for that tile? (b) How many distinct input pixels does the tile need, halo included? (c) What is the reuse factor, (a) over (b)?",
+      "answer": {
+        "parts": [
+          {
+            "label": "naive reads",
+            "value": 1600,
+            "tolerance": 0,
+            "unit": "reads"
+          },
+          {
+            "label": "input tile pixels",
+            "value": 144,
+            "tolerance": 0,
+            "unit": "pixels"
+          },
+          {
+            "label": "reuse factor",
+            "value": 11.11,
+            "tolerance": 0.05,
+            "unit": "times"
+          }
+        ]
+      },
+      "precision_note": "Naive: 8^2 x 5^2 = 64 x 25 = 1,600. Tile: (8 + 5 - 1)^2 = 12^2 = 144. Reuse 1,600 / 144 = 11.11, the formula TILE^2 K^2 / (TILE + K - 1)^2 of section 4 with TILE = 8. Forgetting the halo, 8^2 = 64 pixels and a reuse of 25, is the wrong method.",
+      "explanation": "Section 4: the naive kernel reads $K^2$ pixels for each of the $T^2$ outputs, while the tile loads $(T + K - 1)^2$ pixels once, a halo of radius 2 on every side; the ratio is the reuse factor.",
+      "hints": [
+        "Count reads per output, then multiply by the outputs.",
+        "The input tile is wider than the output tile by the radius on both sides."
+      ]
+    },
+    {
+      "id": "cuda-007-q03",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "cross-correlation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A test compares a GPU kernel that computes the post's sum $\\sum_{i,j} \\text{in}[y+i][x+j] \\cdot \\text{mask}[i+r][j+r]$ with a reference that computes a textbook convolution, which flips the filter. With a box blur the two agree; with a horizontal edge filter `[-1, 0, 1]` in every row they do not. Why?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The kernel computes a cross-correlation; flipping a symmetric filter changes nothing, flipping the edge filter negates it.",
+          "correct": true,
+          "feedback": "Yes. Flipping `[-1, 0, 1]` gives `[1, 0, -1]`, so the two results differ in sign, while the box blur is its own flip."
+        },
+        {
+          "key": "b",
+          "text": "The edge filter has negative weights, which zero padding handles differently from positive ones.",
+          "correct": false,
+          "feedback": "Zero padding adds nothing for any weight; the difference appears in the interior too, not only at the edges."
+        },
+        {
+          "key": "c",
+          "text": "Floating-point rounding is larger for filters whose weights sum to zero.",
+          "correct": false,
+          "feedback": "Rounding errors are tiny; the two results here differ by whole pixel values because one filter is the mirror of the other."
+        },
+        {
+          "key": "d",
+          "text": "The kernel needs a larger halo for an asymmetric filter.",
+          "correct": false,
+          "feedback": "The halo depends only on the radius, which is the same for both 3 x 3 filters."
+        }
+      ],
+      "explanation": "Section 1: the sum without a flip is a cross-correlation. For a symmetric filter it equals the true convolution, which the model confirms for the box blur; for an asymmetric filter the two differ, so a reference must use the same convention as the kernel.",
+      "hints": [
+        "What does flipping do to a symmetric filter, and to `[-1, 0, 1]`?"
+      ]
+    },
+    {
+      "id": "cuda-007-q04",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "constant-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The filter lives in `__constant__ float c_mask[49];`. Which runtime function does the host call to copy the weights into it?",
+      "answer": {
+        "model": "`cudaMemcpyToSymbol`, for example `cudaMemcpyToSymbol(c_mask, h_mask, sizeof(h_mask))`.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be|either)\\b)(?![\\s\\S]*\\b(not|never|instead of|rather than|without|avoid)\\s+(using\\s+)?(an?\\s+|the\\s+)?`?cudamemcpytosymbol\\b)(?![\\s\\S]*\\bcudamemcpytosymbol\\b[^.;\\n]*\\b(is wrong|is not|isn't|does not|doesn't|fails|won't|cannot|can't)\\b)(?![\\s\\S]*\\bor\\s+`?cudamemcpy\\b(?!tosymbol))(?![\\s\\S]*\\bcudamemcpy\\b(?!tosymbol)`?\\s+or\\b)(?![\\s\\S]*\\b(use|uses|call|calls|with)\\s+(a\\s+)?(plain\\s+|regular\\s+)?`?cudamemcpy\\b(?!tosymbol))(?![\\s\\S]*,\\s*`?cudamemcpy\\b(?!tosymbol)`?\\s*,)(?!\\W*cudamemcpy\\b(?!tosymbol))[\\s\\S]*\\bcudamemcpytosymbol\\b"
+        ]
+      },
+      "explanation": "Section 3: a `__constant__` array is a symbol, filled with `cudaMemcpyToSymbol`; `cudaMemcpy` expects a device address and fails with `invalid argument` when given the symbol, as section 8 reproduced.",
+      "hints": [
+        "The call names the variable itself, not a pointer to device memory."
+      ]
+    },
+    {
+      "id": "cuda-007-q05",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "constant-memory",
+        "broadcast"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Inside a kernel launched with 16 x 16 blocks, which read from constant memory is served to a warp as one request?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`c_mask[i * K + j]`, where `i` and `j` are loop counters",
+          "correct": true,
+          "feedback": "Yes. The index is the same in all 32 lanes, so the warp reads one address and the value is broadcast."
+        },
+        {
+          "key": "b",
+          "text": "`c_mask[threadIdx.x % 9]`",
+          "correct": false,
+          "feedback": "Lanes with different `threadIdx.x % 9` read different addresses, so the request splits, one per distinct address."
+        },
+        {
+          "key": "c",
+          "text": "`c_img[row * W + col]`, a pixel stored in constant memory",
+          "correct": false,
+          "feedback": "Every lane reads its own pixel, 32 different addresses, so the read splits into 32 requests."
+        },
+        {
+          "key": "d",
+          "text": "Any of them: constant memory always serves a warp in one request",
+          "correct": false,
+          "feedback": "The Programming Guide splits a request into one per distinct address; only a uniform index gives one request."
+        }
+      ],
+      "explanation": "Section 3: a constant-memory request splits into as many requests as there are different addresses in it. A filter tap's index depends only on the loop counters, so it is uniform across the warp and broadcast.",
+      "hints": [
+        "Count the distinct addresses the 32 lanes of one warp ask for."
+      ]
+    },
+    {
+      "id": "cuda-007-q06",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 4,
+      "tags": [
+        "constant-memory",
+        "broadcast"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel with a 1D block of 256 threads reads a `__constant__ float c_lut[32]`. Using the Programming Guide's rule from the post, how many separate requests does warp 0 (threads 0 to 31) make for (a) `c_lut[threadIdx.x / 16]`, (b) `c_lut[threadIdx.x % 8]`, (c) `c_lut[3]`?",
+      "answer": {
+        "parts": [
+          {
+            "label": "c_lut[threadIdx.x / 16]",
+            "value": 2,
+            "tolerance": 0,
+            "unit": "requests"
+          },
+          {
+            "label": "c_lut[threadIdx.x % 8]",
+            "value": 8,
+            "tolerance": 0,
+            "unit": "requests"
+          },
+          {
+            "label": "c_lut[3]",
+            "value": 1,
+            "tolerance": 0,
+            "unit": "requests"
+          }
+        ]
+      },
+      "precision_note": "Distinct addresses over threadIdx.x = 0..31: x / 16 takes 0 and 1 (2); x % 8 takes 0..7 (8); a constant index takes 1. Counting lanes instead of distinct addresses (32 each) is the wrong method.",
+      "explanation": "Section 3: a constant-memory request is split into as many separate requests as there are different addresses in it, so the cost follows the number of distinct indices in the warp, not the number of lanes.",
+      "hints": [
+        "List the values the index takes for threads 0 to 31.",
+        "Each distinct value is one request; repeated values share it."
+      ]
+    },
+    {
+      "id": "cuda-007-q07",
+      "type": "numeric",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "constant-memory",
+        "capacity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A program already uses 32 KB of the 64 KB of constant memory for other tables. (a) How many more 4-byte floats fit? (b) What is the largest odd `K` for which a `K x K` float filter still fits?",
+      "answer": {
+        "parts": [
+          {
+            "label": "floats that fit",
+            "value": 8192,
+            "tolerance": 0,
+            "unit": "floats"
+          },
+          {
+            "label": "largest odd K",
+            "value": 89,
+            "tolerance": 0,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "32 KB = 32,768 bytes / 4 = 8,192 floats. 89^2 = 7,921 fits; 91^2 = 8,281 does not. With the whole 64 KB the model prints 127. Taking the square root of 8,192 and rounding (91) is the wrong method.",
+      "explanation": "Section 3: constant memory is 64 KB in all, so the space left is what bounds the filter; the model's last line does the same count for the full 64 KB (16,384 floats, 127 x 127).",
+      "hints": [
+        "Convert the free bytes to floats.",
+        "Find the largest odd number whose square is at most that count."
+      ]
+    },
+    {
+      "id": "cuda-007-q08",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "halo",
+        "barrier"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of one thread of `convTiled` in the order the kernel executes them.",
+      "items": [
+        {
+          "key": "a",
+          "text": "compute `col = blockIdx.x * TILE + tx - R` and `row` likewise"
+        },
+        {
+          "key": "b",
+          "text": "store `in[row * W + col]`, or 0 outside the image, into `s[ty][tx]`"
+        },
+        {
+          "key": "c",
+          "text": "wait at `__syncthreads()`"
+        },
+        {
+          "key": "d",
+          "text": "test whether the thread is one of the inner `TILE x TILE`"
+        },
+        {
+          "key": "e",
+          "text": "sum `s[ty + i - R][tx + j - R] * c_mask[i * K + j]` over the window"
+        },
+        {
+          "key": "f",
+          "text": "write the sum to `out[orow * W + oc]` if that pixel is in the image"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "explanation": "Section 4: every thread computes its shifted load index and loads one pixel (zero padding outside the image); the barrier makes the whole tile present; then only the inner threads sum their windows from shared memory and write one output each.",
+      "hints": [
+        "The barrier separates the loads of all threads from the reads of neighbors."
+      ]
+    },
+    {
+      "id": "cuda-007-q09",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "launch",
+        "halo"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`convTiled` with `TILE` 16 runs a 5 x 5 filter over a 1920 x 1080 image. Give (a) the threads per block, (b) how many of them compute an output, and (c) the number of blocks in the grid.",
+      "answer": {
+        "parts": [
+          {
+            "label": "threads per block",
+            "value": 400,
+            "tolerance": 0,
+            "unit": "threads"
+          },
+          {
+            "label": "threads that compute",
+            "value": 256,
+            "tolerance": 0,
+            "unit": "threads"
+          },
+          {
+            "label": "blocks",
+            "value": 8160,
+            "tolerance": 0,
+            "unit": "blocks"
+          }
+        ]
+      },
+      "precision_note": "Block (16 + 5 - 1)^2 = 20^2 = 400; inner 16^2 = 256 (the model prints 256 of 400); grid ceil(1920 / 16) x ceil(1080 / 16) = 120 x 68 = 8,160. Sizing the grid by the 20-wide block, 96 x 54 = 5,184, is the wrong method.",
+      "explanation": "Section 4: the block is the input tile, one thread per pixel of $(\\texttt{TILE} + K - 1)^2$, of which the inner $\\texttt{TILE}^2$ compute; the grid counts output tiles, `(W + TILE - 1) / TILE` by `(H + TILE - 1) / TILE`.",
+      "hints": [
+        "The block covers the output tile plus the halo on every side.",
+        "The grid is sized by output tiles of 16, rounded up."
+      ]
+    },
+    {
+      "id": "cuda-007-q10",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 10,
+      "tags": [
+        "halo",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`tiled_conv` models `convTiled` on the CPU with the standard library: each block loads a `(tile + K - 1)` square input tile with zero padding, and its inner `tile x tile` threads compute. Its output is wrong for every image larger than one tile. Fix it so that it equals a direct zero-padded stencil sum for any image size, filter size and tile.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def tiled_conv(img, mask, tile):\n    \"\"\"convTiled on the CPU, standard library only. img is a list of H rows of W numbers, mask a K x K list\n    (K odd), tile the output tile width. Each block loads a (tile + K - 1)^2 input tile with zero padding,\n    then its inner tile x tile threads compute one output each. Returns the H x W output.\"\"\"\n    h, w, k = len(img), len(img[0]), len(mask)\n    r, blk = k // 2, tile + k - 1\n    out = [[0.0] * w for _ in range(h)]\n    for by in range((h + blk - 1) // blk):\n        for bx in range((w + blk - 1) // blk):\n            s = [[0.0] * blk for _ in range(blk)]\n            for ty in range(blk):                          # every thread loads one pixel\n                for tx in range(blk):\n                    row, col = by * blk + ty - r, bx * blk + tx - r\n                    if 0 <= row < h and 0 <= col < w:\n                        s[ty][tx] = img[row][col]\n            for ty in range(r, blk - r):                   # inner threads only\n                for tx in range(r, blk - r):\n                    orow, ocol = by * blk + ty - r, bx * blk + tx - r\n                    if orow < h and ocol < w:\n                        out[orow][ocol] = sum(s[ty + i - r][tx + j - r] * mask[i][j]\n                                              for i in range(k) for j in range(k))\n    return out\n",
+      "solution": "def tiled_conv(img, mask, tile):\n    \"\"\"convTiled on the CPU, standard library only. img is a list of H rows of W numbers, mask a K x K list\n    (K odd), tile the output tile width. Each block loads a (tile + K - 1)^2 input tile with zero padding,\n    then its inner tile x tile threads compute one output each. Returns the H x W output.\"\"\"\n    h, w, k = len(img), len(img[0]), len(mask)\n    r, blk = k // 2, tile + k - 1\n    out = [[0.0] * w for _ in range(h)]\n    for by in range((h + tile - 1) // tile):           # the grid counts OUTPUT tiles\n        for bx in range((w + tile - 1) // tile):\n            s = [[0.0] * blk for _ in range(blk)]\n            for ty in range(blk):                          # every thread loads one pixel\n                for tx in range(blk):\n                    row, col = by * tile + ty - r, bx * tile + tx - r   # blocks step by tile\n                    if 0 <= row < h and 0 <= col < w:\n                        s[ty][tx] = img[row][col]\n            for ty in range(r, blk - r):                   # inner threads only\n                for tx in range(r, blk - r):\n                    orow, ocol = by * tile + ty - r, bx * tile + tx - r\n                    if orow < h and ocol < w:\n                        out[orow][ocol] = sum(s[ty + i - r][tx + j - r] * mask[i][j]\n                                              for i in range(k) for j in range(k))\n    return out\n",
+      "tests": "def reference(img, mask):\n    h, w, k = len(img), len(img[0]), len(mask)\n    r = k // 2\n    return [[sum(img[y + i - r][x + j - r] * mask[i][j] for i in range(k) for j in range(k)\n                 if 0 <= y + i - r < h and 0 <= x + j - r < w) for x in range(w)] for y in range(h)]\n\ndef close(a, b):\n    return all(abs(p - q) < 1e-9 for ra, rb in zip(a, b) for p, q in zip(ra, rb)) and len(a) == len(b)\n\nimg = [[(7 * y + 3 * x) % 11 for x in range(13)] for y in range(9)]          # 13 wide, 9 high: edge tiles\nbox = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]\nedge = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]                                   # asymmetric\nassert close(tiled_conv(img, box, 4), reference(img, box))\nassert close(tiled_conv(img, edge, 4), reference(img, edge))\nassert close(tiled_conv(img, edge, 8), reference(img, edge))\nmask5 = [[(i * 5 + j) % 3 - 1 for j in range(5)] for i in range(5)]\nassert close(tiled_conv(img, mask5, 4), reference(img, mask5))\nassert tiled_conv([[2, 3]], [[0, 0, 0], [0, 1, 0], [0, 0, 0]], 1) == [[2, 3]]\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Section 4: blocks step by the output tile, not by the input tile, and the grid counts output tiles. The starter uses `blk` (tile plus halo) for the block stride and the block count, so consecutive input tiles are spaced too far apart and some outputs are skipped. Replacing `blk` by `tile` in the two ranges and the two index computations fixes it; the halo shift by `r` stays.",
+      "hints": [
+        "Compare which output pixels block 0 and block 1 write.",
+        "Which width should the block index be multiplied by: the input tile's or the output tile's?"
+      ]
+    },
+    {
+      "id": "cuda-007-q11",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 1,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "separable"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A 9 x 9 Gaussian blur is separable. How many multiply-adds per output pixel does (a) the 2D filter cost, and (b) its row pass plus column pass?",
+      "answer": {
+        "parts": [
+          {
+            "label": "2D filter",
+            "value": 81,
+            "tolerance": 0,
+            "unit": "multiply-adds"
+          },
+          {
+            "label": "two 1D passes",
+            "value": 18,
+            "tolerance": 0,
+            "unit": "multiply-adds"
+          }
+        ]
+      },
+      "precision_note": "K^2 = 81 and 2K = 18, the model's rule (9 against 6 for 3 x 3, 49 against 14 for 7 x 7).",
+      "explanation": "Section 5: a separable filter replaces $K^2$ multiply-adds per pixel by $K$ in each of two passes, $2K$ in all.",
+      "hints": [
+        "Each 1D pass costs K per pixel."
+      ]
+    },
+    {
+      "id": "cuda-007-q12",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "separable"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A `K x K` filter is to be applied as a 1D pass along every row followed by a 1D pass along every column, with the same result. What must be true of its weights?",
+      "answer": {
+        "model": "The filter must be the outer product of a column vector and a row vector (rank one): weight `(i, j)` equals `c[i] * r[j]`.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not|cannot|can't|no)\\s+((an?|the|be)\\s+){0,2}(outer product|rank[- ]?(one|1)|separable|product of)\\b)(?![\\s\\S]*\\bsum of (an? |the |two )?(1d |one-dimensional )?(row|column|vector)s?\\b)(?![\\s\\S]*\\bsymmetric\\b(?![\\s\\S]*\\b(outer product|rank[- ]?(one|1))\\b))[\\s\\S]*(\\bouter[- ]product\\b|\\brank[- ]?(one|1)\\b|\\bseparable\\b|\\bproduct of (an? |the )?(1d |one-dimensional )?(column|row|vertical|horizontal)( vector)?s? (and|times|with|by) (an? |the )?(1d |one-dimensional )?(row|column|horizontal|vertical)\\b|\\b(column|row) vector (times|multiplied by) (an? |the )?(row|column) vector\\b|\\bfactor(s|ed|izes|ises)? (in)?to (an? |the )?(column|row|two)\\b|\\bw(\\[|_)?i(\\]|,)?\\s*(\\[|_)?j\\]?\\s*=\\s*\\w+(\\[|_)i\\]?\\s*[*x·]\\s*\\w+(\\[|_)j\\]?)"
+        ]
+      },
+      "explanation": "Section 5: only a filter that is a column vector times a row vector, such as the box blur or a Gaussian, can be split into a row pass and a column pass.",
+      "hints": [
+        "Write the 3 x 3 box blur as a product of two 1D filters."
+      ]
+    },
+    {
+      "id": "cuda-007-q13",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4",
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "separable",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On the author's GTX 1650 the separable 3 x 3 blur took 0.266 ms, slower than the 2D kernel with the filter in constant memory (0.208 ms), although it needs 6 multiply-adds per pixel instead of 9. Which reading fits the measurement?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The two passes move 16 bytes per pixel through global memory instead of 8, and at 125 GB/s that traffic, not arithmetic, sets the time.",
+          "correct": true,
+          "feedback": "Yes. 33.2 MB in 0.266 ms is 125 GB/s, close to the copy kernel's 130.8: the kernel is bound by its doubled traffic."
+        },
+        {
+          "key": "b",
+          "text": "The second launch costs about 0.06 ms by itself on this card.",
+          "correct": false,
+          "feedback": "At the copy kernel's 130.8 GB/s the 33.2 MB the two passes move take 0.254 ms by themselves, which leaves about 0.01 ms of the 0.266 ms for everything else, the second launch included."
+        },
+        {
+          "key": "c",
+          "text": "A separable filter needs more multiply-adds than the 2D filter at 3 x 3.",
+          "correct": false,
+          "feedback": "It needs fewer, 6 against 9; the multiply-adds are not what limits either kernel here."
+        },
+        {
+          "key": "d",
+          "text": "The row pass cannot use constant memory, so its weights come from global memory.",
+          "correct": false,
+          "feedback": "The passes read `c_row` and `c_col`, which are `__constant__` arrays."
+        }
+      ],
+      "explanation": "Section 6: at 3 x 3 the separable kernel is memory bound on twice the traffic; at 7 x 7, where it saves 35 of 49 multiply-adds, it is the fastest kernel, 2.5 times faster than constant memory.",
+      "hints": [
+        "Compute the bandwidth the two passes achieve from the bytes they move.",
+        "Compare it with the copy kernel's 130.8 GB/s."
+      ]
+    },
+    {
+      "id": "cuda-007-q14",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "caches",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`convNaive<3>` reads 9 pixels and writes 1 per output, yet it processes a 1920 x 1080 image in 0.224 ms on a card whose theoretical peak is 160 GB/s. What does this show?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Most of the re-reads are served by the L1 and L2 caches, since fetching them all from DRAM would need about 370 GB/s.",
+          "correct": true,
+          "feedback": "Yes. 82.9 MB in 0.224 ms would be 370 GB/s, more than twice the peak, so most re-reads never reach DRAM."
+        },
+        {
+          "key": "b",
+          "text": "The timing is wrong: the kernel must have been skipped.",
+          "correct": false,
+          "feedback": "Every row is checked against the CPU result, and the naive rows matched to 4.6e-05."
+        },
+        {
+          "key": "c",
+          "text": "Constant memory caches the pixels as well as the filter.",
+          "correct": false,
+          "feedback": "`convNaive` reads both from global memory; constant memory holds only `c_mask`, and only `convConst` and `convTiled` read it."
+        },
+        {
+          "key": "d",
+          "text": "The 160 GB/s peak applies only to writes.",
+          "correct": false,
+          "feedback": "The theoretical peak bounds reads and writes together."
+        }
+      ],
+      "explanation": "Section 6, first reading: $(9 + 1) \\times 4$ bytes per pixel over 2,073,600 pixels is 82.9 MB; in 0.224 ms that would be 370 GB/s from DRAM, impossible on a 160 GB/s card, so the caches already capture much of the reuse a shared tile would add.",
+      "hints": [
+        "Count the bytes the kernel would move if every read went to DRAM.",
+        "Divide by the time and compare with the peak."
+      ]
+    },
+    {
+      "id": "cuda-007-q15",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o5",
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On another card the separable 3 x 3 row of `convolution.cu` reports 0.400 ms for the 1920 x 1080 image. (a) What GB/s does the program print for that row? (b) What is the bandwidth of the traffic the two passes actually move, 16 bytes per pixel?",
+      "stimulus": {
+        "kind": "code",
+        "language": "cuda",
+        "content": "const size_t n = (size_t)W * H, bytes = n * sizeof(float);\nprintf(\"%-24s %9.3f %7.1f   %14.1fx   %.1e %s\\n\", r.name, r.ms, 2 * bytes / (r.ms * 1e6),\n       cpu1 / r.ms, r.err, r.ok ? \"ok\" : \"MISMATCH\");",
+        "caption": "The lines of snippets/convolution.cu that compute and print a GPU row, with W = 1920 and H = 1080."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "printed GB/s",
+            "value": 41.5,
+            "tolerance": 0.05,
+            "unit": "GB/s"
+          },
+          {
+            "label": "actual traffic",
+            "value": 82.9,
+            "tolerance": 0.05,
+            "unit": "GB/s"
+          }
+        ]
+      },
+      "precision_note": "bytes = 1920 x 1080 x 4 = 8,294,400; printed 2 x 8,294,400 / (0.400 x 1e6) = 41.47, shown as 41.5. Actual traffic 4 x 8,294,400 = 33,177,600 bytes / 0.400 ms = 82.94 GB/s. Using 1,024-based gigabytes gives 38.6, the wrong unit for this program.",
+      "explanation": "Section 6: the printed GB/s counts the 8 bytes per pixel any filter must move; the separable form moves twice that through its intermediate image, so its real traffic is twice the printed figure.",
+      "hints": [
+        "The printed column uses 2 x bytes, one read and one write per pixel.",
+        "The two passes each read and write the full image."
+      ]
+    },
+    {
+      "id": "cuda-007-q16",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3",
+        "o2"
+      ],
+      "section": "8",
+      "est_minutes": 4,
+      "tags": [
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each one-line mistake in `convolution.cu` with the symptom the program showed.",
+      "left": [
+        {
+          "key": "a",
+          "text": "`convTiled` launched with 16 x 16 threads per block"
+        },
+        {
+          "key": "b",
+          "text": "the `__syncthreads()` after the load removed"
+        },
+        {
+          "key": "c",
+          "text": "`cudaMemcpy` used to fill `c_mask`"
+        },
+        {
+          "key": "d",
+          "text": "the grid sized as `(W + 17) / 18` blocks"
+        },
+        {
+          "key": "e",
+          "text": "the tests `r >= 0 && c >= 0` dropped from the naive kernel"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "two rows and two columns of every output tile stay NaN"
+        },
+        {
+          "key": "q",
+          "text": "errors of about 100 scattered through the tiled output, from neighbors not yet loaded"
+        },
+        {
+          "key": "r",
+          "text": "the program stops with `invalid argument`"
+        },
+        {
+          "key": "s",
+          "text": "the last rows and columns of every kernel's output are unwritten, and the rows report faster times"
+        },
+        {
+          "key": "t",
+          "text": "wrong values only along the image edges, with no error reported"
+        },
+        {
+          "key": "u",
+          "text": "a bank conflict that makes the kernel slower but still correct"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s",
+        "e": "t"
+      },
+      "explanation": "Section 8 reproduced each mistake: a block the size of the output tile leaves 14 x 14 computing threads; no barrier reads unloaded neighbors; `cudaMemcpy` rejects a symbol; a grid sized by the 18-wide block launches too few blocks; a half boundary check reads outside the array at the edges. None of them produced a bank conflict.",
+      "hints": [
+        "Ask which mistakes leave pixels unwritten and which compute wrong values.",
+        "Only one of them is reported by the CUDA runtime."
+      ]
+    },
+    {
+      "id": "cuda-007-q17",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o3",
+        "o5"
+      ],
+      "section": "4",
+      "est_minutes": 15,
+      "tags": [
+        "tiling",
+        "matmul"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Compare the shared-memory tile of this post's `convTiled` with the tiles of the tiled matrix multiplication of post 03 and the transpose of post 06. Say why the stencil's input tile is larger than its output tile while the others are not, how the reuse of each tile is counted, and why the stencil tile lost to the constant-memory kernel at 3 x 3 on the GTX 1650 while post 03's tiles made matrix multiplication 1.6 times faster.",
+      "kind": "compare",
+      "solution": "1. **Shape.** A matrix-multiplication tile of `A` or `B` is exactly as large as the part of the operand a block needs for one step of the `K` loop, and a transpose tile holds exactly the block's 32 x 32 elements. A stencil output depends on a window that extends the filter radius beyond the output tile, so the input tile adds a halo: 18 x 18 for a 16 x 16 tile and a 3 x 3 filter.\n2. **Reuse.** In matrix multiplication each loaded element of `A` and `B` is used `TILE` times, so global reads fall by a factor of `TILE`. In the stencil, each pixel is used by up to $K^2$ outputs; the reuse is $16^2 K^2 / (15 + K)^2$, 7.1 at 3 x 3 and 25.9 at 7 x 7, and the halo threads only load. In the transpose, the tile buys coalescing, not reuse.\n3. **Why the measured result differs.** In both kernels the caches already serve most re-reads: post 03's naive matrix multiplication ran at about 200 GFLOP/s where DRAM alone would allow 40, and `convNaive<3>` would need 370 GB/s if every read reached DRAM, against a 160 GB/s peak. So neither tile removes much DRAM traffic; what each removes is global load instructions. The matrix-multiplication tile divides them by `TILE` and keeps every thread busy, and gained 1.6 times at $1024^3$. The 3 x 3 stencil tile removes nine cached loads per pixel and pays for 68 idle halo threads, a barrier and a partly empty eleventh warp per block, so it took 1.4 times the time of constant memory. At 7 x 7, with 49 reads per pixel, it won by 17%.",
+      "rubric": [
+        {
+          "criterion": "Explains the halo: a stencil output depends on pixels beyond its tile, a matmul or transpose tile does not need extra elements",
+          "points": 2
+        },
+        {
+          "criterion": "Counts the reuse of each tile correctly (TILE for matmul, the stencil formula with 7.1 and 25.9, coalescing for transpose)",
+          "points": 2
+        },
+        {
+          "criterion": "Uses the 370 GB/s argument or equivalent to show the caches already capture the stencil's reuse",
+          "points": 2
+        },
+        {
+          "criterion": "Names the tile's costs (idle halo threads, barrier, partial warp) and the measured 3 x 3 and 7 x 7 outcomes",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 4 and 6 of this post, with the tiles of post 03 and post 06: the halo and the cache behavior are what set the stencil tile apart.",
+      "hints": [
+        "Ask what one output needs from the input in each of the three kernels.",
+        "Ask whether the re-reads the tile removes would otherwise reach DRAM."
+      ],
+      "connects": [
+        "cuda-003",
+        "cuda-006"
+      ]
+    },
+    {
+      "id": "cuda-007-q18",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5",
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 15,
+      "tags": [
+        "design",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A program must apply a 15 x 15 Gaussian blur to 3840 x 2160 frames on a GTX 1650. Choose among the post's kernels (naive, constant memory, tiled with halo, separable), justify the choice with the post's counts and measurements, and say what the program should measure before committing to it.",
+      "kind": "design",
+      "solution": "A Gaussian is separable, so the first candidate is two 1D passes with the factors in constant memory: 30 multiply-adds per pixel instead of 225, and a 15-element weight vector that every lane reads at once, the broadcast case. The cost is the intermediate image: 16 bytes per pixel instead of 8, about 133 MB per frame at 3840 x 2160. At 3 x 3 that doubled traffic made the separable kernel lose, but at 7 x 7 it was already 2.5 times faster than the 2D constant-memory kernel, and a 15 x 15 2D kernel would do 225 multiply-adds and up to 225 reads per pixel, so the balance moves further toward separable. A tiled 2D kernel would have a reuse of $16^2 \\cdot 15^2 / 30^2 = 64$ but a 30 x 30 block of 900 threads of which only 256 compute (28%), which argues against it. Each 1D pass could itself stage its rows or columns in shared memory, as Podlozhnyuk's whitepaper does. Before committing, the program should run the harness's comparison at 15 x 15 on the real frame size, check every variant against a CPU reference, and record the clock, temperature and power draw, because this laptop card runs below its boost clock at its power cap and when hot.",
+      "rubric": [
+        {
+          "criterion": "Recognizes the Gaussian as separable and counts 30 against 225 multiply-adds",
+          "points": 2
+        },
+        {
+          "criterion": "Weighs the doubled traffic of the intermediate image, using the 3 x 3 and 7 x 7 measurements",
+          "points": 2
+        },
+        {
+          "criterion": "Evaluates the 2D tile at 15 x 15 (reuse against idle halo threads and block size)",
+          "points": 2
+        },
+        {
+          "criterion": "Proposes measuring at the real size with a correctness check and the card's clock and temperature",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Sections 5 and 6: the measured trend from 3 x 3 to 7 x 7 and the counts of the model extend to a larger filter, but only a measurement at the real size settles the choice.",
+      "hints": [
+        "Start with the multiply-adds per pixel of each option at K = 15.",
+        "Then weigh the bytes each option moves and what the 3 x 3 and 7 x 7 rows showed."
+      ]
+    }
+  ]
+}
