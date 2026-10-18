@@ -36,9 +36,9 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Bank conflict.** Shared memory is divided into 32 banks, and when two or more lanes of a warp touch different addresses in the same bank, the accesses serialize. The usual fix is padding a tile by one column (`[TILE][TILE + 1]`). See [post 06](posts/06-matrix-transpose/index.md).
 
-**Coalescing.** When the 32 threads of a warp read or write consecutive addresses, the hardware serves the warp with as few 128-byte transactions as the data needs; a strided access pattern makes each lane cost its own transaction, up to 32 times the traffic. See [post 02](posts/02-vector-addition/index.md) and [post 06](posts/06-matrix-transpose/index.md).
+**Coalescing.** When the 32 threads of a warp read or write consecutive addresses, the hardware serves the warp with as few 32-byte transactions (sectors) as the data needs on compute capability 6.0 and later: four, one 128-byte line, for 32 consecutive floats. A strided pattern puts each lane in its own sector: 32 sectors, 8 times the bytes, for 4-byte words. See [post 02](posts/02-vector-addition/index.md) and [post 06](posts/06-matrix-transpose/index.md).
 
-**Constant memory.** A 64 KB read-only space with its own cache, which broadcasts one value to every lane of a warp that reads the same address in the same instruction; used for filter weights. See [post 07](posts/07-convolution/index.md).
+**Constant memory.** A 64 KB read-only space cached on each SM (an 8 KB working set on compute capability 7.5); a warp's read costs one request per distinct address, so a value every lane reads at once is broadcast in one request; used for filter weights. See [post 07](posts/07-convolution/index.md).
 
 **Global memory.** The card's main memory, off-chip DRAM (GDDR on consumer cards, HBM on datacenter ones): large, slow (hundreds of cycles), and the only tier every thread and the host can reach. See [post 01](posts/01-introduction-to-cuda/index.md).
 
@@ -62,6 +62,8 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Blelloch scan.** A work-efficient scan in two passes over a tree, an up-sweep that builds partial sums and a down-sweep that distributes them, doing $O(N)$ additions in $O(\log N)$ steps. See [post 08](posts/08-parallel-scan/index.md).
 
+**Decoupled look-back.** The single-pass scan behind CUB's `DeviceScan` (Merrill and Garland, 2016): each block publishes its total and reads the running totals that earlier blocks publish, so the array is read and written once instead of twice as in a three-phase scan. See [post 08](posts/08-parallel-scan/index.md).
+
 **Grid-stride loop.** A kernel loop in which thread `i` handles elements `i`, `i + stride`, `i + 2 * stride` and so on, where `stride = blockDim.x * gridDim.x` is the number of threads in the grid: a launch of fixed size covers any `N`, adjacent threads still read adjacent addresses on every pass, and each thread combines many elements before any cooperation with other threads. See [post 04](posts/04-reduction/index.md) and [post 05](posts/05-histogram/index.md).
 
 **Halo (apron).** The border of input a tile needs beyond its own output elements, as wide as the filter radius; loaded into shared memory beside the tile. See [post 07](posts/07-convolution/index.md).
@@ -75,6 +77,8 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 **Privatization.** Giving each block (or warp) its own private copy of a shared result, such as a histogram in shared memory, and merging the copies once at the end, to cut atomic contention on global memory. See [post 05](posts/05-histogram/index.md).
 
 **Race condition.** Two or more threads accessing one location without ordering, at least one of them writing, so the result depends on timing; a plain `counter += 1` from many threads loses most of its updates. See [post 09](posts/09-synchronization/index.md).
+
+**Separable filter.** A `K x K` filter that is the outer product of a column vector and a row vector, applied as a row pass and a column pass: $2K$ multiply-adds per pixel instead of $K^2$, at the cost of an intermediate image. See [post 07](posts/07-convolution/index.md).
 
 **Stream compaction.** Removing elements in parallel: an exclusive scan of a keep-or-drop flag gives each kept element its output position. See [post 08](posts/08-parallel-scan/index.md).
 
@@ -144,7 +148,7 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 ## Libraries and tools above CUDA
 
-**cuBLAS, cuDNN, CUB.** NVIDIA's libraries for dense linear algebra, deep-learning primitives, and block- and device-wide parallel primitives (reduce, scan, sort); the baselines the kernel posts compare against. See [post 03](posts/03-matrix-multiplication/index.md) and [post 19](posts/19-cutlass-triton/index.md).
+**cuBLAS, cuDNN, CUB.** NVIDIA's libraries for dense linear algebra, deep-learning primitives, and block- and device-wide parallel primitives (reduce, scan, sort); the baselines the kernel posts compare against. See [post 03](posts/03-matrix-multiplication/index.md), [post 08](posts/08-parallel-scan/index.md) and [post 19](posts/19-cutlass-triton/index.md).
 
 **CUTLASS.** NVIDIA's C++ template library for matrix multiplication, which exposes the tiling hierarchy (device, thread block, warp, Tensor Core instruction) as composable templates. See [post 19](posts/19-cutlass-triton/index.md).
 

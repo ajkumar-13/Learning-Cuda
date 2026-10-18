@@ -41,7 +41,7 @@ int blocksPerGrid = (N + blockSize - 1) / blockSize;    // round up, never down
 | L2 cache | whole GPU | managed by the hardware over global memory |
 | global memory (DRAM) | whole GPU and the host | the data; touch it as few times as possible |
 
-Coalescing (posts 02 and 06): when the 32 threads of a warp touch consecutive addresses, the hardware serves the warp with as few 128-byte transactions as the data needs; a strided pattern can cost up to 32 times the traffic. Shared memory has 32 banks: pad a tile to `[TILE][TILE + 1]` to break bank conflicts.
+Coalescing (posts 02 and 06): when the 32 threads of a warp touch consecutive addresses, the hardware serves the warp with as few 32-byte sectors as the data needs (four, one 128-byte line, for 32 consecutive floats); a strided pattern costs one sector per lane, 8 times the bytes for floats. Shared memory has 32 banks: pad a tile to `[TILE][TILE + 1]` to break bank conflicts.
 
 ---
 

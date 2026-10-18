@@ -57,18 +57,18 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 
 ## Post 06 - Matrix transpose: coalescing, shared memory, and bank conflicts
 
-- Harris, M. "An Efficient Matrix Transpose in CUDA C/C++." NVIDIA Technical Blog, 2013. <https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/>
+- Harris, M. "An Efficient Matrix Transpose in CUDA C/C++." NVIDIA Technical Blog, 18 February 2013. <https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Device Memory Accesses". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#device-memory-accesses>
-- NVIDIA. *CUDA C++ Best Practices Guide*, section "Shared Memory". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory>
-- Volkov, V. "Better Performance at Lower Occupancy." GPU Technology Conference, 2010.
+- NVIDIA. *CUDA C++ Best Practices Guide*, sections "Coalesced Access to Global Memory" and "Shared Memory and Memory Banks". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#coalesced-access-to-global-memory>
+- Volkov, V. "Better Performance at Lower Occupancy." GPU Technology Conference, 22 September 2010. <https://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf>
 
 ---
 
 ## Post 07 - Convolution: constant memory, shared-memory halos, and separable filters
 
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Constant Memory". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#constant-memory>
-- Kirk, D. B. and Hwu, W. W. *Programming Massively Parallel Processors: A Hands-on Approach*. Morgan Kaufmann. The chapter on convolution.
-- Podlozhnyuk, V. "Image Convolution with CUDA." NVIDIA, 2007.
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Constant Memory" and "Technical Specifications per Compute Capability". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#constant-memory>
+- Hwu, W. W., Kirk, D. B. and El Hajj, I. *Programming Massively Parallel Processors: A Hands-on Approach*. 4th ed. Morgan Kaufmann, 2022. Chapter 7, "Convolution: An introduction to constant memory and caching."
+- Podlozhnyuk, V. "Image Convolution with CUDA." NVIDIA whitepaper, June 2007.
 - NVIDIA. *cuDNN Documentation*. Consulted October 2026. <https://docs.nvidia.com/deeplearning/cudnn/>
 
 ---
@@ -76,8 +76,9 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 08 - Parallel scan: breaking the dependency chain of a prefix sum
 
 - Harris, M., Sengupta, S. and Owens, J. D. "Parallel Prefix Sum (Scan) with CUDA." In *GPU Gems 3*, chapter 39. NVIDIA, 2007. <https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda>
-- Blelloch, G. E. "Prefix Sums and Their Applications." Carnegie Mellon University technical report CMU-CS-90-190, 1990.
-- Hillis, W. D. and Steele, G. L. "Data Parallel Algorithms." *Communications of the ACM* 29(12), 1986.
+- Blelloch, G. E. "Prefix Sums and Their Applications." Carnegie Mellon University technical report CMU-CS-90-190, November 1990. <https://www.cs.cmu.edu/~scandal/papers/CMU-CS-90-190.html>
+- Hillis, W. D. and Steele, G. L. "Data Parallel Algorithms." *Communications of the ACM* 29(12), December 1986.
+- Merrill, D. and Garland, M. "Single-pass Parallel Prefix Scan with Decoupled Look-back." NVIDIA Technical Report NVR-2016-002, March 2016. <https://research.nvidia.com/publication/2016-03_single-pass-parallel-prefix-scan-decoupled-look-back>
 - NVIDIA. *CUB* documentation, `cub::DeviceScan`. Consulted October 2026. <https://nvidia.github.io/cccl/unstable/cub/api/structcub_1_1DeviceScan.html>
 
 ---
@@ -97,7 +98,7 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 - Williams, S., Waterman, A. and Patterson, D. "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4), 2009. <https://doi.org/10.1145/1498765.1498785>
 - NVIDIA. *CUDA C++ Best Practices Guide*. Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Occupancy Calculator". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#occupancy-calculator>
-- Volkov, V. "Better Performance at Lower Occupancy." GPU Technology Conference, 2010.
+- Volkov, V. "Better Performance at Lower Occupancy." GPU Technology Conference, 22 September 2010. <https://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf>
 
 ---
 
