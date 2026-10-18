@@ -1,8 +1,28 @@
 id: cuda-016
 slug: 16-numerical-precision
-title: "16 · Numbers on a GPU — FP32, FP16, BF16, and numerical stability"
+title: "16 - Numbers on a GPU: FP32, FP16, BF16, and numerical stability"
+summary: "How a float spends its bits on range and precision, why a parallel sum's last bits depend on its order and its block count, why FP16 inputs want an FP32 accumulator, and how a stable softmax and an error bound make a kernel testable."
 date: 2026-08-01
-tags: [tensor-attention, cuda, floating-point, numerical-stability]
-hero: diagrams/01-float-formats.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part V - Tensor & Attention"
+level: intermediate
+reading_time: 18
+tags: [cuda, floating-point, numerical-stability, mixed-precision, fp16, bf16, softmax, testing]
+hero: diagrams/01-float-formats.svg
+prerequisites: [cuda-004]
+code: included
+outcomes:
+  - id: o1
+    text: "Read a float as sign, exponent and mantissa, and derive from the bit widths which formats trade range for precision."
+  - id: o2
+    text: "Explain why a parallel reduction is not bit-for-bit reproducible across block counts, and when one launch is."
+  - id: o3
+    text: "Apply mixed precision, FP16 inputs with an FP32 accumulator, and say what the compiler's fused multiply-add changes."
+  - id: o4
+    text: "Apply the stable-softmax max subtraction and explain why it changes no probability."
+  - id: o5
+    text: "Choose a test tolerance against an FP64 reference from the format's unit roundoff and the summation depth."
+recommended: [cuda-003, cmp-035]
+compute: gpu-small
+hardware: gtx-1650

@@ -1,0 +1,743 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-016",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-016-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "formats",
+        "exponent"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Two floating-point formats have the same total width. One of them can represent numbers up to about $3.4 \\times 10^{38}$, the other only up to 65,504. Which field differs between them in the way that explains this?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The mantissa: more mantissa bits let a format reach larger numbers.",
+          "correct": false,
+          "feedback": "More mantissa bits make neighboring numbers closer together; they do not move the largest value much (FP16 and TF32 have the same 10-bit mantissa and very different ranges)."
+        },
+        {
+          "key": "b",
+          "text": "The sign bit: one format spends it on magnitude instead.",
+          "correct": false,
+          "feedback": "Every format in the post has exactly one sign bit; it chooses plus or minus, not size."
+        },
+        {
+          "key": "c",
+          "text": "The exponent: the wider exponent reaches about $3.4 \\times 10^{38}$.",
+          "correct": true,
+          "feedback": "Right: the exponent's width sets the range. BF16's 8 exponent bits give FP32's range; FP16's 5 stop at 65,504."
+        },
+        {
+          "key": "d",
+          "text": "The bias: the larger-range format uses a larger bias with the same exponent width.",
+          "correct": false,
+          "feedback": "The bias follows from the exponent width ($b = 2^{e-1} - 1$); with the same exponent width the range would be the same."
+        }
+      ],
+      "explanation": "Section 1: the exponent's width sets the range; FP16 has 5 exponent bits and stops at 65,504, while BF16 keeps FP32's 8 and so FP32's range.",
+      "hints": [
+        "Which field says how far the binary point can move?"
+      ]
+    },
+    {
+      "id": "cuda-016-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "bf16",
+        "overflow"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel stores the value 100,000 once in FP16 and once in BF16. What comes back from each?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "FP16 gives 100,000 exactly; BF16 gives infinity.",
+          "correct": false,
+          "feedback": "This swaps the two formats: BF16 is the one with FP32's 8 exponent bits."
+        },
+        {
+          "key": "b",
+          "text": "FP16 gives 65,504, its largest value; BF16 gives 100,000 exactly.",
+          "correct": false,
+          "feedback": "Rounding to nearest sends a value above the largest finite FP16 number by more than half a spacing to infinity, not to 65,504; and BF16's 8-bit significand cannot hold 100,000 exactly."
+        },
+        {
+          "key": "c",
+          "text": "Both give 100,000, since both are 16-bit formats.",
+          "correct": false,
+          "feedback": "Equal widths do not mean equal ranges or precision; the split of the bits decides both."
+        },
+        {
+          "key": "d",
+          "text": "FP16 gives infinity; BF16 gives 99,840.",
+          "correct": true,
+          "feedback": "Right: FP16 overflows above 65,504, and BF16 rounds 100,000 to the nearest multiple of its spacing of 512."
+        }
+      ],
+      "explanation": "Section 3: 100,000 exceeds FP16's largest value 65,504, so FP16 stores infinity; BF16 has FP32's range and stores the nearest multiple of 512, 99,840.",
+      "hints": [
+        "Compare 100,000 with each format's largest value.",
+        "Near 100,000, BF16's numbers are $2^{16-7}$ apart."
+      ]
+    },
+    {
+      "id": "cuda-016-q03",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "reproducibility",
+        "atomics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Two reductions sum the same array with the same launch of 56 blocks. Kernel P writes each block's sum to `partial[blockIdx.x]` and the host adds the 56 partials in index order; kernel Q has each block `atomicAdd` its sum into one FP32 total. Run each twice. What should be expected?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "P gives the same bits both times; Q may differ in its last bits between the two runs.",
+          "correct": true,
+          "feedback": "Right: P's order of additions is fixed by the code; Q's final additions happen in whatever order the blocks finish."
+        },
+        {
+          "key": "b",
+          "text": "Both give the same bits both times, since the launch is identical.",
+          "correct": false,
+          "feedback": "The launch fixes the tree inside each block, but not the order in which Q's atomic additions reach the total."
+        },
+        {
+          "key": "c",
+          "text": "Both may differ between runs, since GPU arithmetic is not deterministic.",
+          "correct": false,
+          "feedback": "Each FP32 addition is correctly rounded and deterministic; only the order can change, and P fixes it."
+        },
+        {
+          "key": "d",
+          "text": "P may differ between runs; Q is reproducible because atomics serialize the additions.",
+          "correct": false,
+          "feedback": "Atomics serialize the additions but not in a fixed order; serialization in a varying order is exactly what changes the last bits."
+        }
+      ],
+      "explanation": "Section 2: a fixed tree and a fixed final order give the same bits every run (56 blocks gave 524781.0625 twice); the order in which atomic additions land changes from run to run, as post 04 notes, so Q can differ in its last bits between identical launches.",
+      "hints": [
+        "Which of the two fixes the order of every addition?",
+        "Each single FP32 addition is deterministic; only the order can vary."
+      ]
+    },
+    {
+      "id": "cuda-016-q04",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "fma",
+        "contraction"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel's FP16 dot product loop is `acc = __hadd(acc, __hmul(a[i], b[i]));`, built with `nvcc -O3` and no other flags. What does the GPU execute for one iteration?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "An FP16 multiply rounded to FP16, then an FP16 add rounded to FP16, exactly as written.",
+          "correct": false,
+          "feedback": "That is what `__hmul_rn` and `__hadd_rn` guarantee; the plain intrinsics may be contracted, and here they were."
+        },
+        {
+          "key": "b",
+          "text": "An FP32 multiply and an FP32 add, since FP16 arithmetic is emulated on this card.",
+          "correct": false,
+          "feedback": "Compute capability 7.5 has FP16 instructions; the SASS shows `HFMA2`, an FP16 operation."
+        },
+        {
+          "key": "c",
+          "text": "One FP16 fused multiply-add, `HFMA2`, which rounds once.",
+          "correct": true,
+          "feedback": "Right: the compiler fused the pair, so the product is not rounded separately."
+        },
+        {
+          "key": "d",
+          "text": "Nothing is fused unless `--use_fast_math` is given.",
+          "correct": false,
+          "feedback": "`--use_fast_math` implies `--fmad=true`, but contraction is already on by default."
+        }
+      ],
+      "explanation": "Section 4: `nvcc` contracts a multiply followed by an add into a fused multiply-add by default (`--fmad` defaults to true), and the SASS shows one `HFMA2` per term; `__hmul_rn` and `__hadd_rn` are the intrinsics that keep them apart.",
+      "hints": [
+        "What does `--fmad` default to?",
+        "Recall the instruction name section 4 read with `cuobjdump -sass`."
+      ]
+    },
+    {
+      "id": "cuda-016-q05",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "softmax",
+        "stability"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Why does subtracting the row maximum $M$ before `exp()` leave every softmax probability unchanged?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Because the largest score contributes almost all of the probability anyway.",
+          "correct": false,
+          "feedback": "That would make it an approximation; it is exact for any row, including rows with equal scores."
+        },
+        {
+          "key": "b",
+          "text": "Because numerator and denominator are both multiplied by $e^{-M}$, which cancels.",
+          "correct": true,
+          "feedback": "Right: the same factor scales every term and the sum, so each ratio is unchanged."
+        },
+        {
+          "key": "c",
+          "text": "Because FP32 rounds the shift away for scores near $M$.",
+          "correct": false,
+          "feedback": "The shift is applied before rounding matters; the equality holds in exact arithmetic."
+        },
+        {
+          "key": "d",
+          "text": "Because subtracting $M$ makes every score positive.",
+          "correct": false,
+          "feedback": "It makes every shifted score zero or negative, which is what keeps every exponent at most $e^0 = 1$."
+        }
+      ],
+      "explanation": "Section 5: $e^{x_i - M} = e^{x_i} e^{-M}$, so numerator and sum are both multiplied by $e^{-M}$ and the ratio is the same; it is exact algebra, not an approximation.",
+      "hints": [
+        "Write $e^{x_i - M}$ as a product."
+      ]
+    },
+    {
+      "id": "cuda-016-q06",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "bf16",
+        "exponent"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "How many exponent bits does BF16 have, and which 32-bit format has the same number?",
+      "answer": {
+        "model": "8 exponent bits, the same as FP32.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no|without)\\W+(\\w+\\W+){0,2}(8|eight)\\b)(?![\\s\\S]*\\b(not|unlike|isn't|never)\\W+(\\w+\\W+){0,2}(fp ?32|float ?32|single[- ]precision|binary32)\\b)(?![\\s\\S]*(?<!fp16 has )(?<!fp16's )(?<!fp16 uses )(?<!fp16 keeps )(?<!fp16 only has )(?<!half has )\\b(?!8\\b|eight\\b)(\\d+|one|two|three|four|five|six|seven|nine|ten|eleven|sixteen)\\s*(-?\\s*bits?)?\\s+(of\\s+)?(exponent|exp)\\b)(?![\\s\\S]*\\b(8|eight)\\s*(-?\\s*bits?)?\\s+(of\\s+)?(mantissa|fraction|significand)\\b)(?![\\s\\S]*\\bbf ?16\\W+(has|keeps|uses|gets)\\W+(?!8\\b|eight\\b)(\\d+|one|two|three|four|five|six|seven|nine|ten|eleven|sixteen)\\b(?!\\s*(-?\\s*bits?)?\\s+(of\\s+)?(mantissa|fraction|significand)))(?=[\\s\\S]*\\b(8|eight)\\b)(?=[\\s\\S]*\\b(fp ?32|float ?32|single[- ]precision|binary32)\\b)"
+        ]
+      },
+      "explanation": "Section 1: BF16 is FP32 with the low 16 mantissa bits removed, so it keeps FP32's 8 exponent bits and with them FP32's range.",
+      "hints": [
+        "BF16 was made by cutting a 32-bit format in half."
+      ]
+    },
+    {
+      "id": "cuda-016-q07",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "fma",
+        "intrinsics"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which two `cuda_fp16.h` intrinsics compute an FP16 product and an FP16 sum with each result rounded separately, so the compiler cannot contract them into a fused multiply-add?",
+      "answer": {
+        "model": "__hmul_rn and __hadd_rn.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|don't|avoid|without)\\W+(\\w+\\W+){0,2}_*h(mul|add)_rn\\b)(?=[\\s\\S]*_*hmul_rn\\b)(?=[\\s\\S]*_*hadd_rn\\b)"
+        ]
+      },
+      "explanation": "Section 4: `__hmul_rn` and `__hadd_rn` are documented as preventing contraction into an FMA; the plain `__hmul` and `__hadd` were contracted into `HFMA2`.",
+      "hints": [
+        "Their names end in the rounding mode."
+      ]
+    },
+    {
+      "id": "cuda-016-q08",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "3",
+      "est_minutes": 4,
+      "tags": [
+        "spacing",
+        "rounding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Give (a) the gap between neighboring FP32 numbers between $2^{26}$ and $2^{27}$ (FP32 has 24 significant bits) and (b) the gap between neighboring BF16 numbers between $2^{16}$ and $2^{17}$ (8 significant bits).",
+      "answer": {
+        "parts": [
+          {
+            "label": "FP32 spacing",
+            "value": 8,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "BF16 spacing",
+            "value": 512,
+            "tolerance": 0,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "Spacing $2^{k-(p-1)}$: FP32 $2^{26-23} = 8$; BF16 $2^{16-7} = 512$. Using $p$ instead of $p - 1$ gives 4 and 256, the nearest wrong method; numpy.spacing(numpy.float32(1e8)) prints 8.0.",
+      "explanation": "Sections 2 and 3: in a binade $[2^k, 2^{k+1})$ a format with $p$ significant bits has spacing $2^{k-p+1}$: $2^{26-23} = 8$ for FP32 near $10^8$, and $2^{16-7} = 512$ for BF16 near 100,000.",
+      "hints": [
+        "The spacing in $[2^k, 2^{k+1})$ is $2^k$ divided by $2^{p-1}$.",
+        "For FP32, $p - 1 = 23$; for BF16, 7."
+      ]
+    },
+    {
+      "id": "cuda-016-q09",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 5,
+      "tags": [
+        "tolerance",
+        "error-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A one-block FP32 dot product uses 512 threads: each thread adds 32 products into its accumulator, then a shared-memory tree halves 512 partial sums to one. The products are exact in FP32 and $\\sum |a_i b_i| = 100$. Using the bound $\\gamma_d \\sum |a_i b_i|$ with $\\gamma_d = d u / (1 - d u)$ and $u = 2^{-24}$, give the tolerance in units of $10^{-4}$.",
+      "answer": {
+        "value": 2.444,
+        "tolerance": 0.003,
+        "unit": "1e-4"
+      },
+      "precision_note": "d = 32 + 9 = 41; gamma = 41 * 2^-24 / (1 - 41 * 2^-24) = 2.44380e-6; times 100 = 2.4438e-4. Forgetting the tree (d = 32) gives 1.907; d = 40 gives 2.384; both fall outside the tolerance.",
+      "explanation": "Section 6: $d$ counts the additions on the longest path, 32 per thread (as section 6 counts them) plus $\\log_2 512 = 9$ tree levels, so $d = 41$, $\\gamma_{41} \\approx 2.4438 \\times 10^{-6}$ and the tolerance is about $2.444 \\times 10^{-4}$.",
+      "hints": [
+        "Count the per-thread additions and the tree levels.",
+        "$\\log_2 512 = 9$."
+      ]
+    },
+    {
+      "id": "cuda-016-q10",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "block-count",
+        "spacing"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In section 2's output, the sum of the 1,048,576 floats has an exact value near 524,781, where FP32 numbers are 0.0625 apart. Express (a) the 224-block sum's error and (b) the single CPU loop's error in FP32 spacings.",
+      "answer": {
+        "parts": [
+          {
+            "label": "224 blocks",
+            "value": 1.35,
+            "tolerance": 0.01,
+            "unit": "spacings"
+          },
+          {
+            "label": "CPU loop",
+            "value": 47.35,
+            "tolerance": 0.05,
+            "unit": "spacings"
+          }
+        ]
+      },
+      "precision_note": "From the pasted output: 0.0844 / 0.0625 = 1.3504; 2.9594 / 0.0625 = 47.3504. Multiplying by the spacing instead gives 0.0053 and 0.185.",
+      "explanation": "Section 2: 0.0844 / 0.0625 = 1.35 spacings for 224 blocks against 2.9594 / 0.0625 = 47.35 for one sequential loop, whose running total grows large and rounds every later addition against it.",
+      "hints": [
+        "Read the abs error column.",
+        "Divide each error by the spacing 0.0625."
+      ]
+    },
+    {
+      "id": "cuda-016-q11",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "softmax",
+        "steps"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of a stable softmax of one row in order.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Find the row maximum M."
+        },
+        {
+          "key": "b",
+          "text": "Subtract M from every score."
+        },
+        {
+          "key": "c",
+          "text": "Exponentiate every shifted score."
+        },
+        {
+          "key": "d",
+          "text": "Add the exponentials into one sum."
+        },
+        {
+          "key": "e",
+          "text": "Divide every exponential by the sum."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "explanation": "Section 5: the maximum must be known before any shift, the exponentials need the shifted scores, the sum needs every exponential, and the division needs the sum.",
+      "hints": [
+        "The maximum is needed before anything is exponentiated."
+      ]
+    },
+    {
+      "id": "cuda-016-q12",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "fp16",
+        "range"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each FP32 value to what FP16 stores for it.",
+      "left": [
+        {
+          "key": "a",
+          "text": "100,000"
+        },
+        {
+          "key": "b",
+          "text": "0.00001"
+        },
+        {
+          "key": "c",
+          "text": "0.00000001"
+        },
+        {
+          "key": "d",
+          "text": "1,000"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "infinity"
+        },
+        {
+          "key": "q",
+          "text": "a subnormal, 0.0000100136"
+        },
+        {
+          "key": "r",
+          "text": "zero"
+        },
+        {
+          "key": "s",
+          "text": "1,000 exactly"
+        },
+        {
+          "key": "t",
+          "text": "65,504, the largest finite value"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s"
+      },
+      "explanation": "Section 3: 100,000 is above 65,504 and overflows; $10^{-5}$ is below the smallest normal $6.1 \\times 10^{-5}$ and survives as a subnormal with a small error; $10^{-8}$ is below half the smallest subnormal and becomes 0; 1,000 is 1111101000 in binary, 7 significant bits, well within FP16's 11, so it is exact.",
+      "hints": [
+        "Place each value against 65,504, $6.1 \\times 10^{-5}$ and $3 \\times 10^{-8}$."
+      ]
+    },
+    {
+      "id": "cuda-016-q13",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o5",
+        "o2"
+      ],
+      "section": "6",
+      "est_minutes": 12,
+      "tags": [
+        "tolerance",
+        "python"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `gamma(d, u)`, the factor $\\gamma_d = d u / (1 - d u)$, and `within(result, ref, xs, d, u)`, which returns True when $|\\text{result} - \\text{ref}| \\le \\gamma_d \\sum_i |x_i|$ for the summed terms `xs`.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def gamma(d, u):\n    \"\"\"gamma_d = d * u / (1 - d * u).\"\"\"\n    raise NotImplementedError\n\n\ndef within(result, ref, xs, d, u):\n    \"\"\"True when |result - ref| <= gamma_d * sum(|x| for x in xs).\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def gamma(d, u):\n    \"\"\"gamma_d = d * u / (1 - d * u).\"\"\"\n    return d * u / (1 - d * u)\n\n\ndef within(result, ref, xs, d, u):\n    \"\"\"True when |result - ref| <= gamma_d * sum(|x| for x in xs).\"\"\"\n    return abs(result - ref) <= gamma(d, u) * sum(abs(x) for x in xs)\n",
+      "tests": "assert gamma(4, 2**-3) == 1.0\nassert abs(gamma(24, 2**-24) - 1.4305135209e-06) < 1e-15\nassert within(1.0, 0.0, [1.0], 4, 2**-3)\nassert not within(0.0, 1.0, [0.25, 0.25, 0.25, 0.25], 2, 2**-3)\nassert within(0.0, 1.0, [1e8, -1e8, 1.0], 2, 2**-24)\nassert not within(2.0, 0.0, [1.0, -1.0], 1, 2**-24)\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 6: the bound is relative to $\\sum |x_i|$, not to the result, because a sum that cancels has a small result and a rounding error set by the large terms. The tests catch a bound relative to $|\\sum x_i|$ or to the reference, $d u$ without the denominator, and a strict inequality.",
+      "hints": [
+        "The bound multiplies $\\gamma_d$ by the sum of absolute values of the terms.",
+        "With $d = 4$ and $u = 2^{-3}$, $\\gamma_d$ is exactly 1."
+      ]
+    },
+    {
+      "id": "cuda-016-q14",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 15,
+      "tags": [
+        "reproducibility",
+        "reduction"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 04's reductions combine block sums with `atomicAdd`, and its pitfall says the last digits differ from a CPU loop and between runs. Using this post's section 2, explain (1) why the GPU sum differs from the CPU loop even with one fixed launch, (2) why two runs of an atomic reduction can differ while `sumBlocks` gave the same bits twice, and (3) how to make a multi-block reduction bit-for-bit reproducible across runs, and what it still cannot match.",
+      "kind": "connect",
+      "connects": [
+        "cuda-004"
+      ],
+      "solution": "1. Every FP32 addition rounds its exact result, and the rounding depends on the operands, so it depends on the order. The GPU adds within each thread, then in a tree, then across blocks; the CPU adds left to right with a running total that grows large, so each later addition rounds against a big number (section 2: the CPU loop was 47 spacings off, the trees within 1.35). Different orders, different last bits, even though each operation is correctly rounded.\n2. `atomicAdd` makes each addition to the total indivisible but does not fix which block's addition comes first; blocks finish in an order that changes from run to run, so the sequence of roundings changes and the last bits can differ. `sumBlocks` writes each block sum to its own slot and the host adds them in index order, so with the same launch every addition happens in the same order on the same operands and the bits repeat (56 blocks gave 524781.0625 twice).\n3. Fix the order: write block partials to an array and reduce them in a fixed order (on the host, or with a second single-block kernel whose tree is fixed), and keep the launch configuration fixed. The cost is a second pass and an extra small array instead of one atomic per block. It is reproducible only for that configuration: a different block count or block size changes the tree (1, 14, 56 and 224 blocks gave three different sums), and no order matches the CPU loop's except the loop itself; so a test still compares against an FP64 reference with a bound, not with the CPU's bits.",
+      "rubric": [
+        {
+          "criterion": "Explains that rounding depends on the order, and that the GPU tree and the CPU loop use different orders, citing the spacing errors",
+          "points": 3
+        },
+        {
+          "criterion": "Explains that atomicAdd fixes indivisibility but not order, while fixed partials plus an ordered final sum repeat the same bits",
+          "points": 3
+        },
+        {
+          "criterion": "Gives a reproducible scheme with its cost, and states that it does not survive a change of launch or match the CPU loop",
+          "points": 3
+        }
+      ],
+      "explanation": "Section 2 and post 04: order decides the rounding; a fixed tree and fixed final order make one launch reproducible, but not a different launch or the CPU loop.",
+      "hints": [
+        "Every FP32 addition is deterministic; ask what decides the order.",
+        "What does `atomicAdd` not promise about order?"
+      ]
+    },
+    {
+      "id": "cuda-016-q15",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o3",
+        "o5"
+      ],
+      "section": "4",
+      "est_minutes": 15,
+      "tags": [
+        "testing",
+        "fma",
+        "tolerance"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A test compares an FP16-accumulate dot-product kernel, built with plain `__hadd(acc, __hmul(a, b))`, against a NumPy model that rounds every product to FP16 and then every sum to FP16, and it requires the two to agree within $10^{-6}$. It fails on correct code. Give the two separate reasons, and rewrite the test so it passes for correct code and still catches a real bug.",
+      "kind": "critique",
+      "solution": "Reason 1, the arithmetic differs: nvcc contracts the plain multiply and add into one fused multiply-add (HFMA2), which rounds a * b + acc once, while the model rounds the product and then the sum. The two compute different, equally legitimate results, so the bits differ (section 4: the fused and the rounded-apart FP16 kernels gave -2.753906250 and -2.755859375). Fix it by making them do the same thing: either write the kernel with __hmul_rn and __hadd_rn (no contraction), or model the fused step as one rounding of the exact a * b + acc; then a bit-exact check of model against kernel is legitimate.\nReason 2, the tolerance ignores the format: an FP16 accumulator rounds to 11 significant bits, unit roundoff 2^-11, and the result's error against the true value is around 1e-3 here, three orders of magnitude above 1e-6. A tolerance must come from the format and the summation depth: gamma_d times the sum of |a_i b_i| with u = 2^-11 and d = 24 (25 when products round), about 0.74 to 0.77 for section 4's data.\nRewritten test: compute an FP64 reference on the FP16 operands and the sum of |a_i b_i| alongside it; assert |result - ref| <= gamma_d(u = 2^-11) * sum|a_i b_i| for the FP16 kernel and the same with u = 2^-24 for an FP32-accumulate kernel; optionally also assert bit equality with a model that does the same rounding as the compiled kernel. A real bug, such as a missing tree level or a skipped element (an error of the size of one product, up to 0.0625 here, or of a whole partial sum), can still be smaller than the FP16 bound, so the FP32-accumulate kernel's much tighter bound and the bit-exact model comparison are what catch small bugs.",
+      "rubric": [
+        {
+          "criterion": "Identifies the FMA contraction: one rounding in the kernel against two in the model, and fixes it with _rn intrinsics or a fused model",
+          "points": 3
+        },
+        {
+          "criterion": "Identifies that 1e-6 is far below FP16's achievable accuracy and sizes a bound from u = 2^-11 and the summation depth",
+          "points": 3
+        },
+        {
+          "criterion": "Rewrites the test against an FP64 reference with a bound relative to the sum of |a_i b_i|, and says what the loose FP16 bound can miss",
+          "points": 3
+        }
+      ],
+      "explanation": "Sections 4 and 6: the kernel and the model do different arithmetic (one rounding against two per term), and the tolerance ignores the format: FP16's unit roundoff is $2^{-11}$, so a bound sized for it is about $10^{-2} \\sum |a_i b_i|$ for 24 additions.",
+      "hints": [
+        "What did `cuobjdump -sass` show for this loop?",
+        "What is FP16's unit roundoff?"
+      ]
+    },
+    {
+      "id": "cuda-016-q16",
+      "type": "numeric",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "overflow",
+        "exp"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Give the largest $x$, to two decimals, for which $e^x$ is still finite in (a) FP32, whose largest value is about $3.4028 \\times 10^{38}$, and (b) FP16, whose largest value is 65,504.",
+      "answer": {
+        "parts": [
+          {
+            "label": "FP32",
+            "value": 88.72,
+            "tolerance": 0.01,
+            "unit": ""
+          },
+          {
+            "label": "FP16",
+            "value": 11.09,
+            "tolerance": 0.01,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "ln(3.4028235e38) = 88.7228; ln(65504) = 11.0898. Using log10 gives 38.53 and 4.82, the nearest wrong method.",
+      "explanation": "Section 5: $\\ln(3.4028 \\times 10^{38}) \\approx 88.72$ and $\\ln 65{,}504 \\approx 11.09$; an FP16 softmax overflows at scores above about 11, so even modest scores need the max subtraction there.",
+      "hints": [
+        "Take the natural logarithm of the largest value.",
+        "$e^x$ stays finite while $x$ is at most the logarithm of the largest value."
+      ]
+    },
+    {
+      "id": "cuda-016-q17",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "tolerance",
+        "cancellation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A test checks a sum against an FP64 reference with a relative tolerance, $|\\hat{s} - s| \\le 10^{-6} |s|$. The terms are large and of both signs, and the exact sum is close to 0. What goes wrong, and what does section 6 use instead?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Nothing goes wrong: a relative tolerance is always the right choice for floating point.",
+          "correct": false,
+          "feedback": "A relative tolerance on the result fails exactly when the result is small compared with the terms."
+        },
+        {
+          "key": "b",
+          "text": "The test may pass a buggy kernel, since a small $|s|$ makes the tolerance large.",
+          "correct": false,
+          "feedback": "A small $|s|$ makes the tolerance tiny, not large; the failure is a correct kernel rejected."
+        },
+        {
+          "key": "c",
+          "text": "The tolerance should be absolute, $10^{-6}$, whatever the data.",
+          "correct": false,
+          "feedback": "A fixed absolute tolerance ignores both the format and the size of the terms; section 6 sizes it from both."
+        },
+        {
+          "key": "d",
+          "text": "Correct code fails, because the rounding error scales with the large terms; use $\\gamma_d \\sum |x_i|$.",
+          "correct": true,
+          "feedback": "Right: the bound is relative to the sum of the absolute values, which the test computes alongside the reference."
+        }
+      ],
+      "explanation": "Section 6: the rounding error of a sum is set by the size of the terms it adds, not by the size of the result; a bound relative to $\\sum |x_i|$ stays meaningful when the result cancels to near zero.",
+      "hints": [
+        "Which is larger here, $|s|$ or $\\sum |x_i|$?",
+        "What sets the size of the rounding error: the terms or the result?"
+      ]
+    }
+  ]
+}
