@@ -118,9 +118,10 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 
 ## Post 12 - CUDA streams: overlapping copy and compute for free throughput
 
-- Harris, M. "How to Overlap Data Transfers in CUDA C/C++." NVIDIA Technical Blog, 2012. <https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/>
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Streams". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#streams>
-- NVIDIA. *CUDA C++ Best Practices Guide*, section "Asynchronous and Overlapping Transfers with Computation". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#asynchronous-transfers-and-overlapping-transfers-with-computation>
+- Harris, M. "How to Overlap Data Transfers in CUDA C/C++." NVIDIA Technical Blog, 13 December 2012. <https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/>
+- Harris, M. "How to Optimize Data Transfers in CUDA C/C++." NVIDIA Technical Blog, 4 December 2012. <https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, CUDA 12.3 edition, sections 3.2.6 "Page-Locked Host Memory" and 3.2.8 "Asynchronous Concurrent Execution". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#asynchronous-concurrent-execution>
+- NVIDIA. *CUDA C++ Best Practices Guide*, sections "Pinned Memory" and "Asynchronous and Overlapping Transfers with Computation". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#asynchronous-transfers-and-overlapping-transfers-with-computation>
 - NVIDIA. *Nsight Systems Documentation*. Consulted October 2026. <https://docs.nvidia.com/nsight-systems/>
 
 ---
@@ -128,8 +129,10 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 13 - Cutting launch overhead: CUDA Graphs and stream-ordered allocation
 
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "CUDA Graphs". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#cuda-graphs>
-- NVIDIA. "Getting Started with CUDA Graphs." NVIDIA Technical Blog, 2019. <https://developer.nvidia.com/blog/cuda-graphs/>
-- NVIDIA. "Using the NVIDIA CUDA Stream-Ordered Memory Allocator, Part 1." NVIDIA Technical Blog, 2021. <https://developer.nvidia.com/blog/using-cuda-stream-ordered-memory-allocator-part-1/>
+- Gray, A. "Getting Started with CUDA Graphs." NVIDIA Technical Blog, 5 September 2019. <https://developer.nvidia.com/blog/cuda-graphs/>
+- Kini, V. and Hemstad, J. "Using the NVIDIA CUDA Stream-Ordered Memory Allocator, Part 1." NVIDIA Technical Blog, 27 July 2021. <https://developer.nvidia.com/blog/using-cuda-stream-ordered-memory-allocator-part-1/>
+- Kini, V. and Hemstad, J. "Using the NVIDIA CUDA Stream-Ordered Memory Allocator, Part 2." NVIDIA Technical Blog, 27 July 2021. <https://developer.nvidia.com/blog/using-cuda-stream-ordered-memory-allocator-part-2/>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Streams" (implicit synchronization). Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#streams>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Stream Ordered Memory Allocator". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#stream-ordered-memory-allocator>
 
 ---
@@ -137,18 +140,21 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 14 - Kernel fusion: the fastest kernel is the one never launched
 
 - Dao, T., Fu, D. Y., Ermon, S., Rudra, A. and Ré, C. "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness." NeurIPS, 2022. <https://arxiv.org/abs/2205.14135>
-- NVIDIA. *cuDNN Documentation*, fused operations. Consulted October 2026. <https://docs.nvidia.com/deeplearning/cudnn/>
+- NVIDIA. *cuDNN Documentation*, backend API, cudnn_cnn library, `cudnnConvolutionBiasActivationForward()` (deprecated in cuDNN 9.0), and the graph API's fusion engines. Consulted October 2026. <https://docs.nvidia.com/deeplearning/cudnn/backend/latest/api/cudnn-cnn-library.html>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Local Memory". Consulted October 2026 (CUDA 12.3 edition). <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#local-memory>
 - PyTorch. "Introduction to torch.compile." PyTorch tutorials, consulted October 2026. <https://docs.pytorch.org/tutorials/intermediate/torch_compile_tutorial.html>
+- PyTorch. "torch.compiler" (TorchInductor) and "Getting Started" (fusion). PyTorch documentation, consulted October 2026. <https://docs.pytorch.org/docs/stable/torch.compiler.html>, <https://docs.pytorch.org/docs/stable/torch.compiler_get_started.html>
 - Williams, S., Waterman, A. and Patterson, D. "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4), 2009. <https://doi.org/10.1145/1498765.1498785>
 
 ---
 
 ## Post 15 - Asynchronous copy and software pipelining: cp.async, double buffering, and hiding memory latency
 
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Asynchronous Data Copies". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#asynchronous-data-copies>
-- NVIDIA. *NVIDIA A100 Tensor Core GPU Architecture*. Whitepaper, 2020. <https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf>
-- NVIDIA. *CUTLASS: CUDA Templates for Linear Algebra Subroutines*. Source repository, consulted October 2026. <https://github.com/NVIDIA/cutlass>
-- Allan, V. H., Jones, R. B., Lee, R. M. and Allan, S. J. "Software Pipelining." *ACM Computing Surveys* 27(3), 1995.
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Asynchronous Data Copies", "Asynchronous Data Copies using cuda::pipeline" and "Multiprocessor Level". Consulted October 2026 (CUDA 12.3 edition). <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#asynchronous-data-copies>
+- NVIDIA. *NVIDIA A100 Tensor Core GPU Architecture*. Whitepaper V1.0, 2020. <https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf>
+- NVIDIA. "Efficient GEMM in CUDA." CUTLASS documentation, consulted October 2026. <https://github.com/NVIDIA/cutlass/blob/main/media/docs/cpp/efficient_gemm.md>
+- NVIDIA. CUTLASS source, `include/cutlass/gemm/device/default_gemm_configuration.h` and `include/cutlass/gemm/threadblock/mma_pipelined.h`, consulted October 2026. <https://github.com/NVIDIA/cutlass>
+- Allan, V. H., Jones, R. B., Lee, R. M. and Allan, S. J. "Software Pipelining." *ACM Computing Surveys* 27(3), September 1995, 367 to 432.
 
 ---
 

@@ -15,7 +15,7 @@ Every post ships its companions in its own `snippets/` folder: a CPU model (`.py
 | Part I - First Kernels | 01 to 03 | Python and NumPy | CUDA Toolkit 12.x and any NVIDIA card it supports, built with that card's `-arch` |
 | Part II - Parallel Patterns | 04 to 09 | Python and NumPy | as Part I |
 | Part III - Understanding Performance | 10 to 11 | Python and NumPy | as Part I; post 11 also uses Nsight Systems, Nsight Compute and `compute-sanitizer`, which ship with the toolkit |
-| Part IV - Systems & Execution | 12 to 15 | Python and NumPy | as Part I; post 15's `async_pipeline.cu` needs `sm_80` |
+| Part IV - Systems & Execution | 12 to 15 | Python and NumPy | as Part I; post 15's `async_pipeline.cu` needs `sm_80`; `async_pipeline_sm75.cu` builds the same program for Turing, where the pipeline intrinsics fall back to an ordinary copy |
 | Part V - Tensor & Attention | 16 to 19 | Python and NumPy; post 19's `triton_matmul.py` also needs PyTorch and Triton on Linux | as Part I; post 17 needs compute capability 7.0 or above; post 18's `flash_attention.cu` needs `sm_80` |
 
 ## The CPU models

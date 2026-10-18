@@ -102,33 +102,39 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Arithmetic intensity ($I$).** The floating-point operations a kernel performs per byte it moves to and from DRAM, in FLOP per byte. Vector addition does about $1/12 \approx 0.083$; a kernel whose $I$ is below the card's ratio of peak FLOP/s to $\beta$ is memory bound. Met in [post 02](posts/02-vector-addition/index.md), defined in [post 10](posts/10-roofline/index.md).
 
+**Epilogue.** In a matrix multiplication or convolution kernel, the code that runs on each output value after its last multiply-add and before its one write, where a bias or an activation is fused without extra traffic; in a software pipeline, the stage that drains the last tiles. See [post 14](posts/14-kernel-fusion/index.md).
+
 **Memory bound and compute bound.** A kernel is memory bound when it waits on bytes (its arithmetic intensity is low, and only better access patterns speed it up) and compute bound when it waits on arithmetic. See [post 02](posts/02-vector-addition/index.md) and [post 10](posts/10-roofline/index.md).
 
 **Peak bandwidth ($\beta$).** The card's theoretical DRAM bandwidth in GB/s (160 GB/s for the author's GTX 1650 with Max-Q Design, as its device query reports); achieved bandwidth is reported as a fraction of it. See [post 02](posts/02-vector-addition/index.md) and [post 10](posts/10-roofline/index.md).
 
-**Register pressure.** Too many registers per thread: fewer threads fit on an SM, so occupancy falls, and past the hardware limit the compiler spills registers to slow local memory; the limit on how much fusion pays. See [post 14](posts/14-kernel-fusion/index.md).
+**Register pressure.** Too many registers per thread: fewer warps fit on an SM, so occupancy falls (on compute capability 7.5, above 64 registers per thread), and past the hardware limit of 255 per thread or a cap set by `-maxrregcount` or `__launch_bounds__` the compiler spills registers to local memory, which resides in device memory; the limit on how much fusion pays. See [post 14](posts/14-kernel-fusion/index.md).
 
 **Roofline.** The ceiling on a kernel's performance as a function of its arithmetic intensity: attainable GFLOP/s is the smaller of the compute peak and $I \cdot \beta$. Plotted log-log, the bandwidth roof slopes and the compute roof is flat, and they meet at the ridge point. See [post 10](posts/10-roofline/index.md).
 
 ## Systems and tools
 
-**Asynchronous copy (`cp.async`).** An instruction of compute capability 8.0 and above (`sm_80`) that copies from global to shared memory in the background without passing through registers, so a block can compute on one tile while the next loads. See [post 15](posts/15-async-copy-pipelining/index.md).
+**Asynchronous copy (`cp.async`).** An instruction of compute capability 8.0 and above (`sm_80`) that copies from global to shared memory in the background without passing through registers, so a block can compute on one tile while the next loads. Built for an older card, the `__pipeline_*` intrinsics compile to an ordinary load and store, so the code runs but nothing is asynchronous. See [post 15](posts/15-async-copy-pipelining/index.md).
 
 **Compute Sanitizer.** The CUDA toolkit's correctness tool, `compute-sanitizer`, with the tools memcheck (out-of-bounds and misaligned accesses), racecheck (shared-memory races), synccheck (illegal barrier use) and initcheck (reads of uninitialized global memory). See [post 11](posts/11-profiling-debugging/index.md).
 
-**CUDA Graph.** A recorded sequence of kernels and copies with their dependencies, captured once from a stream and replayed with one launch, which removes most of the per-launch CPU overhead. See [post 13](posts/13-cuda-graphs/index.md).
+**Copy engine.** A direct memory access (DMA) unit that moves data between host and device memory without the SMs, so a copy can run beside a kernel; the runtime reports the card's `asyncEngineCount`, and the Programming Guide says a value of 2 lets copies to and from the device overlap. Whether they run at full speed together is measured, not read from the count. See [post 12](posts/12-cuda-streams/index.md).
 
-**Double buffering.** Keeping two shared-memory buffers per operand (`s_A[2][TILE][TILE]`) so the block computes on one while the `cp.async` load of the next fills the other. See [post 15](posts/15-async-copy-pipelining/index.md).
+**CUDA Graph.** A recorded sequence of kernels and copies with their dependencies, captured once from a stream and replayed with one launch, which cuts the host's issue time per kernel and narrows the gap the GPU leaves between kernels. See [post 13](posts/13-cuda-graphs/index.md).
+
+**Default stream.** The stream a CUDA call uses when it names none. Compiled without `--default-stream per-thread` it is the legacy NULL stream, and any command on it keeps commands of other streams from running concurrently; a stream created with `cudaStreamNonBlocking` is exempt. See [post 12](posts/12-cuda-streams/index.md).
+
+**Double buffering.** Keeping two shared-memory buffers per operand (`s_A[2][TILE][TILE]`) so the block computes on one while the load of the next fills the other (by `cp.async` on compute capability 8.0 and later, through registers before it). See [post 15](posts/15-async-copy-pipelining/index.md).
 
 **Kernel fusion.** Combining several operations into one kernel so the intermediate results stay in registers instead of making a round trip through global memory. See [post 14](posts/14-kernel-fusion/index.md).
 
 **Nsight Systems and Nsight Compute.** NVIDIA's two profilers: Nsight Systems (`nsys`) shows the whole timeline of copies, kernels and API calls; Nsight Compute (`ncu`) shows one kernel's counters, such as achieved bandwidth, achieved occupancy and stall reasons. See [post 11](posts/11-profiling-debugging/index.md).
 
-**Software pipelining.** A multi-stage schedule (a prologue, a steady state and an epilogue) that overlaps the load of tile `k + 1` with the compute on tile `k`. See [post 15](posts/15-async-copy-pipelining/index.md).
+**Software pipelining.** A multi-stage schedule (a prologue, a steady state and an epilogue) that overlaps the load of tile `t + 1` with the compute on tile `t`. See [post 15](posts/15-async-copy-pipelining/index.md).
 
 **Stream.** An ordered queue of GPU work; work in different streams may overlap, a copy on a copy engine beside a kernel on the SMs. See [post 12](posts/12-cuda-streams/index.md).
 
-**Stream-ordered allocation.** Allocating and freeing device memory as stream operations (`cudaMallocAsync`, `cudaFreeAsync`) from a memory pool, so allocation no longer synchronizes the device. See [post 13](posts/13-cuda-graphs/index.md).
+**Stream-ordered allocation.** Allocating and freeing device memory as stream operations (`cudaMallocAsync`, `cudaFreeAsync`) from a memory pool, so freeing no longer synchronizes the device as `cudaFree` does; the pool keeps freed memory across a synchronize only when its release threshold is raised above the default of 0. See [post 13](posts/13-cuda-graphs/index.md).
 
 ## Numerics and Tensor Cores
 
