@@ -1,0 +1,772 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-010",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-010-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "roofline",
+        "memory-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel on the GTX 1650 has an arithmetic intensity of 0.5 FLOP per byte, and the card's ridge point is 19.5 FLOP per byte. Which change can raise the ceiling the roofline gives it?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Moving fewer bytes per FLOP, for example by reusing loaded values from shared memory or registers.",
+          "correct": true,
+          "feedback": "Right: left of the ridge the ceiling is $I \\times \\beta$, so only a higher intensity (or more bandwidth) raises it."
+        },
+        {
+          "key": "b",
+          "text": "Replacing its multiplies and adds with fused multiply-adds so each lane does more FLOP per cycle.",
+          "correct": false,
+          "feedback": "The compute roof already counts every lane doing a fused multiply-add each cycle, and a kernel at 0.5 FLOP per byte is nowhere near it; its ceiling is set by the bandwidth slope."
+        },
+        {
+          "key": "c",
+          "text": "Raising its occupancy from 50% to 100% by using fewer registers per thread.",
+          "correct": false,
+          "feedback": "Occupancy can help a kernel get closer to its roof, but it does not move the roof; the ceiling depends only on $I$ and the card."
+        },
+        {
+          "key": "d",
+          "text": "Launching more blocks than the card has streaming multiprocessors.",
+          "correct": false,
+          "feedback": "More blocks fill the card, which helps reach the roof; the ceiling itself is $\\min(\\pi, I \\times \\beta)$ and does not change."
+        }
+      ],
+      "explanation": "Section 3: below the ridge point a kernel is memory bound and its ceiling is $I \\times \\beta$; the lever is fewer bytes per FLOP, which raises $I$. Faster arithmetic and more occupancy do not move that roof.",
+      "hints": [
+        "Which of the two roofs is lower at 0.5 FLOP per byte?"
+      ]
+    },
+    {
+      "id": "cuda-010-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "arithmetic-intensity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Thread `i` of a kernel computes `y[i] = (a * x[i] + b) * x[i] + c` on `float` arrays `x` and `y` with two fused multiply-adds, reading `x[i]` and writing `y[i]` once each (`a`, `b`, `c` are kernel arguments). Give (a) its arithmetic intensity and (b) its roofline ceiling on the GTX 1650 ($\\beta = 160$ GB/s, $\\pi = 3{,}118$ GFLOP/s).",
+      "answer": {
+        "parts": [
+          {
+            "label": "intensity",
+            "value": 0.5,
+            "tolerance": 0.005,
+            "unit": "FLOP per byte"
+          },
+          {
+            "label": "ceiling",
+            "value": 80.0,
+            "tolerance": 0.5,
+            "unit": "GFLOP/s"
+          }
+        ]
+      },
+      "precision_note": "Two fused multiply-adds are 4 FLOP; the thread reads 4 bytes and writes 4, so $I = 4 / 8 = 0.5$ and the ceiling is $\\min(3{,}118, 0.5 \\times 160) = 80$ GFLOP/s. Counting an FMA as 1 FLOP gives 0.25 and 40, which the tolerances reject.",
+      "explanation": "Section 2: intensity is FLOP over DRAM bytes, with a fused multiply-add counted as 2 FLOP. Section 3: below the ridge the ceiling is $I \\times \\beta$.",
+      "hints": [
+        "A fused multiply-add is two floating-point operations.",
+        "Count the bytes read and written per thread, then multiply $I$ by 160 GB/s."
+      ]
+    },
+    {
+      "id": "cuda-010-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 5,
+      "tags": [
+        "ridge-point",
+        "peak"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A hypothetical card has 80 streaming multiprocessors of 64 FP32 lanes, a maximum SM clock of 1,410 MHz and a theoretical bandwidth of 1,555 GB/s. Give (a) its FP32 peak $\\pi$ in GFLOP/s and (b) its ridge point in FLOP per byte.",
+      "answer": {
+        "parts": [
+          {
+            "label": "peak",
+            "value": 14438.4,
+            "tolerance": 5,
+            "unit": "GFLOP/s"
+          },
+          {
+            "label": "ridge point",
+            "value": 9.29,
+            "tolerance": 0.05,
+            "unit": "FLOP per byte"
+          }
+        ]
+      },
+      "precision_note": "$\\pi = 80 \\times 64 \\times 1.41 \\times 10^9 \\times 2 = 14{,}438.4$ GFLOP/s; ridge $14{,}438.4 / 1{,}555 = 9.29$. Forgetting the factor 2 for the fused multiply-add gives 7,219 and 4.64, which the tolerances reject.",
+      "explanation": "Section 3: the compute peak is every lane doing a fused multiply-add (2 FLOP) every cycle at the maximum clock, and the ridge point is $\\pi / \\beta$. A kernel below 9.29 FLOP per byte is memory bound on that card, whatever its ridge on another.",
+      "hints": [
+        "Multiply lanes, clock and FLOP per lane per cycle.",
+        "Divide the peak in GFLOP/s by the bandwidth in GB/s."
+      ]
+    },
+    {
+      "id": "cuda-010-q04",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "roofline",
+        "caches"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 03's naive matrix multiplication counts at $I = 0.25$ FLOP per byte, a roof of 40 GFLOP/s on the GTX 1650, yet it measured 196 GFLOP/s. Which explanation is consistent with the roofline?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The count sends every read to DRAM, but the caches served many repeats, so the kernel's real DRAM intensity was at least 1.225 FLOP per byte.",
+          "correct": true,
+          "feedback": "Right: a kernel cannot beat the roof of the bytes it really moves, so it moved fewer bytes than counted; 196 / 160 = 1.225 is the least intensity that allows it."
+        },
+        {
+          "key": "b",
+          "text": "The card's memory briefly ran faster than its theoretical 160 GB/s while the kernel ran.",
+          "correct": false,
+          "feedback": "The theoretical bandwidth is the most the memory bus can carry; the measured copy kernels stay below it."
+        },
+        {
+          "key": "c",
+          "text": "The FLOP count is too high: a fused multiply-add should count as 1 FLOP, which would put the kernel under its roof.",
+          "correct": false,
+          "feedback": "Counting an FMA as 1 FLOP halves both the measured rate and the intensity, so the ratio to the roof stays 4.9."
+        },
+        {
+          "key": "d",
+          "text": "The roofline does not apply to matrix multiplication, only to streaming kernels such as vector addition.",
+          "correct": false,
+          "feedback": "The roofline applies to any kernel; it needs the intensity of the traffic that actually reaches DRAM."
+        }
+      ],
+      "explanation": "Section 4: a dot above its roof means the byte count is wrong, never the card. Post 03 inferred that the L1 and L2 caches serve the naive kernel's repeated loads; at 196 GFLOP/s and at most 160 GB/s its DRAM intensity is at least 1.225.",
+      "hints": [
+        "Which input to the roof is an assumption rather than a property of the card?",
+        "Divide the measured GFLOP/s by the most bytes per second the card can move."
+      ]
+    },
+    {
+      "id": "cuda-010-q05",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3",
+        "o1"
+      ],
+      "section": "4",
+      "est_minutes": 6,
+      "tags": [
+        "roofline",
+        "measured"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 03 measured its tiled kernel (`TILE` = 16) at 222 GFLOP/s for $M = N = K = 2{,}048$. Counting every load as written plus the write of `C` as the model does, give (a) the kernel's roof on the GTX 1650 at that size and (b) the measured rate as a percentage of that roof.",
+      "stimulus": {
+        "kind": "code",
+        "language": "text",
+        "content": "  size    naive ms  GFLOP/s    tiled ms  GFLOP/s   cuBLAS ms  GFLOP/s   max rel err\n   2048     108.001      159      77.244      222       9.946     1727   2.5e-06"
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "roof",
+            "value": 637.5,
+            "tolerance": 1,
+            "unit": "GFLOP/s"
+          },
+          {
+            "label": "share of roof",
+            "value": 34.8,
+            "tolerance": 0.3,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "$I = 2N^3 / (4(2N^3/16 + N^2)) = 2N / (4(2N/16 + 1)) = 4{,}096 / 1{,}028 = 3.984$; roof $3.984 \\times 160 = 637.5$ GFLOP/s; $222 / 637.5 = 34.8\\%$. The model's KERNELS formula with N = 2048 gives the same. Reusing the 1,024 intensity gives 635.0, and dropping the write of `C` gives 640.0, both outside the tolerance.",
+      "explanation": "Sections 2 and 4: the tiled kernel's loads are divided by `TILE`; with the write of `C` its intensity at $N = 2{,}048$ is 3.984 FLOP per byte, left of the ridge, so its roof is $I \\times 160$. At 34.8% of it, the gap is inside the SM, as at 1,024 cubed.",
+      "hints": [
+        "Write the bytes as loads divided by TILE plus the write of `C`, all times 4.",
+        "The roof is the intensity times 160 GB/s, since 3.98 is left of the ridge."
+      ]
+    },
+    {
+      "id": "cuda-010-q06",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 5,
+      "tags": [
+        "occupancy"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel launched with 128 threads per block uses 72 registers per thread and 6,000 bytes of static shared memory, and no dynamic shared memory. On the GTX 1650 (compute capability 7.5), give (a) the blocks per SM and (b) the theoretical occupancy.",
+      "answer": {
+        "parts": [
+          {
+            "label": "blocks per SM",
+            "value": 7,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "occupancy",
+            "value": 87.5,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "Block size: 4 warps, $32 / 4 = 8$. Registers: $72 \\times 32 = 2{,}304$ per warp (already a multiple of 256); a quarter of 16,384 holds 7, the SM 28 warps, 7 blocks. Shared memory: 6,000 rounds to 6,144; $65{,}536 / 6{,}144 = 10$. The smallest is 7 blocks, 28 warps, $28 / 32 = 87.5\\%$; roofline_model.occupancy(72, 6000, 128) prints the same.",
+      "explanation": "Section 5: each of the three limits caps the blocks per SM and the smallest binds; here registers allow 7 blocks of 4 warps, 28 of the 32 warp slots.",
+      "hints": [
+        "Compute the blocks each of block size, registers and shared memory allows.",
+        "Registers per warp are $72 \\times 32$; a quarter of the register file holds 16,384."
+      ]
+    },
+    {
+      "id": "cuda-010-q07",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 12,
+      "tags": [
+        "occupancy",
+        "registers",
+        "shared-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `blocks_per_sm(regs_per_thread, smem_per_block, block_threads)` with the occupancy rules the post's model uses for the GTX 1650, as the docstring states them. It must give the runtime calculator's answers, including the cases where the register quarters or the 256-byte shared-memory unit change the result.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def blocks_per_sm(regs_per_thread, smem_per_block, block_threads):\n    \"\"\"Theoretical blocks per SM on compute capability 7.5 (GTX 1650): 32 warp slots, at most 16 blocks,\n    at most 1,024 threads per block, 65,536 registers in four quarters of 16,384 (one per warp scheduler,\n    each holding whole warps), registers allocated per warp rounded up to 256, and 65,536 bytes of shared\n    memory allocated per block in units of 256 bytes. Return 0 when one block cannot fit.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "import math\n\n\ndef blocks_per_sm(regs_per_thread, smem_per_block, block_threads):\n    \"\"\"Theoretical blocks per SM on compute capability 7.5 (GTX 1650): 32 warp slots, at most 16 blocks,\n    at most 1,024 threads per block, 65,536 registers in four quarters of 16,384 (one per warp scheduler,\n    each holding whole warps), registers allocated per warp rounded up to 256, and 65,536 bytes of shared\n    memory allocated per block in units of 256 bytes. Return 0 when one block cannot fit.\"\"\"\n    if block_threads > 1024:\n        return 0\n    warps = math.ceil(block_threads / 32)\n    by_block = min(32 // warps, 16)\n    regs_per_warp = math.ceil(regs_per_thread * 32 / 256) * 256\n    by_regs = (16384 // regs_per_warp) * 4 // warps\n    by_smem = 65536 // (math.ceil(smem_per_block / 256) * 256) if smem_per_block else 16\n    return min(by_block, by_regs, by_smem)\n",
+      "tests": "assert blocks_per_sm(96, 0, 256) == 2\nassert blocks_per_sm(32, 49152, 256) == 1\nassert blocks_per_sm(39, 2048, 256) == 4\nassert blocks_per_sm(12, 0, 32) == 16\nassert blocks_per_sm(39, 8192, 1024) == 1\nassert blocks_per_sm(72, 0, 1024) == 0\nassert blocks_per_sm(104, 0, 64) == 8\nassert blocks_per_sm(199, 0, 96) == 2\nassert blocks_per_sm(32, 21800, 32) == 2\nassert blocks_per_sm(32, 13100, 256) == 4\nassert blocks_per_sm(72, 6000, 128) == 7\nassert blocks_per_sm(16, 0, 2048) == 0\nassert blocks_per_sm(12, 256, 32) == 16\nassert blocks_per_sm(100, 0, 64) == 8\nassert blocks_per_sm(12, 0, 100) == 8\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 5: block size caps the blocks at $32$ over the warps per block and at 16; registers are rounded up to 256 per warp and each quarter of 16,384 holds whole warps; shared memory is rounded up to 256 bytes per block. The smallest of the three is the answer, and 104 registers with 64-thread blocks gives 8, not the 9 that dividing the whole register file suggests. These rules match `cudaOccupancyMaxActiveBlocksPerMultiprocessor` on the author's GTX 1650 in all 24,840 cases of the post's `occupancy_check.cu`.",
+      "hints": [
+        "Compute the three limits separately and return the smallest.",
+        "For registers: warps per quarter is 16,384 divided by the rounded registers per warp; there are four quarters.",
+        "Shared memory of 0 bytes does not limit the blocks below 16."
+      ]
+    },
+    {
+      "id": "cuda-010-q08",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "roofline",
+        "vocabulary"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On a roofline, the sloped bandwidth roof meets the flat compute roof at the intensity $\\pi / \\beta$. What is that intensity called?",
+      "answer": {
+        "model": "The ridge point: 19.5 FLOP per byte on the GTX 1650; below it a kernel is memory bound, above it compute bound.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|isn't|never)\\s+(the\\s+|a\\s+)?(ridge|machine balance))[\\s\\S]*\\b(ridge(\\s*point)?|machine\\s+balance)\\b"
+        ]
+      },
+      "explanation": "Section 3: $\\pi / \\beta$ is the ridge point, 19.5 FLOP per byte on the GTX 1650; a kernel left of it is memory bound and one right of it compute bound.",
+      "hints": [
+        "It is named after the top edge of a roof."
+      ]
+    },
+    {
+      "id": "cuda-010-q09",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "occupancy",
+        "nvcc"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which `nvcc` option makes the compiler print each kernel's registers per thread and static shared memory, the inputs to a hand count of occupancy?",
+      "answer": {
+        "model": "`-Xptxas=-v` (also written `--ptxas-options=-v`), which prints lines such as `Used 39 registers, 2048 bytes smem`.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|instead of|rather than)\\s+`?(-xptxas|--ptxas-options|--resource-usage|-res-usage))[\\s\\S]*(-xptxas\\s*[= ]?\\s*[\\\"']?-?-v(erbose)?\\b|--ptxas-options\\s*[= ]\\s*[\\\"']?-?-v(erbose)?\\b|--resource-usage\\b|-res-usage\\b)"
+        ]
+      },
+      "explanation": "Section 5 and section 8: `-Xptxas=-v` passes the verbose flag to `ptxas`, which reports registers, static shared memory and any spill stores and loads per kernel; dynamic shared memory is added by hand.",
+      "hints": [
+        "The flag is passed through to the PTX assembler."
+      ]
+    },
+    {
+      "id": "cuda-010-q10",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "occupancy"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of a hand count of a kernel's theoretical occupancy in order.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Read the registers per thread and static shared memory from a `-Xptxas=-v` compile, and add any dynamic shared memory the launch requests."
+        },
+        {
+          "key": "b",
+          "text": "Round the registers per warp up to a multiple of 256 and the shared memory per block up to a multiple of 256 bytes."
+        },
+        {
+          "key": "c",
+          "text": "Compute the blocks per SM that block size, registers and shared memory each allow."
+        },
+        {
+          "key": "d",
+          "text": "Take the smallest of the three as the blocks per SM."
+        },
+        {
+          "key": "e",
+          "text": "Multiply by the warps per block and divide by the 32 warp slots."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "explanation": "Section 5: the inputs come from the compiler and the launch, the allocation units are applied before dividing, the binding limit is the smallest, and occupancy is resident warps over the 32 slots.",
+      "hints": [
+        "Each step uses the result of the one before.",
+        "The rounding happens before the division into the SM's resources."
+      ]
+    },
+    {
+      "id": "cuda-010-q11",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "roofline",
+        "bottlenecks"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each measured run from the series to what bounds it.",
+      "left": [
+        {
+          "key": "a",
+          "text": "Vector addition over 10,000,000 elements, 145.0 GB/s (post 02)"
+        },
+        {
+          "key": "b",
+          "text": "Vector addition over 1,000 elements, 3.4 GB/s (post 02)"
+        },
+        {
+          "key": "c",
+          "text": "Global-atomic histogram of a solid color, 6.6 GB/s (post 05)"
+        },
+        {
+          "key": "d",
+          "text": "Naive transpose, 41.5 GB/s against 124.4 for the padded one (post 06)"
+        },
+        {
+          "key": "e",
+          "text": "cuBLAS at 1,024 cubed, 2,189 GFLOP/s (post 03)"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "The DRAM bandwidth slope of the roofline"
+        },
+        {
+          "key": "q",
+          "text": "The fixed cost of a launch"
+        },
+        {
+          "key": "r",
+          "text": "Atomics queueing on one address"
+        },
+        {
+          "key": "s",
+          "text": "Uncoalesced access"
+        },
+        {
+          "key": "t",
+          "text": "The arithmetic peak, the flat roof"
+        },
+        {
+          "key": "u",
+          "text": "Register spills to local memory"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s",
+        "e": "t"
+      },
+      "explanation": "Sections 4 and 7: the large vector addition runs at 91% of its slope roof; at 1,000 elements the launch dominates; the histogram is bound by its atomics; the naive transpose moves the same bytes uncoalesced; cuBLAS reaches 70% of the flat roof. None of these runs reports spills.",
+      "hints": [
+        "Two of the runs move few bytes slowly for different reasons.",
+        "One right-hand item applies to none of them."
+      ]
+    },
+    {
+      "id": "cuda-010-q12",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 15,
+      "tags": [
+        "latency-hiding",
+        "ilp",
+        "occupancy"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "With the post's illustrative numbers (160 GB/s, 14 SMs, a 400-cycle load latency at 1,740 MHz), explain (1) why a streaming kernel whose threads each issue four independent 4-byte loads before using any can reach full bandwidth at about 19% occupancy, (2) why raising its occupancy to 100% then gains nothing, and (3) how the warps needed change if the latency doubles, and what that says about rules such as 'aim for 50% to 75% occupancy'.",
+      "kind": "explain",
+      "solution": "1. By Little's law the bytes in flight must equal bandwidth times latency: $160 \\text{ GB/s} \\times 229.9$ ns $= 36{,}782$ bytes, 2,627 per SM. A warp that issues four independent coalesced loads has $4 \\times 128 = 512$ bytes in flight, so $\\lceil 2{,}627 / 512 \\rceil = 6$ warps per SM suffice, $6 / 32 \\approx 19\\%$ occupancy.\n2. Once the bytes in flight cover the latency the memory system delivers $\\beta$; extra warps add requests that only queue behind the full pipe, so the attainable bandwidth stays flat at 160 GB/s. Forcing more warps by capping registers could even spill and slow the kernel.\n3. Doubling the latency doubles the bytes in flight needed, 5,254 per SM, so about 11 warps with four loads each, or 42 with one, more than the 32 slots: with one load per warp the kernel could no longer reach $\\beta$. So the occupancy a kernel needs depends on latency and ILP; a fixed percentage rule is a rough guess that is too high for kernels with ILP and too low for long latencies.",
+      "rubric": [
+        {
+          "criterion": "Applies Little's law: bytes in flight equal bandwidth times latency, per SM",
+          "points": 2
+        },
+        {
+          "criterion": "Counts 512 bytes in flight per warp and arrives at 6 warps, about 19%",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that past the knee extra warps only queue, so bandwidth stays at beta",
+          "points": 2
+        },
+        {
+          "criterion": "Recomputes the warps for a doubled latency and draws the conclusion about fixed occupancy targets",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Section 6: occupancy is one way to put bytes in flight and ILP is another; the knee of the latency-hiding curve sits where the bytes in flight cover the latency, and it moves with both the latency and the loads per warp.",
+      "hints": [
+        "Start from bytes in flight = bandwidth x latency, and divide by 14 SMs.",
+        "Each independent coalesced load of a warp keeps 128 bytes in flight.",
+        "Doubling the latency doubles every warp count."
+      ]
+    },
+    {
+      "id": "cuda-010-q13",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o3",
+        "o1"
+      ],
+      "section": "4",
+      "est_minutes": 15,
+      "tags": [
+        "roofline",
+        "matrix-multiplication",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 03's tiled matrix multiplication (`TILE` = 16) reached 305 GFLOP/s at 1,024 cubed, 48% of its roof of 635 GFLOP/s, with 100% theoretical occupancy. Using posts 03 and 10, explain (1) why neither DRAM bandwidth nor occupancy is what holds it there, (2) what limits it instead, and (3) how computing several outputs per thread from values held in registers changes both its intensity and that limit.",
+      "kind": "connect",
+      "solution": "1. Its roof assumes the count of DRAM bytes; at 305 GFLOP/s and $I = 3.97$ it moves about $305 / 3.97 \\approx 77$ GB/s, less than half of $\\beta$, so DRAM is not saturated. Its occupancy is 100%, bound by block size (39 registers and 2,048 bytes of shared memory allow more blocks than the warp slots do), so more warps are not available and not needed.\n2. Post 03 found that the inner loop still issues two loads per multiply-add, now from shared memory, plus a barrier per tile: the shared-memory loads and the barriers limit it, a limit inside the SM that neither roof of the roofline models.\n3. If each thread computes several outputs, it loads a value of `A` or `B` once from shared memory into a register and uses it for several multiply-adds, so shared-memory loads per FLOP fall; with larger tiles per block, each value loaded from DRAM also serves more FLOP, raising $I$ toward and past the ridge of 19.5. The kernel then moves toward the flat roof, as cuBLAS does at 70% of $\\pi$, at the cost of more registers per thread and possibly lower occupancy, which section 6 says need not hurt.",
+      "rubric": [
+        {
+          "criterion": "Shows DRAM is not saturated (about 77 GB/s) and that occupancy is already 100%",
+          "points": 2
+        },
+        {
+          "criterion": "Names the shared-memory loads and barriers of the inner loop as the limit, from post 03",
+          "points": 2
+        },
+        {
+          "criterion": "Explains register tiling: fewer shared loads per FLOP and higher DRAM intensity",
+          "points": 2
+        },
+        {
+          "criterion": "Connects higher register use to lower occupancy and says why that need not hurt",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "connects": [
+        "cuda-003",
+        "cuda-010"
+      ],
+      "explanation": "Section 4 places the tiled kernel at 48% of its roof and cites post 03's diagnosis; section 5 shows its occupancy is 100%; section 3 names more reuse per thread as the way past the ridge.",
+      "hints": [
+        "Convert 305 GFLOP/s at 3.97 FLOP per byte into GB/s.",
+        "Ask what each multiply-add in the tiled inner loop must load first.",
+        "A value held in a register can feed several multiply-adds."
+      ]
+    },
+    {
+      "id": "cuda-010-q14",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 2,
+      "tags": [
+        "occupancy",
+        "latency-hiding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which statement about occupancy is right?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Once the bytes in flight cover the memory latency, more resident warps add nothing to a memory-bound kernel.",
+          "correct": true,
+          "feedback": "Right: by Little's law the memory system is full at that point, and extra warps only queue."
+        },
+        {
+          "key": "b",
+          "text": "A memory-bound kernel needs 100% occupancy to reach its full bandwidth.",
+          "correct": false,
+          "feedback": "Volkov's copy kernel reached 84% of peak at 4% occupancy by giving each thread many independent loads."
+        },
+        {
+          "key": "c",
+          "text": "Occupancy is the fraction of cycles in which an SM issues an instruction.",
+          "correct": false,
+          "feedback": "That is issue utilization. Occupancy is resident warps over the most an SM can hold."
+        },
+        {
+          "key": "d",
+          "text": "Raising occupancy also raises the roofline ceiling of the kernel.",
+          "correct": false,
+          "feedback": "The ceiling depends only on the intensity and the card; occupancy helps a kernel approach it."
+        }
+      ],
+      "explanation": "Section 6: occupancy buys latency hiding only until the bytes in flight equal bandwidth times latency; the Best Practices Guide states that higher occupancy does not always equate to higher performance.",
+      "hints": [
+        "Think of the memory system as a pipe that is either full or not."
+      ]
+    },
+    {
+      "id": "cuda-010-q15",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "occupancy",
+        "launch-failure"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A tiled kernel with `TILE` = 32 is launched with 1,024 threads per block on the GTX 1650. After a change, `-Xptxas=-v` reports 70 registers per thread. What happens at the launch?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The launch fails: at 1,024 threads per block at most 64 registers per thread fit, so not one block of this kernel fits on an SM.",
+          "correct": true,
+          "feedback": "Right: 70 registers round to 2,304 per warp, a quarter of 16,384 holds 7 such warps, and the block needs 8 per quarter; the runtime reports too many resources requested for launch."
+        },
+        {
+          "key": "b",
+          "text": "The kernel runs with one block per SM at 50% occupancy.",
+          "correct": false,
+          "feedback": "Blocks are placed whole; there is no half block. If the registers of one block do not fit, zero blocks fit."
+        },
+        {
+          "key": "c",
+          "text": "The kernel runs at 100% occupancy and the compiler spills the extra registers at run time.",
+          "correct": false,
+          "feedback": "Spilling is decided at compile time; the compiled kernel uses 70 registers, and the launch is checked against them."
+        },
+        {
+          "key": "d",
+          "text": "The runtime splits each block across two SMs.",
+          "correct": false,
+          "feedback": "A block runs on one SM for its whole life, which is what lets its threads share memory and barriers."
+        }
+      ],
+      "explanation": "Section 5: at 1,024 threads per block the block fits only at 64 registers per thread or fewer ($65{,}536 / 1{,}024$). Above that the launch fails; the Best Practices Guide warns of \"too many resources requested for launch\" errors and suggests `__launch_bounds__` to make the compiler respect the block size.",
+      "hints": [
+        "Blocks are placed on an SM whole or not at all.",
+        "Divide the SM's registers by the threads of one block."
+      ]
+    },
+    {
+      "id": "cuda-010-q16",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 4,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 6,
+      "tags": [
+        "latency-hiding",
+        "littles-law"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On a card with 160 GB/s and 14 SMs, loads take an illustrative 600 cycles at an SM clock of 1,500 MHz. Every thread issues two independent 4-byte coalesced loads before using either. Give (a) the bytes that must be in flight per SM to sustain 160 GB/s and (b) the fewest resident warps per SM that keep them in flight.",
+      "answer": {
+        "parts": [
+          {
+            "label": "bytes per SM",
+            "value": 4571,
+            "tolerance": 5,
+            "unit": "bytes"
+          },
+          {
+            "label": "warps per SM",
+            "value": 18,
+            "tolerance": 0,
+            "unit": "warps"
+          }
+        ]
+      },
+      "precision_note": "Latency $600 / 1.5 \\times 10^9 = 400$ ns; $160 \\times 10^9 \\times 400 \\times 10^{-9} = 64{,}000$ bytes, $64{,}000 / 14 = 4{,}571$ per SM. Each warp keeps $2 \\times 128 = 256$ bytes in flight: $\\lceil 4{,}571 / 256 \\rceil = 18$ warps. With one load per warp it would be 36, more than the 32 slots.",
+      "explanation": "Section 6: Little's law gives the bytes in flight as bandwidth times latency; each independent coalesced load of a warp keeps 128 bytes in flight, so the warps needed are the per-SM bytes over 128 times the loads per warp, rounded up.",
+      "hints": [
+        "Convert the latency to seconds at the stated clock.",
+        "Divide by 14 SMs, then by the bytes one warp keeps in flight."
+      ]
+    },
+    {
+      "id": "cuda-010-q17",
+      "type": "mcq",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "arithmetic-intensity",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "At $M = N = K = 1{,}024$, counting loads as written plus the write of `C`, tiling with `TILE` = 16 gives $I = 3.969$ FLOP per byte. About what does `TILE` = 32 give?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "About 7.9 FLOP per byte: the loads are divided by 32 instead of 16.",
+          "correct": true,
+          "feedback": "Right: $2N / (4(2N/32 + 1)) = 2{,}048 / 260 = 7.877$; the write of `C` keeps it a little under 8."
+        },
+        {
+          "key": "b",
+          "text": "About 15.9 FLOP per byte: doubling the tile quadruples the reuse.",
+          "correct": false,
+          "feedback": "Each loaded value serves `TILE` threads, so the loads fall in proportion to `TILE`, not its square."
+        },
+        {
+          "key": "c",
+          "text": "Still about 4.0 FLOP per byte: the tile changes shared-memory traffic, not DRAM traffic.",
+          "correct": false,
+          "feedback": "The tile decides how often each value is loaded from global memory, which is exactly the DRAM traffic the count divides by."
+        },
+        {
+          "key": "d",
+          "text": "About 19.5 FLOP per byte, the ridge point, where every larger tile ends.",
+          "correct": false,
+          "feedback": "The ridge belongs to the card, not the algorithm; intensity can pass it, up to $N/6 = 170.7$ at this size."
+        }
+      ],
+      "explanation": "Section 2: tiling divides the global loads by `TILE`, so the intensity grows in proportion to the tile width, 0.25, 3.969, 7.877, until the write of `C` and the each-once bound of 170.7 matter.",
+      "hints": [
+        "How many threads does each loaded value serve in a `TILE` x `TILE` block?"
+      ]
+    }
+  ]
+}

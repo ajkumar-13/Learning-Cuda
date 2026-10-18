@@ -1,59 +1,215 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">The roofline: a sloped memory-bound region rising to a flat compute-bound ceiling</title>
-  <desc id="d">A log-log performance roof. The horizontal axis is arithmetic intensity in floating-point operations per byte; the vertical axis is achieved performance. A line rises from the lower left at a constant slope, the memory-bound region, where performance is limited by bandwidth and grows with intensity. At a ridge point it bends to horizontal, the compute-bound ceiling set by peak floating-point throughput. Two kernels are plotted. Vector-add sits far left on the steep slope, deep in the memory-bound region near peak bandwidth, drawn in blue as the canonical memory-bound kernel. Tiled matrix multiply sits near the ridge, drawn in green as the kernel that tiling pushed rightward from memory-bound toward compute-bound. The takeaway is that a kernel's intensity decides which roof it lives under.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .axis{stroke:var(--cuda-ink);stroke-width:1.5;}
-    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
-    .roof{stroke:var(--cuda-ink);stroke-width:1.5;fill:none;}
-    .dotP{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
-    .dotG{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .lblP{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-primary);}
-    .lblG{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-success);}
-    .ridge{stroke:var(--cuda-ink-muted);stroke-width:1;stroke-dasharray:4 3;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">The roofline: which roof does the kernel live under?</text>
-  <text class="small" x="40" y="66">Low intensity is bandwidth-bound (the slope); high intensity is compute-bound (the flat ceiling).</text>
-
-  <!-- plot frame -->
-  <line class="axis" x1="140" y1="440" x2="860" y2="440"/>
-  <line class="axis" x1="140" y1="440" x2="140" y2="110"/>
-  <!-- light grid -->
-  <g class="grid">
-    <line x1="300" y1="110" x2="300" y2="440"/>
-    <line x1="460" y1="110" x2="460" y2="440"/>
-    <line x1="620" y1="110" x2="620" y2="440"/>
-    <line x1="780" y1="110" x2="780" y2="440"/>
-    <line x1="140" y1="360" x2="860" y2="360"/>
-    <line x1="140" y1="270" x2="860" y2="270"/>
-    <line x1="140" y1="180" x2="860" y2="180"/>
-  </g>
-
-  <!-- axis labels -->
-  <text class="label" x="500" y="486" text-anchor="middle">arithmetic intensity  (FLOP / byte, log scale)</text>
-  <text class="label" x="40" y="280" text-anchor="middle" transform="rotate(-90 40 280)">performance (log)</text>
-
-  <!-- roofline: sloped memory-bound part then flat compute ceiling -->
-  <path class="roof" d="M150,420 L520,150 L860,150"/>
-  <!-- ridge marker -->
-  <line class="ridge" x1="520" y1="150" x2="520" y2="440"/>
-  <text class="small" x="520" y="458" text-anchor="middle">ridge point</text>
-  <text class="small" x="360" y="285" text-anchor="middle" transform="rotate(-36 360 285)">memory-bound region</text>
-  <text class="small" x="690" y="142" text-anchor="middle">compute-bound (peak FLOP/s)</text>
-
-  <!-- vector-add: far left on the slope, near the roof -->
-  <circle class="dotP" cx="225" cy="380" r="8"/>
-  <text class="lblP" x="240" y="376">vector-add</text>
-  <text class="small" x="240" y="394">memory-bound, near peak BW</text>
-
-  <!-- tiled matmul: near the ridge -->
-  <circle class="dotG" cx="500" cy="168" r="8"/>
-  <text class="lblG" x="540" y="182">tiled matmul</text>
-  <text class="small" x="540" y="200">tiling reached the ridge</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-roofline-title" aria-describedby="cuda-01-roofline-desc">
+<title id="cuda-01-roofline-title">Measured kernels under the GTX 1650's two roofs</title>
+<desc id="cuda-01-roofline-desc">A log-log chart of attainable performance in GFLOP/s against arithmetic intensity in FLOP per byte, from 0.01 to 1,000. The derived roof rises along the 160 GB/s bandwidth slope to the ridge point at 19.5 FLOP per byte and stays flat at the compute peak of 3,118 GFLOP/s. Measured points: vector add 12.1 GFLOP/s at 0.083, the shuffle reduction 38.6 at 0.25, the tiled matrix multiply 305 at 3.97, cuBLAS 2,189 at 171 (its intensity is at most that), and the naive matrix multiply 196 at 0.25, above its slope roof of 40; a dashed arrow leads to a hollow mark at 1.225 FLOP per byte, the least intensity that 196 GFLOP/s implies. A note says the padded transpose, with no arithmetic, moved 124.4 GB/s and cannot be drawn on a log axis.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-ink-muted { fill: var(--cuda-ink-muted); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-ink { fill: var(--cuda-orange-ink); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-ink { stroke: var(--cuda-ink); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-red { stroke: var(--cuda-red); }
+  .s-surface { stroke: var(--cuda-surface); }
+</style>
+<defs>
+<marker id="cuda-01-roofline-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-01-roofline-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-red"/></marker>
+<clipPath id="cuda-01-roofline-clip-1"><rect x="90" y="122" width="820" height="312"/></clipPath>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="610">Measured kernels under the GTX 1650's two roofs</text>
+<text x="40" y="76" class="t-subtitle" data-w="774">Roof derived; dots measured on the author's GTX 1650 (compute capability 7.5), CUDA 12.3, October 2026.</text>
+<g data-grid="skip">
+<path d="M96,428H904M96,353H904M96,278H904M96,203H904M96,128H904" class="gridline"/>
+<path d="M96,405.42H904M96,392.22H904M96,382.85H904M96,375.58H904M96,369.64H904M96,364.62H904M96,360.27H904M96,356.43H904M96,330.42H904M96,317.22H904M96,307.85H904M96,300.58H904M96,294.64H904M96,289.62H904M96,285.27H904M96,281.43H904M96,255.42H904M96,242.22H904M96,232.85H904M96,225.58H904M96,219.64H904M96,214.62H904M96,210.27H904M96,206.43H904M96,180.42H904M96,167.22H904M96,157.85H904M96,150.58H904M96,144.64H904M96,139.62H904M96,135.27H904M96,131.43H904M144.65,128V428M173.1,128V428M193.29,128V428M208.95,128V428M221.75,128V428M232.57,128V428M241.94,128V428M250.21,128V428M306.25,128V428M334.7,128V428M354.89,128V428M370.55,128V428M383.35,128V428M394.17,128V428M403.54,128V428M411.81,128V428M467.85,128V428M496.3,128V428M516.49,128V428M532.15,128V428M544.95,128V428M555.77,128V428M565.14,128V428M573.41,128V428M629.45,128V428M657.9,128V428M678.09,128V428M693.75,128V428M706.55,128V428M717.37,128V428M726.74,128V428M735.01,128V428M791.05,128V428M819.5,128V428M839.69,128V428M855.35,128V428M868.15,128V428M878.97,128V428M888.34,128V428M896.61,128V428" class="gridline d-ref"/>
+<text x="88" y="432" text-anchor="end" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">0</tspan><tspan dy="6">​</tspan></text>
+<text x="88" y="357" text-anchor="end" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">1</tspan><tspan dy="6">​</tspan></text>
+<text x="88" y="282" text-anchor="end" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">2</tspan><tspan dy="6">​</tspan></text>
+<text x="88" y="207" text-anchor="end" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">3</tspan><tspan dy="6">​</tspan></text>
+<text x="88" y="132" text-anchor="end" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">4</tspan><tspan dy="6">​</tspan></text>
+<text x="96" y="452" class="t-tick" data-w="33">10<tspan class="sub" dy="-6">−2</tspan><tspan dy="6">​</tspan></text>
+<text x="257.6" y="452" text-anchor="middle" class="t-tick" data-w="33">10<tspan class="sub" dy="-6">−1</tspan><tspan dy="6">​</tspan></text>
+<text x="419.2" y="452" text-anchor="middle" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">0</tspan><tspan dy="6">​</tspan></text>
+<text x="580.8" y="452" text-anchor="middle" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">1</tspan><tspan dy="6">​</tspan></text>
+<text x="742.4" y="452" text-anchor="middle" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">2</tspan><tspan dy="6">​</tspan></text>
+<text x="904" y="452" text-anchor="middle" class="t-tick" data-w="23">10<tspan class="sub" dy="-6">3</tspan><tspan dy="6">​</tspan></text>
+<path d="M96,128V428H904" class="axis"/>
+<path d="M627.63,128V428" class="s-ink-muted w1 nofill d-ref"/>
+<g clip-path="url(#cuda-01-roofline-clip-1)">
+<path d="M96,412.69 L627.63,165.96 L904,165.96" class="s-ink w15 nofill"/>
+</g>
+<text x="633.63" y="144" class="t-note f-ink-muted" data-w="67">ridge 19.5</text>
+</g>
+<text x="96" y="116" class="t-note" data-w="63">GFLOP/s</text>
+<text x="500" y="472" text-anchor="middle" class="t-note" data-w="234">arithmetic intensity, FLOP per byte</text>
+<g data-grid="skip">
+<text x="447.66" y="342.04" class="t-note" data-w="183">slope: 160 GB/s × intensity</text>
+</g>
+<g data-grid="skip">
+<text x="900" y="155.96" text-anchor="end" class="t-note" data-w="141">peak 3,118 GFLOP/s</text>
+</g>
+<g data-grid="skip">
+<path d="M244.8,340.84 L250.8,346.84 L244.8,352.84 L238.8,346.84 Z" class="f-orange s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="256.8" y="372.84" class="t-value f-orange-ink" data-w="110">vector add 12.1</text>
+</g>
+<g data-grid="skip">
+<path d="M321.91,302.96 L327.91,308.96 L321.91,314.96 L315.91,308.96 Z" class="f-orange s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="333.91" y="334.96" class="t-value f-orange-ink" data-w="102">reduction 38.6</text>
+</g>
+<g data-grid="skip">
+<path d="M515.95,235.68 L521.95,241.68 L515.95,247.68 L509.95,241.68 Z" class="f-orange s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="527.95" y="246.68" class="t-value f-orange-ink" data-w="61">tiled 305</text>
+</g>
+<g data-grid="skip">
+<path d="M779.92,171.48 L785.92,177.48 L779.92,183.48 L773.92,177.48 Z" class="f-orange s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="779.92" y="207.48" text-anchor="middle" class="t-value f-orange-ink" data-w="214">cuBLAS 2,189, intensity ≤ 171</text>
+</g>
+<g data-grid="skip">
+<path d="M321.87,250.08 L327.87,256.08 L321.87,262.08 L315.87,256.08 Z" class="f-red s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="309.87" y="261.08" text-anchor="end" class="t-value f-red-ink" data-w="126">naive matmul 196</text>
+</g>
+<path d="M320,256 L429,256" class="s-red w15 nofill d-proj" marker-end="url(#cuda-01-roofline-arrow-red)"/>
+<g data-grid="skip">
+<circle cx="433.44" cy="256.08" r="5" class="nofill s-red w15"/>
+</g>
+<g data-grid="skip">
+<text x="445.44" y="284.08" class="t-note" data-w="141">real intensity ≥ 1.225</text>
+</g>
+<g data-grid="skip">
+<text x="208.95" y="412.69" class="t-note" data-w="348">padded transpose: no FLOP, 124.4 GB/s, not drawn</text>
+</g>
+<text x="40" y="504" class="t-note" data-w="670">Each dot sits under its roof, except the naive kernel: the caches cut its DRAM traffic below its count.</text>
 </svg>

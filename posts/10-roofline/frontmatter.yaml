@@ -1,8 +1,28 @@
 id: cuda-010
 slug: 10-roofline
-title: "10 · How fast can a kernel be? — roofline, arithmetic intensity, and occupancy"
+title: "10 - How fast can a kernel be: roofline, arithmetic intensity, and occupancy"
+summary: "How arithmetic intensity places a kernel under the GTX 1650's bandwidth and compute roofs, what the series' measured kernels reach against them, and how registers, shared memory and block size cap occupancy."
 date: 2026-07-18
-tags: [understanding-performance, cuda, roofline, occupancy]
-hero: diagrams/01-roofline.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part III - Understanding Performance"
+level: intermediate
+reading_time: 13
+tags: [cuda, roofline, arithmetic-intensity, occupancy, latency-hiding, performance-model]
+hero: diagrams/01-roofline.svg
+prerequisites: [cuda-003, cuda-006]
+code: included
+outcomes:
+  - id: o1
+    text: "Count a kernel's arithmetic intensity in FLOP per byte and place it on the roofline of the GTX 1650."
+  - id: o2
+    text: "Say from the ridge point whether a kernel is memory bound or compute bound, and name the lever that moves it."
+  - id: o3
+    text: "Read a measured kernel against its roof, and explain why a kernel can run above the roof its count predicts."
+  - id: o4
+    text: "Derive theoretical occupancy from block size, registers per thread and shared memory per block, and name the binding limit."
+  - id: o5
+    text: "Explain why more occupancy stops helping once enough bytes are in flight, and why a low-occupancy kernel can still be fast."
+recommended: [cuda-005, cuda-009]
+compute: gpu-small
+hardware: gtx-1650
