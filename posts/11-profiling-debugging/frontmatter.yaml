@@ -1,8 +1,28 @@
 id: cuda-011
 slug: 11-profiling-debugging
-title: "11 · Profiling and debugging — Nsight, compute-sanitizer, and the occupancy you can measure"
+title: "11 - Profiling and debugging: Nsight, compute-sanitizer, and measured occupancy"
+summary: "How to prove a kernel correct with compute-sanitizer before timing it, then measure its bandwidth and occupancy against the roofline model, and when to reach for Nsight Systems or Nsight Compute."
 date: 2026-07-20
-tags: [systems-performance, cuda, profiling, occupancy]
-hero: diagrams/01-profiling-loop.svg
-reading_time: 13
+updated: 2026-10-18
+status: complete
 part: "Part III - Understanding Performance"
+level: intermediate
+reading_time: 17
+tags: [cuda, profiling, debugging, compute-sanitizer, occupancy, nsight]
+hero: diagrams/01-profiling-loop.svg
+prerequisites: [cuda-010]
+code: included
+outcomes:
+  - id: o1
+    text: "Run the profile, don't guess loop: check a kernel with compute-sanitizer, measure it, read its bottleneck, fix one limiter, and repeat."
+  - id: o2
+    text: "Catch out-of-bounds accesses with memcheck, shared-memory races with racecheck, and divergent barriers with synccheck, and read their reports."
+  - id: o3
+    text: "Choose Nsight Systems for the timeline and Nsight Compute for one kernel's counters, run each, and unlock the counters when the driver denies them."
+  - id: o4
+    text: "Compute a kernel's theoretical occupancy from its register count by hand, and check it with the CUDA runtime's occupancy API."
+  - id: o5
+    text: "Read a measured bandwidth against the roofline ceiling and against the theoretical occupancy of each block size."
+recommended: [cuda-002, cuda-004]
+compute: gpu-small
+hardware: gtx-1650

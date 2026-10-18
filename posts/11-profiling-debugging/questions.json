@@ -1,0 +1,720 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-011",
+  "next_ordinal": 17,
+  "questions": [
+    {
+      "id": "cuda-011-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "profiling-loop",
+        "correctness"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel that has just been written gives a fast time with CUDA events. Why does the loop of this post run `compute-sanitizer` on it before that time is trusted or tuned?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The sanitizer reports the kernel's achieved occupancy, which the profiler needs as an input.",
+          "correct": false,
+          "feedback": "Achieved occupancy comes from Nsight Compute's counters; the sanitizer checks memory accesses and synchronization."
+        },
+        {
+          "key": "b",
+          "text": "A kernel that reads or writes memory it does not own can give a fast, meaningless time, so correctness is established first.",
+          "correct": true,
+          "feedback": "Right: a time measures whatever the kernel did, including wrong accesses that a host check can miss."
+        },
+        {
+          "key": "c",
+          "text": "The sanitizer warms the GPU up to its boost clock, so the timed runs afterwards are faster.",
+          "correct": false,
+          "feedback": "The sanitizer instruments the program and slows it down; warming the clock is the job of untimed launches in the harness."
+        },
+        {
+          "key": "d",
+          "text": "CUDA events give wrong times unless the program has first run under `compute-sanitizer`.",
+          "correct": false,
+          "feedback": "CUDA events time correctly on their own; the issue is what the timed kernel did, not the timer."
+        }
+      ],
+      "explanation": "Section 1: the check comes first because a kernel that touches the wrong memory can post a fast, meaningless number, and section 2 shows such a program printing `6 of 6` and exiting 0.",
+      "hints": [
+        "Ask what a time says about a kernel that touched memory it should not have."
+      ]
+    },
+    {
+      "id": "cuda-011-q02",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "compute-sanitizer",
+        "tools"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each bug to the `compute-sanitizer` tool, or other tool, that reports it.",
+      "left": [
+        {
+          "key": "a",
+          "text": "The surplus threads of a launch read one float past the end of a `cudaMalloc` array."
+        },
+        {
+          "key": "b",
+          "text": "Lanes of one warp read a shared-memory value that other lanes of the same warp write, with no barrier between."
+        },
+        {
+          "key": "c",
+          "text": "A `__syncthreads()` inside `if (tid < stride)` holds some threads of a block while the others wait at a later barrier."
+        },
+        {
+          "key": "d",
+          "text": "A kernel reads elements of a global array that no copy, memset or earlier kernel ever wrote."
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "memcheck"
+        },
+        {
+          "key": "q",
+          "text": "racecheck"
+        },
+        {
+          "key": "r",
+          "text": "synccheck"
+        },
+        {
+          "key": "s",
+          "text": "initcheck"
+        },
+        {
+          "key": "t",
+          "text": "Nsight Systems"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s"
+      },
+      "explanation": "Section 2's table: memcheck reports out-of-bounds accesses, racecheck shared-memory hazards, synccheck invalid barrier use, initcheck reads of uninitialized global memory. Nsight Systems is a timeline profiler and checks none of them.",
+      "hints": [
+        "One tool on the right is not part of `compute-sanitizer`."
+      ]
+    },
+    {
+      "id": "cuda-011-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "memcheck",
+        "global-index"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel is launched with blocks of 128 threads over an array of 389 floats with no guard. memcheck reports an invalid read `by thread (5,0,0) in block (3,0,0)`. Give (a) that thread's global index `i` and (b) the byte offset of `A[i]` from the start of the array.",
+      "answer": {
+        "parts": [
+          {
+            "label": "global index i",
+            "value": 389,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "byte offset",
+            "value": 1556,
+            "tolerance": 0,
+            "unit": "bytes"
+          }
+        ]
+      },
+      "precision_note": "i = blockIdx.x * blockDim.x + threadIdx.x = 3 x 128 + 5 = 389; offset 389 x 4 = 1,556 bytes, the first float past a 1,556-byte allocation. Section 2's own report: thread 2 of block 1 in blocks of 4 is i = 6, byte 24.",
+      "explanation": "Section 2: memcheck names a thread by its index inside its block and the block's index, so the global index is `blockIdx.x * blockDim.x + threadIdx.x`; at 4 bytes per float the offset is 4i, which here equals the array's size, the first byte past its end.",
+      "hints": [
+        "The report gives `threadIdx.x` and `blockIdx.x`, not `i`.",
+        "Multiply the block index by the block size, add the thread index, then multiply by 4 bytes."
+      ]
+    },
+    {
+      "id": "cuda-011-q04",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 5,
+      "tags": [
+        "occupancy",
+        "registers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel compiled for `sm_75` uses 72 registers per thread and no shared memory, launched in blocks of 256 threads. With the rules of post 10's model (32 warp slots, at most 16 blocks and 65,536 registers per SM in four quarters of 16,384 that each hold whole warps, registers allocated per warp in units of 256), give (a) the resident blocks per SM and (b) the theoretical occupancy in percent.",
+      "answer": {
+        "parts": [
+          {
+            "label": "blocks per SM",
+            "value": 3,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "theoretical occupancy",
+            "value": 75,
+            "tolerance": 0,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "Per warp ceil(72 x 32 / 256) x 256 = 2,304 registers; a quarter holds floor(16,384 / 2,304) = 7 warps, the SM 28, so 3 blocks of 8 by registers; warp slots allow 32 / 8 = 4; so 3 blocks, 24 warps, 24 / 32 = 75%. Dividing the whole file, 65,536 / 18,432 = 3.56, also gives 3 here; forgetting that blocks are whole gives 28 of 32 warps, 87.5%.",
+      "explanation": "Section 4: each resource caps the blocks per SM and the smallest cap wins. Registers allow 3 blocks of 256 threads (7 warps per quarter, 28 per SM), warp slots 4, so registers bind: 24 of 32 warps, 75%.",
+      "hints": [
+        "Work out the registers one warp needs, rounded up to a multiple of 256.",
+        "Count the whole warps a quarter of 16,384 holds, times 4, in whole blocks of 8 warps; then compare with the warp-slot limit of 4 blocks."
+      ]
+    },
+    {
+      "id": "cuda-011-q05",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "roofline",
+        "bandwidth"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Vector addition, `C[i] = A[i] + B[i]` on floats, does 1 FLOP and moves 12 bytes per element. On a card with a 160 GB/s bandwidth roof it is measured at 120 GB/s. Give (a) its roofline ceiling in GFLOP/s and (b) its achieved performance as a percentage of that ceiling.",
+      "answer": {
+        "parts": [
+          {
+            "label": "ceiling",
+            "value": 13.33,
+            "tolerance": 0.05,
+            "unit": "GFLOP/s"
+          },
+          {
+            "label": "share of ceiling",
+            "value": 75,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "I = 1/12 FLOP per byte; ceiling I x 160 = 13.33 GFLOP/s; achieved 120 / 12 = 10 GFLOP/s, 75% of the ceiling, the same as 120 / 160. Section 6 does the same for SAXPY: 160 / 6 = 26.7 and 145.2 / 6 = 24.2, 91%.",
+      "explanation": "Section 6: a memory-bound kernel's ceiling is $I \\beta$, and its achieved FLOP/s is its achieved bandwidth times $I$, so its share of the ceiling equals its share of the bandwidth roof.",
+      "hints": [
+        "Compute the arithmetic intensity first.",
+        "Multiply both the roof and the measured bandwidth by that intensity."
+      ]
+    },
+    {
+      "id": "cuda-011-q06",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "occupancy",
+        "block-limit"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "SAXPY uses 10 registers per thread. The occupancy API returns 4 blocks per SM for 256-thread blocks (100%) but 16 blocks per SM for 32-thread blocks, which is 50%. What limits the 32-thread launch?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A warp of 32 threads cannot run at full speed, so the runtime halves its occupancy.",
+          "correct": false,
+          "feedback": "Occupancy counts resident warps; it has no notion of a warp's speed."
+        },
+        {
+          "key": "b",
+          "text": "The default 48 KB of shared memory per block allows only 16 blocks.",
+          "correct": false,
+          "feedback": "SAXPY uses no shared memory, so shared memory imposes no limit."
+        },
+        {
+          "key": "c",
+          "text": "An SM of compute capability 7.5 holds at most 16 blocks, and 16 one-warp blocks fill only 16 of its 32 warp slots.",
+          "correct": true,
+          "feedback": "Right: the block limit binds before the warp slots or the registers do."
+        },
+        {
+          "key": "d",
+          "text": "Ten registers per thread fill the register file at 16 blocks of 32 threads.",
+          "correct": false,
+          "feedback": "Sixteen one-warp blocks use 16 x 512 = 8,192 of 65,536 registers; registers allow far more."
+        }
+      ],
+      "explanation": "Section 4: for one-warp blocks the 16-block limit per SM binds first, leaving 16 of 32 warp slots filled; the runtime's column in section 5 and post 10's model agree on 50%.",
+      "hints": [
+        "List the limits: warp slots, registers, shared memory, and one more.",
+        "How many warps do 16 blocks of 32 threads make?"
+      ]
+    },
+    {
+      "id": "cuda-011-q07",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "occupancy",
+        "block-size"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the post's run, SAXPY had 100% theoretical occupancy and moved 145.1 to 145.3 GB/s at every block size from 64 to 1,024 threads. What does this say about its block size?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Once occupancy is full, the block size made no measurable difference.",
+          "correct": true,
+          "feedback": "Right: every launch from 64 threads up filled the 32 warp slots and moved 91% of the peak."
+        },
+        {
+          "key": "b",
+          "text": "Larger blocks run faster, because the GPU has fewer blocks to schedule.",
+          "correct": false,
+          "feedback": "Blocks of 1,024 threads moved the same 145 GB/s as blocks of 64."
+        },
+        {
+          "key": "c",
+          "text": "Any block size, 32 included, gives SAXPY the same bandwidth.",
+          "correct": false,
+          "feedback": "At 32 threads per block the 16-block limit left half the warp slots empty, and the run lost 26% of its bandwidth."
+        },
+        {
+          "key": "d",
+          "text": "SAXPY is compute bound, so its occupancy does not matter.",
+          "correct": false,
+          "feedback": "SAXPY's intensity is 0.167 FLOP per byte, far below the ridge of 19.5: it is memory bound."
+        }
+      ],
+      "explanation": "Section 5: from 64 threads per block up every launch had 100% theoretical occupancy and the kernel moved 91% of the peak; only the one-warp blocks, held to 50% by the 16-block limit, lost bandwidth.",
+      "hints": [
+        "Compare the occupancy and bandwidth columns from 64 threads per block up.",
+        "Which launch did the block size push below 100%, and what happened to its bandwidth?"
+      ]
+    },
+    {
+      "id": "cuda-011-q08",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "7",
+      "est_minutes": 1,
+      "tags": [
+        "nsight-systems",
+        "nsight-compute"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A program launches 40 different kernels and many copies, and it is too slow. Which tool does the post say to run first, to find which kernel or copy dominates?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Nsight Compute with `--set full` over the whole program.",
+          "correct": false,
+          "feedback": "That replays every kernel under counters and takes a long time; it is for one kernel already chosen."
+        },
+        {
+          "key": "b",
+          "text": "`compute-sanitizer --tool racecheck`.",
+          "correct": false,
+          "feedback": "racecheck finds shared-memory hazards; it does not measure where the time goes."
+        },
+        {
+          "key": "c",
+          "text": "`nvcc -Xptxas=-v`.",
+          "correct": false,
+          "feedback": "That prints registers per kernel at build time; it measures no time."
+        },
+        {
+          "key": "d",
+          "text": "Nsight Systems, the timeline of every API call, kernel and copy.",
+          "correct": true,
+          "feedback": "Right: the timeline localizes the problem before the microscope explains it."
+        }
+      ],
+      "explanation": "Section 7: `nsys` first, over the whole program, to find the kernel that matters; `ncu` second, on that kernel, to find why.",
+      "hints": [
+        "One tool shows time across the whole program; the other looks inside one kernel."
+      ]
+    },
+    {
+      "id": "cuda-011-q09",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "7",
+      "est_minutes": 1,
+      "tags": [
+        "nsight-compute",
+        "permissions"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Nsight Compute stops with an error code when the driver denies performance counters to a user who is not an administrator. What is that error code?",
+      "answer": {
+        "model": "ERR_NVGPUCTRPERM",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\b\\W+err_nvgpuctrperm)(?![\\s\\S]*err_nvgpuctrperm\\W+(is\\s+(not|wrong)|isn't|is\\s+the\\s+wrong)\\b)[\\s\\S]*\\berr_nvgpuctrperm\\b"
+        ]
+      },
+      "explanation": "Section 7 pastes `ncu`'s output: `==ERROR== ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters`. It is lifted by allowing access for all users in the NVIDIA Control Panel's developer settings, or by running `ncu` elevated.",
+      "hints": [
+        "It begins with ERR_ and names GPU counters and permission."
+      ]
+    },
+    {
+      "id": "cuda-011-q10",
+      "type": "short",
+      "track": "run",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "8",
+      "est_minutes": 1,
+      "tags": [
+        "compute-sanitizer",
+        "nvcc-flags"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which `nvcc` flag, which keeps `-O3` optimization on, makes a `compute-sanitizer` report name the source file and line of each bad access?",
+      "answer": {
+        "model": "`-lineinfo` (long form `--generate-line-info`).",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|without|no)\\b\\W*(-{1,2})?(lineinfo|generate-line-info))(?![\\s\\S]*(lineinfo|generate-line-info)\\W+(is\\s+(not|wrong)|isn't|won't|doesn't|does\\s+not)\\b)[\\s\\S]*((?<!\\w)-{0,2}lineinfo(?![\\w-])|generate-line-info(?![\\w-]))"
+        ]
+      },
+      "explanation": "Section 2 builds `missing_guard.cu` with `-lineinfo` so that memcheck prints `missing_guard.cu:38`; `-G` would also add line numbers but turns off device optimization.",
+      "hints": [
+        "The flag adds line information without the debug build of `-G`."
+      ]
+    },
+    {
+      "id": "cuda-011-q11",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 3,
+      "tags": [
+        "profiling-loop"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of the post's loop in order, for one change to a kernel that already exists.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Change the kernel."
+        },
+        {
+          "key": "b",
+          "text": "Run it under `compute-sanitizer` (memcheck, and racecheck for shared memory) until it reports 0 errors."
+        },
+        {
+          "key": "c",
+          "text": "Time it with CUDA events after untimed warm-up launches, with the SM clock printed."
+        },
+        {
+          "key": "d",
+          "text": "Compare the measured bandwidth or FLOP/s with the kernel's roofline ceiling and name the limiter."
+        },
+        {
+          "key": "e",
+          "text": "Fix that one limiter and nothing else, then go back to the check."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "explanation": "Section 1 and the hero: write, check, measure, read the bottleneck, fix one thing, and return to the check, since every fix can introduce a new bug.",
+      "hints": [
+        "Correctness comes before any time.",
+        "The model is read after the measurement it judges."
+      ]
+    },
+    {
+      "id": "cuda-011-q12",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "occupancy",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `theoretical_occupancy(regs, threads, smem=0)` for compute capability 7.5: return `(blocks, percent)`, the resident blocks per SM and the theoretical occupancy in percent, with 32 warp slots, at most 16 blocks, 65,536 registers and 65,536 bytes of shared memory per SM, and registers allocated per warp in units of 256 from four quarters of 16,384 registers, each quarter holding whole warps. A block of `threads` threads occupies `ceil(threads / 32)` warp slots.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def theoretical_occupancy(regs, threads, smem=0):\n    \"\"\"(blocks per SM, theoretical occupancy in percent) on sm_75.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "import math\n\n\ndef theoretical_occupancy(regs, threads, smem=0):\n    \"\"\"(blocks per SM, theoretical occupancy in percent) on sm_75.\"\"\"\n    warps = math.ceil(threads / 32)\n    per_warp = math.ceil(regs * 32 / 256) * 256\n    by_warps = 32 // warps\n    by_regs = (16384 // per_warp) * 4 // warps\n    by_smem = 65536 // smem if smem else 16\n    blocks = min(by_warps, by_regs, by_smem, 16)\n    return blocks, 100.0 * blocks * warps / 32\n",
+      "tests": "assert theoretical_occupancy(10, 256) == (4, 100.0)\nassert theoretical_occupancy(10, 32) == (16, 50.0)\nassert theoretical_occupancy(10, 1024) == (1, 100.0)\nassert theoretical_occupancy(72, 256) == (3, 75.0)\nassert theoretical_occupancy(10, 256, 24576) == (2, 50.0)\nassert theoretical_occupancy(10, 256, 49152) == (1, 25.0)\nassert theoretical_occupancy(33, 256) == (4, 100.0)\nassert theoretical_occupancy(73, 128) == (6, 75.0)\nassert theoretical_occupancy(65, 512) == (1, 50.0)\nassert theoretical_occupancy(255, 32) == (8, 25.0)\nassert theoretical_occupancy(104, 64) == (8, 50.0)\nassert theoretical_occupancy(104, 96) == (5, 46.875)\nassert theoretical_occupancy(10, 112)[0] == 8\nassert theoretical_occupancy(10, 200)[0] == 4\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 4: each resource caps the blocks per SM (warp slots, registers rounded up per warp and packed whole into four quarters, shared memory, the 16-block limit) and the smallest wins; occupancy is resident warps over 32. The runtime's `cudaOccupancyMaxActiveBlocksPerMultiprocessor` returned the same 4, 16 and 1 blocks for SAXPY, 2 and 1 blocks with 24,576 and 49,152 bytes of shared memory per 256-thread block, 8 and 4 blocks for blocks of 112 and 200 threads, and, in post 10's check, 8 blocks for 104 registers in 64-thread blocks, where dividing the whole register file would give 9.",
+      "hints": [
+        "Compute one limit per resource and take the smallest.",
+        "Round registers up per warp; each quarter of 16,384 holds whole warps.",
+        "Do not forget the limit of 16 blocks."
+      ]
+    },
+    {
+      "id": "cuda-011-q13",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o5",
+        "o1"
+      ],
+      "section": "6",
+      "est_minutes": 15,
+      "tags": [
+        "roofline",
+        "transpose",
+        "profiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 06's naive transpose moved 41.5 GB/s, 30% of its copy kernel, and this post's SAXPY reached 91% of its roofline ceiling. Explain (1) why both are judged by bandwidth rather than FLOP/s, (2) why the post says SAXPY has little left to win while the naive transpose has a limiter worth a profiler's time, and (3) which Nsight Compute sections would point at the transpose's limiter, and why this post could not show their numbers.",
+      "kind": "connect",
+      "solution": "1. Both kernels do little or no arithmetic per byte: SAXPY has $I = 2/12 \\approx 0.167$ FLOP per byte, far below the GTX 1650's ridge of 19.5, and a transpose does no arithmetic at all. Their ceilings are set by the bandwidth roof, so their performance is measured as bytes moved over time against the 160 GB/s peak or a copy kernel.\n2. SAXPY at 145.2 GB/s sits at 91% of its ceiling: nothing in its arithmetic or its occupancy (from 64 threads per block up) changes that, so the only lever left is fewer bytes, by fusion. The naive transpose moves the same bytes as a copy at under a third of its rate, so something other than the bytes limits it; post 06 found it, the strided writes that touch 32 lines per warp, and fixed it with a shared-memory tile and padding, reaching 89.5% of the copy.\n3. Nsight Compute's GPU Speed Of Light Throughput would show memory throughput well below the copy's, and its Memory Workload Analysis (sectors per request, the efficiency of global stores) would show the wasted sectors of the column writes; Warp State Statistics would show warps stalled on memory. On the author's laptop `ncu` stopped with `ERR_NVGPUCTRPERM`: the driver denies the performance counters to users who are not administrators, so the post describes the sections from the documentation and measures nothing with them.",
+      "rubric": [
+        {
+          "criterion": "Places both kernels far below the ridge and judges them by bandwidth, with the intensity numbers",
+          "points": 3
+        },
+        {
+          "criterion": "Explains that SAXPY is at 91% of its ceiling with fewer bytes as the only lever, while the transpose is far below a kernel moving the same bytes",
+          "points": 3
+        },
+        {
+          "criterion": "Names the uncoalesced column writes as the transpose's limiter and the sections that would show it",
+          "points": 2
+        },
+        {
+          "criterion": "States that ncu was denied the counters (ERR_NVGPUCTRPERM) so no counter numbers were measured",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "connects": [
+        "cuda-006",
+        "cuda-010"
+      ],
+      "explanation": "Section 6 reads SAXPY against its roofline ceiling and contrasts post 06's naive transpose; section 7 names the Nsight Compute sections and shows why they could not be run here.",
+      "hints": [
+        "Compute each kernel's intensity and compare it with the ridge.",
+        "A kernel far below a copy of the same bytes is limited by how it moves them, not how many."
+      ]
+    },
+    {
+      "id": "cuda-011-q14",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o2",
+        "o1"
+      ],
+      "section": "3",
+      "est_minutes": 12,
+      "tags": [
+        "compute-sanitizer",
+        "limits"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A colleague writes: \"My shared-memory reduction gives the right sum on every test, and racecheck and synccheck both reported 0 errors, so its barriers and warp code are correct.\" Using this post's runs, critique each half of that claim and say what the colleague should conclude.",
+      "kind": "critique",
+      "solution": "A right sum does not prove the synchronization correct. In this post `shared_race --divergent-barrier` produced the right sum in all 64 blocks with a `__syncthreads()` inside `if (tid < stride)`, and post 09's `volatile` tail gave right sums while breaking the warp rule; such code depends on scheduling and compiler behavior that can change with the card, the toolkit or the run.\n\nA clean sanitizer run is strong evidence but not proof either. synccheck reports a barrier error only when threads of a block wait at different barriers on an architecture that does not support it; the version of the divergent tree without a final barrier, whose skipping threads simply exit, ran with 0 errors from compute capability 7.0, because a barrier there waits only for threads that have not exited. memcheck can miss an overflow that lands in a neighboring allocation unless `--padding` is used. And a tool only sees the paths the test inputs and launch sizes exercise.\n\nThe colleague should conclude that the reduction passed these tests, check the code against the rules (every thread reaches every `__syncthreads()`; lanes that exchange data through shared memory are ordered by `__syncwarp()`), and keep the sanitizer runs as one check among several.",
+      "rubric": [
+        {
+          "criterion": "Shows with the post's runs that right results coexisted with broken synchronization",
+          "points": 3
+        },
+        {
+          "criterion": "Explains synccheck's blind spot for exiting threads and the reason (barriers count non-exited threads from 7.0)",
+          "points": 3
+        },
+        {
+          "criterion": "Names another limit (memcheck without padding, or coverage of only the exercised paths)",
+          "points": 2
+        },
+        {
+          "criterion": "States the rules the code must follow regardless of the tools",
+          "points": 2
+        }
+      ],
+      "answer_length": "one to two paragraphs",
+      "explanation": "Section 3 shows a divergent barrier with right sums that synccheck flags only when threads wait at different barriers; section 2 quotes memcheck's padding limit. Rules, not passing runs, decide correctness.",
+      "hints": [
+        "Look at which buggy run of the post printed right sums.",
+        "When did synccheck report 0 errors for a barrier inside a branch?"
+      ]
+    },
+    {
+      "id": "cuda-011-q15",
+      "type": "mcq",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "9",
+      "est_minutes": 2,
+      "tags": [
+        "timing",
+        "sm-clock"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A run of `occupancy_demo` prints `SM clock: 211 MHz before the timed launches, 248 MHz after` and 74.3 GB/s at 256 threads per block. What should be done with its table?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Discard it and rerun once the printed clock is near the card's normal clock under load, since the kernel was timed far below it.",
+          "correct": true,
+          "feedback": "Right: the post keeps only runs whose printed clock is near 1,740 MHz; this one ran at about an eighth of it."
+        },
+        {
+          "key": "b",
+          "text": "Keep it: SAXPY is memory bound, so the SM clock cannot change its bandwidth.",
+          "correct": false,
+          "feedback": "This run shows otherwise: at 211 MHz the same kernel moved 74.3 GB/s instead of 145.1, because too few instructions issue to keep memory busy."
+        },
+        {
+          "key": "c",
+          "text": "Scale every time by 1,740 / 211 to correct it to the boost clock.",
+          "correct": false,
+          "feedback": "Bandwidth does not scale with the SM clock in a known way; a measurement taken in the wrong state is rerun, not corrected."
+        },
+        {
+          "key": "d",
+          "text": "Average it with a full-clock run to get a typical figure.",
+          "correct": false,
+          "feedback": "Averaging mixes two machine states and describes neither."
+        }
+      ],
+      "explanation": "Section 9: the harness prints the SM clock, measured as `clock64()` cycles over CUDA-event time, so that a run taken while the laptop's power state cut the clock, here 211 to 248 MHz, is caught and thrown away.",
+      "hints": [
+        "Compare the printed clock with the 1,740 MHz of the run the post keeps."
+      ]
+    },
+    {
+      "id": "cuda-011-q16",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "bandwidth",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "From the post's measured table, SAXPY moved 107.4 GB/s with blocks of 32 threads and 145.1 GB/s with blocks of 256. Give (a) the bandwidth lost at 32 threads per block as a percentage of the 256-thread figure, and (b) the 256-thread bandwidth as a percentage of the 160 GB/s theoretical peak.",
+      "stimulus": {
+        "kind": "code",
+        "language": "text",
+        "content": "block  blocks/SM  warps/SM  theoretical  time (ms)    GB/s  % of peak\n   32         16        16          50%      1.874   107.4        67%\n  256          4        32         100%      1.388   145.1        91%"
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "bandwidth lost",
+            "value": 26.0,
+            "tolerance": 0.5,
+            "unit": "%"
+          },
+          {
+            "label": "share of peak",
+            "value": 90.7,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "1 - 107.4 / 145.1 = 0.2598, 26.0%; 145.1 / 160 = 0.907, 90.7% (the table rounds to 91%). Computing 145.1 / 107.4 - 1 = 35.1% answers a different question and is rejected.",
+      "explanation": "Section 5: with one-warp blocks the 16-block limit leaves half the warp slots empty and the kernel loses about a quarter of its bandwidth; from 64 threads up it stays at 91% of the peak.",
+      "hints": [
+        "A loss is measured against the larger figure.",
+        "Divide by 160 for the share of the peak."
+      ]
+    }
+  ]
+}
