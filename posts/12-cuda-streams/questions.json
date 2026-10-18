@@ -1,0 +1,701 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-012",
+  "next_ordinal": 17,
+  "questions": [
+    {
+      "id": "cuda-012-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "default-stream",
+        "engines"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A program copies `A` and `B` to the device with `cudaMemcpy`, launches a kernel and copies `C` back, all on the default stream. What are the SMs doing while `A` and `B` are being copied in?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Running the kernel on the elements that have already arrived.",
+          "correct": false,
+          "feedback": "The kernel is a later command in the same stream; it starts only when both copies have finished."
+        },
+        {
+          "key": "b",
+          "text": "Helping the copy engine move the data, which is why the copy is fast.",
+          "correct": false,
+          "feedback": "Copies are done by the copy engines, DMA units that work without the SMs."
+        },
+        {
+          "key": "c",
+          "text": "Nothing: the kernel waits for the copies, so the SMs are idle.",
+          "correct": true,
+          "feedback": "Right: on one stream each command starts after the one before it, so each engine works only in its own stage."
+        },
+        {
+          "key": "d",
+          "text": "Running the previous iteration's kernel, because the default stream overlaps them.",
+          "correct": false,
+          "feedback": "The default stream runs its commands in order; nothing of this program overlaps."
+        }
+      ],
+      "explanation": "Section 1: on the default stream each command starts only when the one before it has finished, so the SMs wait through the copies and the copy engines wait through the kernel.",
+      "hints": [
+        "Ask in what order commands on one stream run."
+      ]
+    },
+    {
+      "id": "cuda-012-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "pinned-memory",
+        "pageable"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A pipeline issues `cudaMemcpyAsync` on four streams from host arrays allocated with `std::vector`. It runs no faster than the serial version. What is the reason?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Each stream needs a copy engine of its own, and the card has fewer than four, so the streams queue for one engine.",
+          "correct": false,
+          "feedback": "Streams share the engines by design; from pinned memory the same four streams do overlap, so the engine count is not the cause."
+        },
+        {
+          "key": "b",
+          "text": "Four streams are too few; overlap begins at about eight.",
+          "correct": false,
+          "feedback": "Four streams overlap fine from pinned memory; the number of streams is not the limit here."
+        },
+        {
+          "key": "c",
+          "text": "The kernel is too short to hide anything.",
+          "correct": false,
+          "feedback": "Even with a long kernel, copies from pageable memory do not overlap it."
+        },
+        {
+          "key": "d",
+          "text": "The CPU must first stage pageable memory into a pinned buffer, which makes each copy synchronous.",
+          "correct": true,
+          "feedback": "Right: a DMA engine cannot read pageable memory directly, and the Guide warns such async copies might be synchronous."
+        }
+      ],
+      "explanation": "Section 3: pageable memory is staged through a driver-owned pinned buffer by the CPU, and the Programming Guide warns that async copies involving memory that is not page-locked might be synchronous; an overlap with a kernel requires page-locked host memory.",
+      "hints": [
+        "Ask whether a DMA engine can read memory the operating system may move."
+      ]
+    },
+    {
+      "id": "cuda-012-q03",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "default-stream",
+        "implicit-synchronization"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A working four-stream pipeline, compiled with plain `nvcc` and no `--default-stream` flag, gains a `cudaMemset(d_flags, 0, bytes)` with no stream argument, issued between chunk 1's commands and chunk 2's. What happens to the overlap?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It goes to the legacy default stream, which waits for earlier work in every stream and holds all later work.",
+          "correct": true,
+          "feedback": "Right: any command to the NULL stream is one of the Guide's implicit synchronizations."
+        },
+        {
+          "key": "b",
+          "text": "Nothing changes: a memset runs on the device's own engines, so it executes alongside the copies and kernels of the four streams.",
+          "correct": false,
+          "feedback": "A device memory set is itself on the Guide's list of implicit synchronizations, and here it also goes to the NULL stream."
+        },
+        {
+          "key": "c",
+          "text": "Only chunk 2 is affected, because the memset goes to the stream that was used last.",
+          "correct": false,
+          "feedback": "A call with no stream argument goes to the default stream, not to the last stream used."
+        },
+        {
+          "key": "d",
+          "text": "The program stops with an error, because commands without a stream cannot be mixed with commands on streams created by the program.",
+          "correct": false,
+          "feedback": "Mixing them is legal and silent; it costs the overlap, not correctness."
+        }
+      ],
+      "explanation": "Section 2: without `--default-stream per-thread` the default stream is the legacy NULL stream, and the Programming Guide lists any command to it (and a device memory set) among the operations that keep commands of different streams from running concurrently.",
+      "hints": [
+        "Which stream does a call with no stream argument go to?",
+        "The Guide lists the operations that act as implicit synchronizations between streams."
+      ]
+    },
+    {
+      "id": "cuda-012-q04",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "asyncEngineCount",
+        "copy-engines"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A card reports `asyncEngineCount` equal to 1. By the Programming Guide's definitions, what can it overlap?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Nothing: a value of 1 means copies are synchronous.",
+          "correct": false,
+          "feedback": "Any value above zero lets a copy run concurrently with a kernel."
+        },
+        {
+          "key": "b",
+          "text": "A copy in one direction with a kernel, but not a copy in and a copy out at the same time.",
+          "correct": true,
+          "feedback": "Right: greater than zero allows copy and kernel overlap; overlapping copies to and from the device needs a value of 2."
+        },
+        {
+          "key": "c",
+          "text": "A copy in and a copy out at the same time on its one engine, but never a copy at the same time as a running kernel.",
+          "correct": false,
+          "feedback": "It is the other way round: both directions at once is the case that needs 2."
+        },
+        {
+          "key": "d",
+          "text": "Kernels of different streams at the same time, which is what the number of copy engines reports.",
+          "correct": false,
+          "feedback": "Concurrent kernels are reported by `concurrentKernels`, a different property."
+        }
+      ],
+      "explanation": "Section 2 quotes the Guide: a device can copy during a kernel when `asyncEngineCount` is greater than zero, and can overlap copies to and from the device when it is equal to 2. Concurrent kernels are `concurrentKernels`.",
+      "hints": [
+        "The Guide gives two thresholds for this property."
+      ]
+    },
+    {
+      "id": "cuda-012-q05",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "when-streams-help"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On a card whose copies in and out do overlap, which of these workloads, each with 16 ms of copies in and 16 ms of copies out, gains the largest speed-up from a pipeline of many streams?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A kernel of 1 ms.",
+          "correct": false,
+          "feedback": "The pipeline can hide only stages that can run beside others; with a 1 ms kernel the copies dominate and little is hidden."
+        },
+        {
+          "key": "b",
+          "text": "A kernel of 200 ms.",
+          "correct": false,
+          "feedback": "The kernel dominates: hiding the copies saves at most their share, and the time stays near 200 ms."
+        },
+        {
+          "key": "c",
+          "text": "A kernel of 16 ms.",
+          "correct": true,
+          "feedback": "Right: three comparable stages on three engines is the case where the ideal speed-up approaches 3."
+        },
+        {
+          "key": "d",
+          "text": "All three gain the same, since every pipeline approaches 3 times.",
+          "correct": false,
+          "feedback": "The speed-up approaches 3 only when the three stages are equal; otherwise the longest stage caps it."
+        }
+      ],
+      "explanation": "Sections 5 and 7: a pipeline cannot beat its longest engine's total, so the serial time over that total is the ceiling: 33 over 16 for the 1 ms kernel, 48 over 16 for the 16 ms kernel, 232 over 200 for the 200 ms kernel.",
+      "hints": [
+        "Find the longest stage in each case.",
+        "Divide the serial time by that stage."
+      ]
+    },
+    {
+      "id": "cuda-012-q06",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 3,
+      "tags": [
+        "busy-share",
+        "serial"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Serially on the default stream, a workload's copy in takes 8.0 ms, its kernel 4.0 ms and its copy out 4.0 ms. Give (a) the share of the run in which the SMs are busy and (b) the share in which the host-to-device copy engine is busy, in percent.",
+      "answer": {
+        "parts": [
+          {
+            "label": "SMs busy",
+            "value": 25.0,
+            "tolerance": 0.5,
+            "unit": "%"
+          },
+          {
+            "label": "copy-in engine busy",
+            "value": 50.0,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "Serial time 8.0 + 4.0 + 4.0 = 16.0 ms; SMs 4.0 / 16.0 = 25%; copy in 8.0 / 16.0 = 50%. Dividing by 3 stages instead of by time gives 33%, which the tolerance rejects.",
+      "explanation": "Section 1: in a serial run each engine works only during its own stage, so its busy share is its stage time over the sum of the three.",
+      "hints": [
+        "Add the three stage times first.",
+        "Each engine's share is its own stage over that sum."
+      ]
+    },
+    {
+      "id": "cuda-012-q07",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 5,
+      "tags": [
+        "streams-model",
+        "makespan"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The workload has whole-array stage times of 8.0 ms (copy in), 4.0 ms (kernel) and 4.0 ms (copy out). It is cut into 4 equal chunks on 4 streams, on a card with one copy engine per direction that runs both at full speed together. Using the post's model (each engine takes its stages in issue order; nothing is charged for issuing), give (a) the pipelined time and (b) the speed-up over the serial run.",
+      "answer": {
+        "parts": [
+          {
+            "label": "pipelined time",
+            "value": 10.0,
+            "tolerance": 0.05,
+            "unit": "ms"
+          },
+          {
+            "label": "speed-up",
+            "value": 1.6,
+            "tolerance": 0.02,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "Per chunk 2.0, 1.0 and 1.0 ms. Copies in end at 2, 4, 6, 8; kernels at 3, 5, 7, 9; copies out at 4, 6, 8, 10: 10.0 ms, as streams_model.pipeline(4, 8, 4, 4, shared_copy=False) prints. Closed form: the per-chunk sum 4.0 plus 3 more chunks of the longest stage, 2.0. Speed-up 16 / 10 = 1.60. The equal-stage rule N + 2 = 6 stage-times of 2.0 ms would give 12.0 ms and 1.33, which the tolerance rejects.",
+      "explanation": "Section 5: with unequal stages the pipeline is paced by its longest stage. After the first chunk has filled the pipeline, each further chunk adds the longest stage's per-chunk time, so the time is the per-chunk sum plus $(N - 1)$ times the longest per-chunk stage.",
+      "hints": [
+        "Divide each stage time by the number of chunks.",
+        "Track when each engine finishes each chunk; the copy-in engine is the busiest."
+      ]
+    },
+    {
+      "id": "cuda-012-q08",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4",
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "streams-model",
+        "one-copy-at-a-time"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Take the same workload (8.0 ms in, 4.0 ms kernel, 4.0 ms out) on a machine where only one copy runs at a time. However many streams it is split across, give (a) the shortest time a pipeline can reach and (b) the most time it can save against the serial run.",
+      "answer": {
+        "parts": [
+          {
+            "label": "shortest pipelined time",
+            "value": 12.0,
+            "tolerance": 0.05,
+            "unit": "ms"
+          },
+          {
+            "label": "most time saved",
+            "value": 4.0,
+            "tolerance": 0.05,
+            "unit": "ms"
+          }
+        ]
+      },
+      "precision_note": "One copy at a time, the copies take 8.0 + 4.0 = 12.0 ms whatever the chunking, and the kernel can run under them: streams_model.pipeline(n, 8, 4, 4, shared_copy=True) gives 12.0 ms for 2, 4, 8 and 16 chunks. Saved 16.0 - 12.0 = 4.0 ms, the kernel's time. The two-engine answer of 10.0 ms is rejected.",
+      "explanation": "Section 5: when the copies share the bus one at a time, their sum is a floor no pipeline can go under, and the only stage it can hide is the kernel.",
+      "hints": [
+        "Which stages can still run at the same time as each other?",
+        "Add the stages that cannot."
+      ]
+    },
+    {
+      "id": "cuda-012-q09",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "pinned-memory",
+        "measured"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the post's measured table, vector addition with its copies took 53.60 ms serially from pageable memory and 18.95 ms serially from pinned memory, and 50.01 ms on four streams from pageable memory. How many times faster is the pinned serial run than the pageable serial run?",
+      "answer": {
+        "value": 2.83,
+        "tolerance": 0.02,
+        "unit": ""
+      },
+      "precision_note": "53.60 / 18.95 = 2.828, the speed-up column of the serial, pinned row printed by snippets/streams.cu. The inverse ratio 0.35 is rejected.",
+      "explanation": "Section 6: pinning removes the CPU's staging copy, the largest single gain in the table, before any stream is used; the four-stream pageable run shows that streams cannot recover it.",
+      "hints": [
+        "A speed-up is the slower time over the faster one."
+      ]
+    },
+    {
+      "id": "cuda-012-q10",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "pinned-memory",
+        "api"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which CUDA runtime call does the post's harness use to allocate its page-locked host arrays?",
+      "answer": {
+        "model": "cudaMallocHost",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|possibly|probably|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\W+(cudamallochost|cudahostalloc)\\b)[\\s\\S]*\\b(cudamallochost|cudahostalloc)\\b"
+        ]
+      },
+      "explanation": "Section 3: `cudaMallocHost` (or `cudaHostAlloc`) allocates pinned host memory, freed with `cudaFreeHost`; `cudaHostRegister` pins a range already allocated.",
+      "hints": [
+        "Its name says it allocates on the host, through the CUDA runtime."
+      ]
+    },
+    {
+      "id": "cuda-012-q11",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "pitfalls",
+      "est_minutes": 2,
+      "tags": [
+        "events",
+        "cross-stream"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Stream B must not start a kernel until a copy issued earlier on stream A has finished, and the host must not block. An event has been recorded on stream A after the copy. Which runtime call makes stream B wait for it?",
+      "answer": {
+        "model": "cudaStreamWaitEvent(B, event): later commands on stream B wait until the event has completed.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|possibly|probably|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\W+cudastreamwaitevent\\b)[\\s\\S]*\\bcudastreamwaitevent\\b"
+        ]
+      },
+      "explanation": "Common pitfalls and section 2: different streams are never ordered for free; `cudaStreamWaitEvent` delays the commands issued to a stream after the call until the event completes, without blocking the host as `cudaEventSynchronize` would.",
+      "hints": [
+        "The call takes a stream and an event."
+      ]
+    },
+    {
+      "id": "cuda-012-q12",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "pipeline",
+        "issue-order"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of a streamed vector addition in the order the post's program does them, for one chunk of the work.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Launch the kernel on the chunk, on its stream."
+        },
+        {
+          "key": "b",
+          "text": "Allocate the pinned host arrays and create the streams, once."
+        },
+        {
+          "key": "c",
+          "text": "Read the chunk of `h.C` on the host."
+        },
+        {
+          "key": "d",
+          "text": "Issue the copies of the chunk of `A` and `B` in, on its stream."
+        },
+        {
+          "key": "e",
+          "text": "Synchronize with the stream (or the device, or an event)."
+        },
+        {
+          "key": "f",
+          "text": "Issue the copy of the chunk of `C` out, on the same stream."
+        }
+      ],
+      "answer": [
+        "b",
+        "d",
+        "a",
+        "f",
+        "e",
+        "c"
+      ],
+      "explanation": "Sections 3 and 4: pinned memory and streams are set up once outside the timed work; within a stream the kernel follows its copies in and the copy out follows the kernel; the loop returns before the work runs, so the host synchronizes before it reads `h.C`.",
+      "hints": [
+        "Allocation is never inside the pipeline.",
+        "The host may read a result only after it knows the copy out finished."
+      ]
+    },
+    {
+      "id": "cuda-012-q13",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o5",
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "api",
+        "properties"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each name to what it means for a pipeline.",
+      "left": [
+        {
+          "key": "a",
+          "text": "`asyncEngineCount` equal to 2"
+        },
+        {
+          "key": "b",
+          "text": "`concurrentKernels` equal to 1"
+        },
+        {
+          "key": "c",
+          "text": "`cudaStreamNonBlocking`"
+        },
+        {
+          "key": "d",
+          "text": "`--default-stream per-thread`"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "the device can overlap copies to and from it"
+        },
+        {
+          "key": "q",
+          "text": "kernels of different streams can run at the same time"
+        },
+        {
+          "key": "r",
+          "text": "a created stream that does not synchronize with the legacy default stream"
+        },
+        {
+          "key": "s",
+          "text": "each host thread's default stream is an ordinary stream"
+        },
+        {
+          "key": "t",
+          "text": "host memory is page-locked"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s"
+      },
+      "explanation": "Section 2: the Guide defines the two device properties; the flag on `cudaStreamCreateWithFlags` and the `nvcc` option both remove the legacy default stream's implicit synchronization in different ways. Page-locked memory is a property of an allocation, not of a stream.",
+      "hints": [
+        "Two of the names are device properties, two change what the default stream does."
+      ]
+    },
+    {
+      "id": "cuda-012-q14",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 12,
+      "tags": [
+        "streams-model",
+        "makespan"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `makespan(n, a, k, b)`: the time a pipeline of `n` chunks takes when each chunk is copied in (`a` ms), computed (`k` ms) and copied out (`b` ms) in that order, on three engines (copy in, SMs, copy out) that each take the chunks in issue order and each run one stage at a time. Nothing is charged for issuing a command.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def makespan(n, a, k, b):\n    \"\"\"Pipelined time of n chunks with per-chunk stage times a (copy in), k (kernel), b (copy out).\n\n    One engine per stage; each engine takes the chunks in order.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def makespan(n, a, k, b):\n    \"\"\"Pipelined time of n chunks with per-chunk stage times a (copy in), k (kernel), b (copy out).\n\n    One engine per stage; each engine takes the chunks in order.\"\"\"\n    free = [0.0, 0.0, 0.0]\n    for _ in range(n):\n        done = 0.0\n        for e, t in enumerate((a, k, b)):\n            done = max(done, free[e]) + t\n            free[e] = done\n    return free[2]\n",
+      "tests": "assert makespan(1, 2, 3, 4) == 9\nassert makespan(4, 1, 1, 1) == 6\nassert makespan(4, 2, 1, 1) == 10\nassert makespan(3, 1, 3, 1) == 11\nassert makespan(5, 1, 1, 4) == 22\nassert abs(makespan(64, 1.0, 1.0, 1.0) - 66.0) < 1e-9\nassert abs(makespan(8, 0.5, 0.25, 0.75) - 6.75) < 1e-9\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 5: a stage starts when the stage before it in its chunk has finished and its engine is free, which is the model's `simulate` and `pipeline`. For identical chunks this equals the per-chunk sum plus $(n - 1)$ times the longest stage, so a closed form passes the same tests.",
+      "hints": [
+        "Keep the time each engine becomes free.",
+        "A stage starts at the later of its chunk's previous stage and its engine's free time."
+      ]
+    },
+    {
+      "id": "cuda-012-q15",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o4",
+        "o1"
+      ],
+      "section": "7",
+      "est_minutes": 15,
+      "tags": [
+        "vector-addition",
+        "fusion",
+        "pipeline"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "connects": [
+        "cuda-002",
+        "cuda-014"
+      ],
+      "prompt": "Post 02 found that vector addition with its copies barely beats the CPU, because the copies dominate. Using this post's measurements on the GTX 1650 (kernel about 1.4 ms, copies in and out about 18 ms together for 2^24 floats), explain (1) how much a pipeline of streams can save for this workload on this laptop and why, (2) what that saving would be on a card whose copies in and out fully overlap, and (3) why post 02's advice to keep data on the device and post 14's fusion are the bigger levers.",
+      "kind": "connect",
+      "solution": "1. A pipeline hides only what can run beside something else. On this laptop the copies in and out mostly take turns (one copy each way took only about 15% less time together than apart), so the copies end to end, about 18 ms, are close to a floor; the kernel, about 1.4 ms, is all the pipeline can hide, under a tenth of the run. The measured best pinned pipelines landed close to that floor.\n2. With both directions at full speed together, the pipeline is paced by its longest stage, the copy in (about 11 ms here), so with many chunks the run approaches that, about 11 ms against about 19 ms serial: the model's best is about 1.7 times, still far from the textbook 3, because the stages are unequal.\n3. Both levers remove bytes from the bus instead of hiding them. Keeping the arrays on the device across many kernels (post 02's training-step argument) pays the bus once for many kernels, and fusing a chain of elementwise kernels into one (post 14) removes intermediate round trips through memory. A kernel this small cannot hide its copies, so the way to win is to cross the bus less.",
+      "rubric": [
+        {
+          "criterion": "Identifies the copies end to end as the near-floor on this laptop and the kernel as the most that can be hidden, with numbers",
+          "points": 3
+        },
+        {
+          "criterion": "Applies the longest-stage rule for fully overlapping copies and gives roughly 1.7 times, not 3",
+          "points": 3
+        },
+        {
+          "criterion": "Explains that keeping data on the device and fusion reduce the bytes crossing the bus, with the right posts",
+          "points": 3
+        }
+      ],
+      "answer_length": "three short paragraphs",
+      "explanation": "Sections 5, 6 and 7: a pipeline's time cannot go below its longest engine's total, which is the copy in with two copy engines and the sum of the copies with one at a time. Vector addition's kernel is too small a share for streams to matter much; post 02 and post 14 remove traffic instead.",
+      "hints": [
+        "Find the stage or stages that cannot overlap anything on this machine.",
+        "Compare hiding bytes with not moving them."
+      ]
+    },
+    {
+      "id": "cuda-012-q16",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5",
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 12,
+      "tags": [
+        "full-duplex",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A reader argues: \"PCIe is full duplex and my card reports `asyncEngineCount` greater than 1, so my four-stream pipeline will reach the model's 'both directions at once' time.\" Critique the argument using what this post measured, and design a quick check the reader can run on their own machine before believing it.",
+      "kind": "critique",
+      "solution": "The argument confuses capability with throughput. A full-duplex link and two or more copy engines make overlapping copies possible; they do not say both directions run at full speed together on a given machine. On the author's laptop the GTX 1650 reported `asyncEngineCount 6`, yet one 64 MiB copy each way took only about 15% less time at the same time on two streams than one after the other, and every pinned pipeline landed near the copies end to end, the model's 'one copy at a time' floor, far above its 'both directions at once' prediction. One bound the measurement is consistent with is the host's memory: a single DDR4-2667 module peaks at 21.3 GB/s, and the two directions alone ask for about 22 GB/s of it.\n\nThe check: (1) print `asyncEngineCount` and `concurrentKernels`; (2) time one copy in and one copy out of the same size from pinned memory, one after the other on one stream and then at the same time on two streams, with events, after a warm-up, the fastest of several passes; (3) if the concurrent time is close to the longer of the two copies, the directions overlap; if it is close to their sum, they do not; (4) feed the measured stage times into the streams model and compare both of its columns with a measured serial and pipelined run.",
+      "rubric": [
+        {
+          "criterion": "Separates the capability (duplex link, engine count) from the measured overlap, with this post's numbers",
+          "points": 3
+        },
+        {
+          "criterion": "Designs the two-way copy test with pinned memory, events, warm-up and repeated passes, and says how to read it",
+          "points": 3
+        },
+        {
+          "criterion": "Uses the model's two columns to turn the measured stage times into a prediction to check",
+          "points": 2
+        }
+      ],
+      "answer_length": "two paragraphs",
+      "explanation": "Section 6: the two-way copy test and the table show the copies taking turns on this laptop despite the engine count; section 7 gives the check a program can run before relying on an overlap.",
+      "hints": [
+        "What did the post's two-way copy line show?",
+        "A capability is a ceiling, not a measurement."
+      ]
+    }
+  ]
+}

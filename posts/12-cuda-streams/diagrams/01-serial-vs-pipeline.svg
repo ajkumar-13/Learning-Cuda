@@ -1,67 +1,238 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Serial execution runs copy and compute one at a time; splitting the work across streams overlaps them into a pipeline</title>
-  <desc id="d">Two timelines. The top, serial with the default stream, is one row of twelve blocks: for each of four chunks a host-to-device copy, a kernel, and a device-to-host copy, end to end, twelve stage-times total, because only one engine works at a time so the other two sit idle, about 33 percent utilization. The bottom, pipelined with four streams, has three engine rows: the host-to-device copy engine, the compute engine, and the device-to-host copy engine. Each runs its four chunks staggered diagonally so that in the steady state, highlighted with a green band, all three engines are busy at once. The pipeline finishes in six stage-times instead of twelve, a 2 times speedup here that approaches 3 times with more chunks as utilization approaches 100 percent.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
-    .blk{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .band{fill:none;stroke:var(--cuda-success);stroke-width:1.5;stroke-dasharray:5 3;}
-    .divider{stroke:var(--cuda-grid);stroke-width:1;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="40">The serial trap, and the pipeline that fixes it</text>
-
-  <!-- SERIAL -->
-  <text class="label" x="40" y="100">Serial (default stream): one engine at a time</text>
-  <g>
-    <rect class="blk" x="160" y="112" width="44" height="34"/><text class="mono" x="182" y="133" text-anchor="middle">H2D</text>
-    <rect class="blk" x="204" y="112" width="44" height="34"/><text class="mono" x="226" y="133" text-anchor="middle">K</text>
-    <rect class="blk" x="248" y="112" width="44" height="34"/><text class="mono" x="270" y="133" text-anchor="middle">D2H</text>
-    <rect class="blk" x="292" y="112" width="44" height="34"/><text class="mono" x="314" y="133" text-anchor="middle">H2D</text>
-    <rect class="blk" x="336" y="112" width="44" height="34"/><text class="mono" x="358" y="133" text-anchor="middle">K</text>
-    <rect class="blk" x="380" y="112" width="44" height="34"/><text class="mono" x="402" y="133" text-anchor="middle">D2H</text>
-    <rect class="blk" x="424" y="112" width="44" height="34"/><text class="mono" x="446" y="133" text-anchor="middle">H2D</text>
-    <rect class="blk" x="468" y="112" width="44" height="34"/><text class="mono" x="490" y="133" text-anchor="middle">K</text>
-    <rect class="blk" x="512" y="112" width="44" height="34"/><text class="mono" x="534" y="133" text-anchor="middle">D2H</text>
-    <rect class="blk" x="556" y="112" width="44" height="34"/><text class="mono" x="578" y="133" text-anchor="middle">H2D</text>
-    <rect class="blk" x="600" y="112" width="44" height="34"/><text class="mono" x="622" y="133" text-anchor="middle">K</text>
-    <rect class="blk" x="644" y="112" width="44" height="34"/><text class="mono" x="666" y="133" text-anchor="middle">D2H</text>
-  </g>
-
-  <line class="divider" x1="40" y1="206" x2="920" y2="206"/>
-
-  <!-- PIPELINED -->
-  <text class="label" x="40" y="244">Pipelined (4 streams): engines overlap</text>
-  <text class="small" x="40" y="312" >H2D copy</text>
-  <text class="small" x="40" y="352">compute</text>
-  <text class="small" x="40" y="392">D2H copy</text>
-  <!-- steady-state overlap band -->
-  <rect class="band" x="408" y="296" width="208" height="116" rx="6"/>
-  <text class="small" x="512" y="430" text-anchor="middle" fill="var(--cuda-success)">all 3 engines busy</text>
-  <!-- H2D row -->
-  <g>
-    <rect class="blk" x="200" y="300" width="100" height="28"/><text class="mono" x="250" y="319" text-anchor="middle">1</text>
-    <rect class="blk" x="304" y="300" width="100" height="28"/><text class="mono" x="354" y="319" text-anchor="middle">2</text>
-    <rect class="blk" x="408" y="300" width="100" height="28"/><text class="mono" x="458" y="319" text-anchor="middle">3</text>
-    <rect class="blk" x="512" y="300" width="100" height="28"/><text class="mono" x="562" y="319" text-anchor="middle">4</text>
-  </g>
-  <!-- compute row -->
-  <g>
-    <rect class="blk" x="304" y="340" width="100" height="28"/><text class="mono" x="354" y="359" text-anchor="middle">1</text>
-    <rect class="blk" x="408" y="340" width="100" height="28"/><text class="mono" x="458" y="359" text-anchor="middle">2</text>
-    <rect class="blk" x="512" y="340" width="100" height="28"/><text class="mono" x="562" y="359" text-anchor="middle">3</text>
-    <rect class="blk" x="616" y="340" width="100" height="28"/><text class="mono" x="666" y="359" text-anchor="middle">4</text>
-  </g>
-  <!-- D2H row -->
-  <g>
-    <rect class="blk" x="408" y="380" width="100" height="28"/><text class="mono" x="458" y="399" text-anchor="middle">1</text>
-    <rect class="blk" x="512" y="380" width="100" height="28"/><text class="mono" x="562" y="399" text-anchor="middle">2</text>
-    <rect class="blk" x="616" y="380" width="100" height="28"/><text class="mono" x="666" y="399" text-anchor="middle">3</text>
-    <rect class="blk" x="720" y="380" width="100" height="28"/><text class="mono" x="770" y="399" text-anchor="middle">4</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-serial-vs-pipeline-title" aria-describedby="cuda-01-serial-vs-pipeline-desc">
+<title id="cuda-01-serial-vs-pipeline-title">Streams hide the kernel behind the copies, not the copies</title>
+<desc id="cuda-01-serial-vs-pipeline-desc">Two timelines on one axis in milliseconds, each with lanes for the copy in, the kernel and the copy out of 16,777,216 floats with 64 extra rounds of work per element. Top, serial: A and B copied in, 11.01 ms together, then the kernel 9.44 ms, then C copied out 6.79 ms, one engine busy at a time; the measured serial run took 26.62 ms. Bottom, four streams: four chunks, each with bars A, B, the kernel and C that end at the CUDA events of the fastest pass, with starts inferred; the kernel of one chunk runs while the next chunk is copied in, and the copies in and out mostly follow one another. The last copy out ends at 18.32 ms, near the 17.80 ms the two copies take end to end.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-ink { fill: var(--cuda-orange-ink); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .s-border { stroke: var(--cuda-border); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .w075 { stroke-width: 0.75; }
+</style>
+<defs>
+<marker id="cuda-01-serial-vs-pipeline-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="701">Streams hide the kernel behind the copies, not the copies</text>
+<text x="40" y="76" class="t-subtitle" data-w="717">GTX 1650 at about 1,005 MHz, CUDA 12.3, October 2026; bars end at CUDA events, starts inferred.</text>
+<text x="40" y="124" class="t-head" data-w="401">Serial, pinned memory: one engine busy at a time</text>
+<text x="40" y="156" class="t-label" data-w="48">copy in</text>
+<path d="M176,168 L880,168" class="s-border w075 nofill"/>
+<text x="40" y="188" class="t-label" data-w="41">kernel</text>
+<path d="M176,200 L880,200" class="s-border w075 nofill"/>
+<text x="40" y="220" class="t-label" data-w="58">copy out</text>
+<path d="M176,232 L880,232" class="s-border w075 nofill"/>
+<g data-grid="skip">
+<rect x="176" y="140" width="129.18" height="24" rx="4" class="f-green-soft"/>
+<rect x="176" y="140" width="129.18" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="240.59" y="158" text-anchor="middle" class="t-label" data-w="26">A in</text>
+<rect x="305.18" y="140" width="129.18" height="24" rx="4" class="f-green-soft"/>
+<rect x="305.18" y="140" width="129.18" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="369.78" y="158" text-anchor="middle" class="t-label" data-w="26">B in</text>
+<rect x="434.37" y="172" width="221.53" height="24" rx="4" class="f-orange-soft"/>
+<rect x="434.37" y="172" width="221.53" height="24" rx="4" class="w1 nofill s-orange" data-fit="skip"/>
+<text x="545.13" y="190" text-anchor="middle" class="t-label" data-w="41">kernel</text>
+<rect x="655.89" y="204" width="159.34" height="24" rx="4" class="f-green-soft"/>
+<rect x="655.89" y="204" width="159.34" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="735.56" y="222" text-anchor="middle" class="t-label" data-w="37">C out</text>
+<text x="823.23" y="221" class="t-value" data-w="64">26.62 ms</text>
+</g>
+<text x="40" y="288" class="t-head" data-w="334">Four streams: chunk 1 to 4, each in order</text>
+<text x="40" y="320" class="t-label" data-w="48">copy in</text>
+<path d="M176,332 L880,332" class="s-border w075 nofill"/>
+<text x="40" y="352" class="t-label" data-w="41">kernel</text>
+<path d="M176,364 L880,364" class="s-border w075 nofill"/>
+<text x="40" y="384" class="t-label" data-w="58">copy out</text>
+<path d="M176,396 L880,396" class="s-border w075 nofill"/>
+<g data-grid="skip">
+<rect x="176.79" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="176.79" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="192.94" y="322" text-anchor="middle" class="t-label" data-w="18">A1</text>
+<rect x="210.82" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="210.82" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="226.97" y="322" text-anchor="middle" class="t-label" data-w="18">B1</text>
+<rect x="243.82" y="336" width="55.38" height="24" rx="4" class="f-orange-soft"/>
+<rect x="243.82" y="336" width="55.38" height="24" rx="4" class="w1 nofill s-orange" data-fit="skip"/>
+<text x="271.51" y="354" text-anchor="middle" class="t-label" data-w="9">1</text>
+<rect x="321.32" y="368" width="39.83" height="24" rx="4" class="f-green-soft"/>
+<rect x="321.32" y="368" width="39.83" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="341.23" y="386" text-anchor="middle" class="t-label" data-w="19">C1</text>
+<rect x="244.14" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="244.14" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="260.29" y="322" text-anchor="middle" class="t-label" data-w="18">A2</text>
+<rect x="285.21" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="285.21" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="301.36" y="322" text-anchor="middle" class="t-label" data-w="18">B2</text>
+<rect x="318.44" y="336" width="55.38" height="24" rx="4" class="f-orange-soft"/>
+<rect x="318.44" y="336" width="55.38" height="24" rx="4" class="w1 nofill s-orange" data-fit="skip"/>
+<text x="346.13" y="354" text-anchor="middle" class="t-label" data-w="9">2</text>
+<rect x="398.05" y="368" width="39.83" height="24" rx="4" class="f-green-soft"/>
+<rect x="398.05" y="368" width="39.83" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="417.97" y="386" text-anchor="middle" class="t-label" data-w="19">C2</text>
+<rect x="340.12" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="340.12" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="356.27" y="322" text-anchor="middle" class="t-label" data-w="18">A3</text>
+<rect x="402.31" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="402.31" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="418.45" y="322" text-anchor="middle" class="t-label" data-w="18">B3</text>
+<rect x="435.07" y="336" width="55.38" height="24" rx="4" class="f-orange-soft"/>
+<rect x="435.07" y="336" width="55.38" height="24" rx="4" class="w1 nofill s-orange" data-fit="skip"/>
+<text x="462.76" y="354" text-anchor="middle" class="t-label" data-w="9">3</text>
+<rect x="496.14" y="368" width="39.83" height="24" rx="4" class="f-green-soft"/>
+<rect x="496.14" y="368" width="39.83" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="516.06" y="386" text-anchor="middle" class="t-label" data-w="19">C3</text>
+<rect x="436.8" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="436.8" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="452.95" y="322" text-anchor="middle" class="t-label" data-w="18">A4</text>
+<rect x="479.51" y="304" width="32.3" height="24" rx="4" class="f-green-soft"/>
+<rect x="479.51" y="304" width="32.3" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="495.66" y="322" text-anchor="middle" class="t-label" data-w="18">B4</text>
+<rect x="512.04" y="336" width="55.38" height="24" rx="4" class="f-orange-soft"/>
+<rect x="512.04" y="336" width="55.38" height="24" rx="4" class="w1 nofill s-orange" data-fit="skip"/>
+<text x="539.73" y="354" text-anchor="middle" class="t-label" data-w="9">4</text>
+<rect x="567.42" y="368" width="38.49" height="24" rx="4" class="f-green-soft"/>
+<rect x="567.42" y="368" width="38.49" height="24" rx="4" class="w1 nofill s-green" data-fit="skip"/>
+<text x="586.67" y="386" text-anchor="middle" class="t-label" data-w="19">C4</text>
+<text x="613.91" y="385" class="t-value f-orange-ink" data-w="64">18.32 ms</text>
+<path d="M176,396 L176,402" class="s-ink-muted w1 nofill"/>
+<text x="176" y="420" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<path d="M293.33,396 L293.33,402" class="s-ink-muted w1 nofill"/>
+<text x="293.33" y="420" text-anchor="middle" class="t-tick" data-w="8">5</text>
+<path d="M410.67,396 L410.67,402" class="s-ink-muted w1 nofill"/>
+<text x="410.67" y="420" text-anchor="middle" class="t-tick" data-w="16">10</text>
+<path d="M528,396 L528,402" class="s-ink-muted w1 nofill"/>
+<text x="528" y="420" text-anchor="middle" class="t-tick" data-w="16">15</text>
+<path d="M645.33,396 L645.33,402" class="s-ink-muted w1 nofill"/>
+<text x="645.33" y="420" text-anchor="middle" class="t-tick" data-w="16">20</text>
+<path d="M762.67,396 L762.67,402" class="s-ink-muted w1 nofill"/>
+<text x="762.67" y="420" text-anchor="middle" class="t-tick" data-w="16">25</text>
+<path d="M880,396 L880,402" class="s-ink-muted w1 nofill"/>
+<text x="880" y="420" text-anchor="middle" class="t-tick" data-w="38">30 ms</text>
+</g>
+<text x="40" y="448" class="t-note" data-w="694">Four streams end at 18.32 ms, near the 17.80 ms the copies take end to end; only the kernel fully hides.</text>
+<text x="40" y="504" class="t-note" data-w="549">On this laptop the copies in and out mostly take turns, so the kernel is what hides.</text>
 </svg>

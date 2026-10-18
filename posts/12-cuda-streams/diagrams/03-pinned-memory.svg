@@ -1,45 +1,172 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Pageable host memory needs a staging copy that makes async transfers synchronous; pinned memory lets the GPU DMA directly</title>
-  <desc id="d">Two panels on why pinned memory is required for overlap. On the left, pageable memory from malloc: the data sits in swappable CPU pages, so a transfer is two steps, first the driver copies it into a pinned staging buffer, which blocks the CPU, drawn red, then the GPU DMAs from the staging buffer. Because of the blocking copy, cudaMemcpyAsync silently becomes synchronous and no overlap is possible. On the right, pinned memory from cudaMallocHost: the data is page-locked, so the GPU DMAs directly from it in one step, drawn green, and cudaMemcpyAsync is truly asynchronous, freeing the CPU and allowing streams to overlap. The caution is that pinned memory is a limited resource and slow to allocate, so allocate it once at startup.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
-    .panel{fill:none;stroke:var(--cuda-border);stroke-width:1;}
-    .box{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
-    .stage{fill:var(--cuda-surface);stroke:var(--cuda-alert);stroke-width:1.5;}
-    .pin{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .red{stroke:var(--cuda-alert);stroke-width:1.5;fill:none;}
-    .grn{stroke:var(--cuda-success);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="40">Pinned memory: the silent requirement for async</text>
-  <text class="small" x="40" y="62">cudaMemcpyAsync is only truly asynchronous from page-locked (pinned) host memory.</text>
-
-  <defs>
-    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-alert)"/></marker>
-    <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-success)"/></marker>
-  </defs>
-
-  <!-- LEFT pageable -->
-  <rect class="panel" x="40" y="92" width="430" height="360" rx="10"/>
-  <text class="label" x="60" y="120">Pageable (malloc)</text>
-  <rect class="box" x="64" y="146" width="150" height="64" rx="6"/><text class="small" x="139" y="174" text-anchor="middle">CPU RAM</text><text class="small" x="139" y="192" text-anchor="middle">(swappable pages)</text>
-  <rect class="stage" x="64" y="262" width="150" height="64" rx="6"/><text class="small" x="139" y="290" text-anchor="middle">staging buffer</text><text class="small" x="139" y="308" text-anchor="middle">(pinned, hidden)</text>
-  <rect class="box" x="300" y="262" width="150" height="64" rx="6"/><text class="small" x="375" y="298" text-anchor="middle">GPU</text>
-  <path class="red" d="M139,210 L139,258" marker-end="url(#ar)"/><text class="small" x="150" y="240">1. CPU copies (blocks)</text>
-  <path class="red" d="M214,294 L296,294" marker-end="url(#ar)"/><text class="small" x="232" y="284">2. DMA</text>
-  <text class="small" x="60" y="368" fill="var(--cuda-alert)">cudaMemcpyAsync silently becomes synchronous</text>
-
-  <!-- RIGHT pinned -->
-  <rect class="panel" x="500" y="92" width="430" height="360" rx="10"/>
-  <text class="label" x="520" y="120">Pinned (cudaMallocHost)</text>
-  <rect class="pin" x="524" y="200" width="170" height="64" rx="6"/><text class="small" x="609" y="228" text-anchor="middle">CPU RAM</text><text class="small" x="609" y="246" text-anchor="middle">(page-locked)</text>
-  <rect class="box" x="760" y="200" width="150" height="64" rx="6"/><text class="small" x="835" y="236" text-anchor="middle">GPU</text>
-  <path class="grn" d="M694,232 L756,232" marker-end="url(#ag)"/><text class="small" x="725" y="222" text-anchor="middle">direct DMA</text>
-  <text class="small" x="520" y="320" fill="var(--cuda-success)">cudaMemcpyAsync is truly asynchronous</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-03-pinned-memory-title" aria-describedby="cuda-03-pinned-memory-desc">
+<title id="cuda-03-pinned-memory-title">From pageable memory every copy is staged by the CPU</title>
+<desc id="cuda-03-pinned-memory-desc">Two rows, host on the left and device on the right of a purple dashed boundary. Top, pageable memory from an ordinary allocation: the CPU first copies each piece into a pinned staging buffer the driver owns, in red, and only then does the GPU's DMA engine copy it across; vector addition with its copies took 53.60 ms serially and 50.01 ms on four streams. Bottom, pinned memory from cudaMallocHost: the DMA engine reads it directly; 18.95 ms serially and 17.00 ms on four streams.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-blue-ink { fill: var(--cuda-blue-ink); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-ink { fill: var(--cuda-orange-ink); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-green-line { stroke: var(--cuda-green-line); }
+  .s-purple { stroke: var(--cuda-purple); }
+  .s-red { stroke: var(--cuda-red); }
+</style>
+<defs>
+<marker id="cuda-03-pinned-memory-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-03-pinned-memory-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-red"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="689">From pageable memory every copy is staged by the CPU</text>
+<text x="40" y="76" class="t-subtitle" data-w="801">Vector addition over 16,777,216 floats with its three copies; measured on the author's GTX 1650, October 2026.</text>
+<path d="M600,112 L600,476" class="s-purple w15 nofill d-proj"/>
+<text x="588" y="468" text-anchor="end" class="t-head f-blue-ink" data-w="37">host</text>
+<text x="612" y="468" class="t-head f-orange-ink" data-w="159">device, across PCIe</text>
+<text x="40" y="136" class="t-head" data-w="279">Pageable: new, malloc, std::vector</text>
+<rect x="40" y="184" width="176" height="64" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="56" y="212" class="t-label" data-w="60">the array</text>
+<text x="56" y="232" class="t-note" data-w="115">pages may move</text>
+<rect x="296" y="184" width="248" height="64" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="312" y="212" class="t-label" data-w="94">staging buffer</text>
+<text x="312" y="232" class="t-note" data-w="186">pinned, owned by the driver</text>
+<rect x="704" y="184" width="216" height="64" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="720" y="212" class="t-label" data-w="100">global memory</text>
+<text x="720" y="232" class="t-code" data-w="112">d_A, d_B, d_C</text>
+<path d="M216,216 L293,216" class="s-red w15 nofill" marker-end="url(#cuda-03-pinned-memory-arrow-red)"/>
+<text x="224" y="172" class="t-label f-red-ink" data-w="121">1. the CPU copies</text>
+<path d="M544,216 L701,216" class="flow" marker-end="url(#cuda-03-pinned-memory-arrow)"/>
+<text x="616" y="172" class="t-label" data-w="50">2. DMA</text>
+<text x="40" y="280" class="t-label f-red-ink" data-w="388">serial 53.60 ms, four streams 50.01 ms: no overlap to gain</text>
+<text x="40" y="328" class="t-head" data-w="200">Pinned: cudaMallocHost</text>
+<rect x="40" y="376" width="176" height="64" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="56" y="404" class="t-label" data-w="60">the array</text>
+<text x="56" y="424" class="t-note" data-w="84">page-locked</text>
+<rect x="704" y="376" width="216" height="64" rx="8" class="f-green-soft s-green-line w1"/>
+<text x="720" y="404" class="t-label" data-w="100">global memory</text>
+<text x="720" y="424" class="t-code" data-w="112">d_A, d_B, d_C</text>
+<path d="M216,408 L701,408" class="flow" marker-end="url(#cuda-03-pinned-memory-arrow)"/>
+<text x="296" y="364" class="t-label" data-w="192">DMA, straight from the array</text>
+<text x="40" y="472" class="t-label" data-w="259">serial 18.95 ms, four streams 17.00 ms</text>
+<text x="40" y="504" class="t-note" data-w="531">Pinning removes the CPU's copy, and only then can a copy run beside a kernel.</text>
 </svg>

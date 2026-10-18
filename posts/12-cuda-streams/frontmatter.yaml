@@ -1,8 +1,28 @@
 id: cuda-012
 slug: 12-cuda-streams
-title: "12 · CUDA streams — overlapping copy and compute for free throughput"
+title: "12 - CUDA streams: overlapping copy and compute for free throughput"
+summary: "How streams and pinned memory let copies and kernels run at the same time, why the default stream serializes them, and how to predict from a workload's stage times how much a pipeline can hide."
 date: 2026-07-14
-tags: [systems, cuda, concurrency]
-hero: diagrams/01-serial-vs-pipeline.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part IV - Systems & Execution"
+level: intermediate
+reading_time: 19
+tags: [cuda, streams, concurrency, pinned-memory, pcie, overlap]
+hero: diagrams/01-serial-vs-pipeline.svg
+prerequisites: [cuda-002]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain why work on the default stream leaves the copy engines and the SMs idle in turn, and compute an engine's busy share from the stage times."
+  - id: o2
+    text: "Pipeline a workload across streams with `cudaMemcpyAsync` and per-stream launches, so that one chunk's copies overlap another chunk's kernel."
+  - id: o3
+    text: "Say why `cudaMemcpyAsync` needs pinned host memory to overlap, and what happens from pageable memory."
+  - id: o4
+    text: "Predict from a workload's measured stage times, with the streams model, how much a pipeline can hide and where streams help most and least."
+  - id: o5
+    text: "Check a card's copy engines with `asyncEngineCount` and a two-way copy test before counting on the two directions to overlap."
+recommended: [cuda-011]
+compute: gpu-small
+hardware: gtx-1650
