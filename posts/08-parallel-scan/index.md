@@ -213,7 +213,7 @@ warp shuffle              inclusive       1024       3      2.337    57.4  ok
 CUB DeviceScan            exclusive          -       -      0.961   139.6  ok
 ```
 
-These numbers are measured; the reader's card will give other digits, and the order of the rows is the lesson. The card throttles when hot: this run started at 79 degrees C, and `nvidia-smi`, sampling every 100 ms, read its streaming-multiprocessor clock at 1,650 to 1,725 MHz while it ran. Three such runs agreed within 0.05 ms per row; one that shared the GPU with another program was up to 5.4 times slower. An earlier draft quoted an RTX 3080 table; this one is the shipped `scan.cu`'s output.
+These numbers are measured; the reader's card will give other digits, and the order of the rows is the lesson. The card does not hold its 1,740 MHz boost clock under a sustained kernel: it sits at its software power cap (about 35 W), and `nvidia-smi`, sampling every 100 ms, read its streaming-multiprocessor clock at 1,650 to 1,725 MHz while this run ran, which started at 79 degrees C. Three such runs agreed within 0.05 ms per row; one that shared the GPU with another program was up to 5.4 times slower. An earlier draft quoted an RTX 3080 table; this one is the shipped `scan.cu`'s output.
 
 ![Scan bandwidth on the GTX 1650: Hillis-Steele 33.8 GB/s, Blelloch plain 27.9, conflict-free 39.6, warp shuffle 57.4, CUB 139.6, against the copy's 140.2 and the three-phase limit of 70.1.](diagrams/04-scan-perf.svg)
 
