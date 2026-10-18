@@ -1,69 +1,332 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">An inclusive scan produces a running total where each output depends on the previous one, which looks serial</title>
-  <desc id="d">An input array of eight values 3, 1, 7, 0, 4, 1, 6, 3 across the top. Below it, the inclusive scan, a running total, 3, 4, 11, 11, 15, 16, 22, 25, drawn green. Each output element is formed as the previous output plus the current input, shown by a chain of arrows linking each output cell to the next, plus a faint arrow from each input down to its output. The point is that out at i depends on out at i minus 1, so the computation looks inherently serial. The note explains that tree algorithms break the chain by trading depth for work: a log-depth scan does about 2N additions (Blelloch) or N log N (Hillis-Steele) instead of running N steps in sequence.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--cuda-ink);}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .outc{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .down{stroke:var(--cuda-ink-muted);stroke-width:1;fill:none;}
-    .chain{stroke:var(--cuda-ink);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">A scan is a running total: each output needs the one before it</text>
-  <text class="small" x="40" y="66">out[i] = out[i-1] + in[i]. The dependency chain makes it look impossible to parallelize.</text>
-
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
-    <marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink)"/></marker>
-  </defs>
-
-  <text class="label" x="120" y="130">input</text>
-  <g>
-    <rect class="cell" x="120" y="140" width="80" height="50"/><text class="mono" x="160" y="171" text-anchor="middle">3</text>
-    <rect class="cell" x="208" y="140" width="80" height="50"/><text class="mono" x="248" y="171" text-anchor="middle">1</text>
-    <rect class="cell" x="296" y="140" width="80" height="50"/><text class="mono" x="336" y="171" text-anchor="middle">7</text>
-    <rect class="cell" x="384" y="140" width="80" height="50"/><text class="mono" x="424" y="171" text-anchor="middle">0</text>
-    <rect class="cell" x="472" y="140" width="80" height="50"/><text class="mono" x="512" y="171" text-anchor="middle">4</text>
-    <rect class="cell" x="560" y="140" width="80" height="50"/><text class="mono" x="600" y="171" text-anchor="middle">1</text>
-    <rect class="cell" x="648" y="140" width="80" height="50"/><text class="mono" x="688" y="171" text-anchor="middle">6</text>
-    <rect class="cell" x="736" y="140" width="80" height="50"/><text class="mono" x="776" y="171" text-anchor="middle">3</text>
-  </g>
-
-  <g class="down">
-    <path d="M160,190 L160,278" marker-end="url(#a)"/><path d="M248,190 L248,278" marker-end="url(#a)"/><path d="M336,190 L336,278" marker-end="url(#a)"/><path d="M424,190 L424,278" marker-end="url(#a)"/>
-    <path d="M512,190 L512,278" marker-end="url(#a)"/><path d="M600,190 L600,278" marker-end="url(#a)"/><path d="M688,190 L688,278" marker-end="url(#a)"/><path d="M776,190 L776,278" marker-end="url(#a)"/>
-  </g>
-
-  <text class="label" x="120" y="270" fill="var(--cuda-success)">inclusive scan (running total)</text>
-  <g>
-    <rect class="outc" x="120" y="280" width="80" height="50"/><text class="mono" x="160" y="311" text-anchor="middle">3</text>
-    <rect class="outc" x="208" y="280" width="80" height="50"/><text class="mono" x="248" y="311" text-anchor="middle">4</text>
-    <rect class="outc" x="296" y="280" width="80" height="50"/><text class="mono" x="336" y="311" text-anchor="middle">11</text>
-    <rect class="outc" x="384" y="280" width="80" height="50"/><text class="mono" x="424" y="311" text-anchor="middle">11</text>
-    <rect class="outc" x="472" y="280" width="80" height="50"/><text class="mono" x="512" y="311" text-anchor="middle">15</text>
-    <rect class="outc" x="560" y="280" width="80" height="50"/><text class="mono" x="600" y="311" text-anchor="middle">16</text>
-    <rect class="outc" x="648" y="280" width="80" height="50"/><text class="mono" x="688" y="311" text-anchor="middle">22</text>
-    <rect class="outc" x="736" y="280" width="80" height="50"/><text class="mono" x="776" y="311" text-anchor="middle">25</text>
-  </g>
-  <!-- serial dependency chain -->
-  <g class="chain">
-    <path d="M200,355 L208,355" marker-end="url(#ak)"/>
-    <path d="M160,340 L160,355 L248,355" marker-end="url(#ak)"/>
-    <path d="M248,340 L248,372 L336,372" marker-end="url(#ak)"/>
-    <path d="M336,340 L336,389 L424,389" marker-end="url(#ak)"/>
-    <path d="M424,340 L424,372 L512,372" marker-end="url(#ak)"/>
-    <path d="M512,340 L512,355 L600,355" marker-end="url(#ak)"/>
-    <path d="M600,340 L600,372 L688,372" marker-end="url(#ak)"/>
-    <path d="M688,340 L688,389 L776,389" marker-end="url(#ak)"/>
-  </g>
-  <text class="small" x="120" y="420">each output waits for the previous: a chain of length N</text>
-
-  <text class="small" x="40" y="470">It only looks serial. Tree algorithms break the chain by trading depth for work:</text>
-  <text class="small" x="40" y="494">a log-depth scan does about 2N additions (Blelloch) instead of N sequential steps.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="cuda-01-scan-dependency-title" aria-describedby="cuda-01-scan-dependency-desc">
+<title id="cuda-01-scan-dependency-title">A running total looks serial; it needs only 3 steps</title>
+<desc id="cuda-01-scan-dependency-desc">Two panels on the eight values 3 1 7 0 4 1 6 3. Left, the serial loop: each running total adds its input to the total before it, so the totals 3 4 11 11 15 16 22 25 form a chain of 7 dependent additions, drawn as red arrows numbered 1 to 7. Right, Hillis-Steele: at stride 1, 2 and 4 every element adds the element that many places back, all at once; the rows read 3 4 8 7 4 5 7 9, then 3 4 11 11 12 12 11 14, then the same totals, in 3 parallel steps.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-arrow { stroke: var(--cuda-arrow); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-red { stroke: var(--cuda-red); }
+</style>
+<defs>
+<marker id="cuda-01-scan-dependency-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-01-scan-dependency-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-red"/></marker>
+<marker id="cuda-01-scan-dependency-arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-orange"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="720"/>
+<text x="40" y="48" class="t-title" data-w="597">A running total looks serial; it needs only 3 steps</text>
+<text x="40" y="76" class="t-subtitle" data-w="483">The post's eight values; every number is printed by scan_model.py.</text>
+<text x="40" y="120" class="t-head" data-w="248">Serial loop: 7 dependent steps</text>
+<rect x="80" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="124" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="168" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="212" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="256" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="300" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="344" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="388" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="80" y="160" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="102" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="146" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="190" y="186" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="234" y="186" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="278" y="186" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="322" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="366" y="186" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="410" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<rect x="80" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="124" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="168" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="212" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="256" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="300" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="344" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="388" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="80" y="520" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="102" y="546" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="146" y="546" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="190" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="234" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="278" y="546" text-anchor="middle" class="t-cell16" data-w="19">15</text>
+<text x="322" y="546" text-anchor="middle" class="t-cell16" data-w="19">16</text>
+<text x="366" y="546" text-anchor="middle" class="t-cell16" data-w="19">22</text>
+<text x="410" y="546" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+</g>
+<text x="40" y="184" class="t-label" data-w="12">in</text>
+<text x="40" y="544" class="t-label" data-w="22">out</text>
+<text x="80" y="316" class="t-code" data-w="129">for i = 1 to 7:</text>
+<text x="104" y="344" class="t-code" data-w="231">out[i] = out[i - 1] + in[i]</text>
+<text x="80" y="392" class="t-note" data-w="289">addition i needs the result of addition i − 1,</text>
+<text x="80" y="416" class="t-note" data-w="266">so the 7 additions run one after another</text>
+<path d="M104,564 L104,584 L144,584 L144,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="124" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">1</text>
+<path d="M152,564 L152,584 L184,584 L184,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="168" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">2</text>
+<path d="M192,564 L192,584 L232,584 L232,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="212" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">3</text>
+<path d="M240,564 L240,584 L272,584 L272,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="256" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">4</text>
+<path d="M280,564 L280,584 L320,584 L320,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="300" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">5</text>
+<path d="M328,564 L328,584 L360,584 L360,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="344" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">6</text>
+<path d="M368,564 L368,584 L408,584 L408,567" class="s-red w15 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-red)"/>
+<text x="388" y="604" text-anchor="middle" class="t-tick f-red-ink" data-w="8">7</text>
+<text x="496" y="120" class="t-head" data-w="233">Hillis-Steele: 3 parallel steps</text>
+<rect x="568" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="612" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="656" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="700" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="744" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="788" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="832" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="876" y="160" width="44" height="40" class="cell f-green-soft"/>
+<rect x="568" y="160" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="590" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="634" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="678" y="186" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="722" y="186" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="766" y="186" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="810" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="854" y="186" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="898" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<text x="496" y="184" class="t-label" data-w="12">in</text>
+<rect x="568" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="612" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="656" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="700" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="744" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="788" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="832" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="876" y="280" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="568" y="280" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="590" y="306" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="634" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="678" y="306" text-anchor="middle" class="t-cell16" data-w="10">8</text>
+<text x="722" y="306" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="766" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="810" y="306" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="854" y="306" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="898" y="306" text-anchor="middle" class="t-cell16" data-w="10">9</text>
+</g>
+<text x="496" y="304" class="t-label" data-w="51">stride 1</text>
+<rect x="568" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="612" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="656" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="700" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="744" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="788" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="832" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="876" y="400" width="44" height="40" class="cell f-orange-soft"/>
+<rect x="568" y="400" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="590" y="426" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="634" y="426" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="678" y="426" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="722" y="426" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="766" y="426" text-anchor="middle" class="t-cell16" data-w="19">12</text>
+<text x="810" y="426" text-anchor="middle" class="t-cell16" data-w="19">12</text>
+<text x="854" y="426" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="898" y="426" text-anchor="middle" class="t-cell16" data-w="19">14</text>
+</g>
+<text x="496" y="424" class="t-label" data-w="51">stride 2</text>
+<rect x="568" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="612" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="656" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="700" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="744" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="788" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="832" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="876" y="520" width="44" height="40" class="cell f-green-soft"/>
+<rect x="568" y="520" width="352" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="590" y="546" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="634" y="546" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="678" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="722" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="766" y="546" text-anchor="middle" class="t-cell16" data-w="19">15</text>
+<text x="810" y="546" text-anchor="middle" class="t-cell16" data-w="19">16</text>
+<text x="854" y="546" text-anchor="middle" class="t-cell16" data-w="19">22</text>
+<text x="898" y="546" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+</g>
+<text x="496" y="544" class="t-label" data-w="51">stride 4</text>
+<path d="M600,204 L600,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M640,204 L640,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M584,204 L622.54,273.38" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M688,204 L688,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M624,204 L670.34,273.5" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M728,204 L728,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M672,204 L710.54,273.38" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M776,204 L776,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M712,204 L758.34,273.5" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M816,204 L816,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M760,204 L798.54,273.38" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M864,204 L864,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M800,204 L846.34,273.5" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M904,204 L904,273" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M848,204 L886.54,273.38" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M600,324 L600,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M640,324 L640,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M688,324 L688,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M584,324 L669.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M728,324 L728,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M624,324 L709.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M776,324 L776,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M672,324 L757.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M816,324 L816,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M712,324 L797.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M864,324 L864,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M760,324 L845.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M904,324 L904,393" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M800,324 L885.68,394.1" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M600,444 L600,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M640,444 L640,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M688,444 L688,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M728,444 L728,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M776,444 L776,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M584,444 L757.22,514.86" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M816,444 L816,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M624,444 L797.22,514.86" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M864,444 L864,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M672,444 L845.22,514.86" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M904,444 L904,513" class="flow w1" marker-end="url(#cuda-01-scan-dependency-arrow)"/>
+<path d="M712,444 L885.22,514.86" class="s-orange w1 nofill" marker-end="url(#cuda-01-scan-dependency-arrow-orange)"/>
+<path d="M40,640 H64" class="s-red w15 nofill"/>
+<text x="72" y="644" class="t-label" data-w="270">an addition that waits for the one before</text>
+<path d="M368,640 H392" class="s-orange w15 nofill"/>
+<text x="400" y="644" class="t-label" data-w="224">element t adds element t − stride</text>
+<path d="M648,640 H672" class="s-arrow w15 nofill"/>
+<text x="680" y="644" class="t-label" data-w="227">element's own value carried down</text>
+<text x="40" y="684" class="t-note" data-w="570">Same 8 totals: 7 additions in a chain, or 3 steps in which every element adds at once.</text>
 </svg>

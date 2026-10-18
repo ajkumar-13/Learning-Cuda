@@ -1,52 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Scan time for Hillis-Steele, naive and conflict-free Blelloch, and the CUB library</title>
-  <desc id="d">A bar chart of time in milliseconds, shorter is faster, for scanning 16 million floats on an RTX 3080. Hillis-Steele takes 3.2 milliseconds; it is simple but work-inefficient at N log N additions. Naive Blelloch takes 1.8, order N work but with shared-memory bank conflicts. Blelloch with bank-conflict avoidance takes 0.9, drawn green, about twice as fast as the naive version; it adds the index >> 5 offset to the naive Blelloch shown in the snippet. The CUB library reaches 0.6, drawn blue. The progression shows the two levers: a work-efficient algorithm, then removing bank conflicts.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-primary:#5B7FBF;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-primary:#8BA8E0;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--cuda-ink);}
-    .axis{stroke:var(--cuda-ink);stroke-width:1;}
-    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
-    .n{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
-    .g{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .p{fill:var(--cuda-surface);stroke:var(--cuda-primary);stroke-width:1.5;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Work-efficient, then conflict-free: 0.9 ms, near CUB (16M floats, RTX 3080)</text>
-  <text class="small" x="40" y="66">Time for an exclusive scan — shorter is faster.</text>
-
-  <g>
-    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
-    <line class="grid" x1="160" y1="349" x2="900" y2="349"/><text class="small" x="152" y="353" text-anchor="end">1</text>
-    <line class="grid" x1="160" y1="257" x2="900" y2="257"/><text class="small" x="152" y="261" text-anchor="end">2</text>
-    <line class="grid" x1="160" y1="166" x2="900" y2="166"/><text class="small" x="152" y="170" text-anchor="end">3</text>
-  </g>
-  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
-  <text class="small" x="76" y="280" transform="rotate(-90 76 280)" text-anchor="middle">time (ms)</text>
-
-  <rect class="n" x="220" y="147" width="120" height="293"/>
-  <text class="val" x="280" y="139" text-anchor="middle">3.2</text>
-  <text class="label" x="280" y="462" text-anchor="middle">Hillis-Steele</text>
-  <text class="small" x="280" y="480" text-anchor="middle">N log N work</text>
-
-  <rect class="n" x="400" y="275" width="120" height="165"/>
-  <text class="val" x="460" y="267" text-anchor="middle">1.8</text>
-  <text class="label" x="460" y="462" text-anchor="middle">Blelloch naive</text>
-  <text class="small" x="460" y="480" text-anchor="middle">bank conflicts</text>
-
-  <rect class="g" x="580" y="358" width="120" height="82"/>
-  <text class="val" x="640" y="350" text-anchor="middle" fill="var(--cuda-success)">0.9</text>
-  <text class="label" x="640" y="462" text-anchor="middle">Blelloch (BCAO)</text>
-  <text class="small" x="640" y="480" text-anchor="middle">conflict-free</text>
-
-  <rect class="p" x="760" y="385" width="120" height="55"/>
-  <text class="val" x="820" y="377" text-anchor="middle" fill="var(--cuda-primary)">0.6</text>
-  <text class="label" x="820" y="462" text-anchor="middle">CUB</text>
-  <text class="small" x="820" y="480" text-anchor="middle">library</text>
-
-  <text class="small" x="40" y="512">Two levers: a work-efficient algorithm (O(N) not O(N log N)), then bank-conflict avoidance, which alone is worth about 2x.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-04-scan-perf-title" aria-describedby="cuda-04-scan-perf-desc">
+<title id="cuda-04-scan-perf-title">Only the one-pass library scan reaches the copy</title>
+<desc id="cuda-04-scan-perf-desc">A horizontal bar chart of bandwidth, the 8 N bytes a scan must move divided by its time, for a scan of 16,777,216 floats on the author's GTX 1650. Hillis-Steele in shared memory 33.8 GB/s, Blelloch with plain indices 27.9 (red: bank conflicts), Blelloch conflict-free 39.6, warp shuffle 57.4, CUB 139.6. Dotted lines mark the copy kernel's 140.2 GB/s and half of it, 70.1, the most a three-phase scan can show.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-ink { fill: var(--cuda-ink); }
+  .f-ink-muted { fill: var(--cuda-ink-muted); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-ink { fill: var(--cuda-orange-ink); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+</style>
+<defs>
+<marker id="cuda-04-scan-perf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<clipPath id="cuda-04-scan-perf-clip-1"><rect x="240" y="128" width="616" height="300"/></clipPath>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="587">Only the one-pass library scan reaches the copy</text>
+<text x="40" y="76" class="t-subtitle" data-w="763">Measured on the author's GTX 1650, compute capability 7.5, CUDA 12.3, October 2026; 16,777,216 floats.</text>
+<g data-grid="skip">
+<path d="M240,128V428M394,128V428M548,128V428M702,128V428M856,128V428" class="gridline"/>
+<text x="240" y="448" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="394" y="448" text-anchor="middle" class="t-tick" data-w="16">40</text>
+<text x="548" y="448" text-anchor="middle" class="t-tick" data-w="16">80</text>
+<text x="702" y="448" text-anchor="middle" class="t-tick" data-w="23">120</text>
+<text x="856" y="448" text-anchor="middle" class="t-tick" data-w="23">160</text>
+<g clip-path="url(#cuda-04-scan-perf-clip-1)">
+<rect x="240" y="146" width="130.13" height="24" class="f-orange" data-fit="skip"/>
+<rect x="240" y="206" width="107.41" height="24" class="f-red" data-fit="skip"/>
+<rect x="240" y="266" width="152.46" height="24" class="f-orange" data-fit="skip"/>
+<rect x="240" y="326" width="220.99" height="24" class="f-orange" data-fit="skip"/>
+<rect x="240" y="386" width="537.46" height="24" class="f-ink" data-fit="skip"/>
+</g>
+<path d="M509.88,128V428" class="s-ink-muted w1 nofill d-ref"/>
+<path d="M779.77,128V428" class="s-ink-muted w1 nofill d-ref"/>
+<path d="M240,128V428" class="axis"/>
+<text x="515.88" y="120" class="t-note f-ink-muted" data-w="147">three-phase limit 70.1</text>
+<text x="785.77" y="120" class="t-note f-ink-muted" data-w="73">copy 140.2</text>
+<text x="40" y="163" class="t-label" data-w="135">Hillis-Steele, shared</text>
+<text x="378.13" y="163" class="t-value f-orange-ink" data-w="30">33.8</text>
+<text x="40" y="223" class="t-label" data-w="154">Blelloch, bank conflicts</text>
+<text x="355.41" y="223" class="t-value f-red-ink" data-w="30">27.9</text>
+<text x="40" y="283" class="t-label" data-w="142">Blelloch, conflict-free</text>
+<text x="400.46" y="283" class="t-value f-orange-ink" data-w="30">39.6</text>
+<text x="40" y="343" class="t-label" data-w="82">warp shuffle</text>
+<text x="468.99" y="343" class="t-value f-orange-ink" data-w="30">57.4</text>
+<text x="40" y="403" class="t-label" data-w="114">CUB DeviceScan</text>
+<text x="785.46" y="403" class="t-value f-ink" data-w="38">139.6</text>
+</g>
+<text x="548" y="472" text-anchor="middle" class="t-note" data-w="309">effective bandwidth, 8N bytes over time, GB/s</text>
+<text x="40" y="504" class="t-note" data-w="642">A three-phase scan reads and writes the array twice, so it can show at most half the copy's rate.</text>
 </svg>

@@ -1,0 +1,792 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-008",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-008-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "scan",
+        "dependency"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The CPU loop `for (i = 1; i < N; ++i) out[i] = out[i - 1] + in[i];` computes an inclusive scan. Why can its iterations not simply be handed to $N$ threads, one iteration each?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Each iteration reads `out[i - 1]`, which the previous iteration writes, so iteration $i$ cannot start before iteration $i - 1$ ends.",
+          "correct": true,
+          "feedback": "Right: the loop-carried dependency makes the $N - 1$ additions a chain, which is what the parallel algorithms reorganize."
+        },
+        {
+          "key": "b",
+          "text": "Floating-point addition is not associative, so any reordering gives a wrong answer.",
+          "correct": false,
+          "feedback": "Reordering changes the rounding of float sums slightly, but the algorithms of the post rely on associativity and are exact for integers; that is not why the loop is serial."
+        },
+        {
+          "key": "c",
+          "text": "Each iteration reads a different element of `in`, so the threads' loads would not coalesce.",
+          "correct": false,
+          "feedback": "Adjacent threads reading adjacent elements of `in` is a coalesced pattern; memory access is not the obstacle."
+        },
+        {
+          "key": "d",
+          "text": "There is only one addition per element, too little work to share among threads.",
+          "correct": false,
+          "feedback": "A map such as vector addition also has one operation per element and parallelizes perfectly; the obstacle is the dependency, not the amount of work."
+        }
+      ],
+      "explanation": "Section 1: `out[i]` reads `out[i - 1]`, so every addition waits for the one before it, a chain of $N - 1$ steps. A parallel scan rearranges the additions so that the ones inside a step are independent.",
+      "hints": [
+        "Look at which value each iteration reads that is not an input."
+      ]
+    },
+    {
+      "id": "cuda-008-q02",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "exclusive-scan",
+        "identity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Whatever the input array, what is the first element of its exclusive sum scan?",
+      "answer": {
+        "model": "0, the identity of addition: nothing comes before the first element.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not)\\s+(0|zero|the identity)\\b)(?![\\s\\S]*\\b(0|zero)\\s+or\\b)(?![\\s\\S]*\\b(first|exclusive)\\b[^.;\\n]*\\b(is|equals|=)\\s+(the\\s+)?(in\\[0\\]|input\\[0\\]|x\\[0\\]|first (input|value)|first element of the input|input'?s first (element|value)))\\s*(it is |it's |the answer is |answer: )?(always )?(0|zero|the identity)\\b",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|is not)\\s+(0|zero|the identity)\\b)(?![\\s\\S]*\\b(0|zero)\\s+or\\b)(?![\\s\\S]*\\b(first|exclusive)\\b[^.;\\n]*\\b(is|equals|=)\\s+(the\\s+)?(in\\[0\\]|input\\[0\\]|x\\[0\\]|first (input|value)|first element of the input|input'?s first (element|value)))[\\s\\S]*\\b(is|be|equals|=|gives|holds)\\s+(always\\s+)?(0|zero|the identity)\\b"
+        ]
+      },
+      "explanation": "Section 1: an exclusive scan's element $i$ is the sum of the elements before $i$; before element 0 there are none, so it is the identity of addition, 0. The Blelloch scan produces exactly this by clearing the root to 0.",
+      "hints": [
+        "Element $i$ of an exclusive scan sums the elements strictly before $i$."
+      ]
+    },
+    {
+      "id": "cuda-008-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "work",
+        "depth"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "An array of $N = 65{,}536$ elements is scanned. Give (a) the additions Hillis-Steele performs if every thread adds at every step, as `hillisSteele` does, (b) the additions of Blelloch, (c) Hillis-Steele's parallel steps and (d) Blelloch's.",
+      "answer": {
+        "parts": [
+          {
+            "label": "Hillis-Steele additions",
+            "value": 1048576,
+            "tolerance": 0,
+            "unit": "additions"
+          },
+          {
+            "label": "Blelloch additions",
+            "value": 131070,
+            "tolerance": 0,
+            "unit": "additions"
+          },
+          {
+            "label": "Hillis-Steele steps",
+            "value": 16,
+            "tolerance": 0,
+            "unit": "steps"
+          },
+          {
+            "label": "Blelloch steps",
+            "value": 32,
+            "tolerance": 0,
+            "unit": "steps"
+          }
+        ]
+      },
+      "precision_note": "log2 65,536 = 16. Hillis-Steele: N log2 N = 65,536 x 16 = 1,048,576; Blelloch: 2(N - 1) = 131,070; depths 16 and 2 x 16 = 32. scan_model.work(1 << 16) prints the same. Counting only the useful Hillis-Steele adds gives 983,041, not what part (a) asks.",
+      "explanation": "Section 2: Hillis-Steele runs $\\log_2 N$ steps in which all $N$ threads add, $N \\log_2 N$ additions; Blelloch does $N - 1$ additions in the up-sweep and $N - 1$ in the down-sweep, over $2 \\log_2 N$ steps.",
+      "hints": [
+        "Find $\\log_2 65{,}536$ first.",
+        "Hillis-Steele: $N$ adds per step; Blelloch: $N - 1$ per sweep."
+      ]
+    },
+    {
+      "id": "cuda-008-q04",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "blelloch",
+        "kernel-structure"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the work of one block of the `blelloch` kernel in the order the kernel performs it.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Each thread loads two elements of its tile into shared memory."
+        },
+        {
+          "key": "b",
+          "text": "Up-sweep: at each level the right child adds the left child, with a barrier before each level."
+        },
+        {
+          "key": "c",
+          "text": "Thread 0 saves the block's total from the last element."
+        },
+        {
+          "key": "d",
+          "text": "Thread 0 sets the last element to 0."
+        },
+        {
+          "key": "e",
+          "text": "Down-sweep: the left child takes the parent's value and the right child the parent plus the old left value."
+        },
+        {
+          "key": "f",
+          "text": "Each thread writes its two results to global memory after a final barrier."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "explanation": "Section 3: load, up-sweep (a reduction tree), save the total before the clear destroys it, clear the root, down-sweep, then copy out after the last barrier.",
+      "hints": [
+        "The total must be read before something overwrites it.",
+        "The up-sweep comes first; it is post 04's tree."
+      ]
+    },
+    {
+      "id": "cuda-008-q05",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 6,
+      "tags": [
+        "blelloch",
+        "by-hand"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Run the Blelloch scan of the post by hand on the four values `2 0 1 3`, with the indices `ai = offset * (2t + 1) - 1` and `bi = offset * (2t + 2) - 1`. Give (a) element 1 and (b) element 3 after the up-sweep, and (c) element 2 and (d) element 3 after the down-sweep.",
+      "answer": {
+        "parts": [
+          {
+            "label": "element 1 after the up-sweep",
+            "value": 2,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "element 3 after the up-sweep",
+            "value": 6,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "element 2 after the down-sweep",
+            "value": 2,
+            "tolerance": 0,
+            "unit": ""
+          },
+          {
+            "label": "element 3 after the down-sweep",
+            "value": 3,
+            "tolerance": 0,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "Up-sweep: offset 1 gives s[1] = 2 + 0 = 2 and s[3] = 1 + 3 = 4; offset 2 gives s[3] = 4 + 2 = 6, so 2 2 1 6. Clear: 2 2 1 0. Down-sweep offset 2 (ai 1, bi 3): s[1] = 0, s[3] = 0 + 2 = 2, giving 2 0 1 2; offset 1, pair (0, 1): s[0] = 0, s[1] = 0 + 2 = 2; pair (2, 3): s[2] = 2, s[3] = 2 + 1 = 3, giving 0 2 2 3, the exclusive scan. scan_model.blelloch([2, 0, 1, 3]) prints the same. An inclusive scan would give 3 and 6 for (c) and (d).",
+      "explanation": "Section 3: the up-sweep leaves partial sums at the right child of each pair and the total, 6, last; after the root is cleared the down-sweep produces the exclusive scan `0 2 2 3`.",
+      "hints": [
+        "At offset 1 the pairs are elements (0, 1) and (2, 3); the right one adds the left.",
+        "After clearing the root, the left child takes the parent and the right takes parent plus the old left."
+      ]
+    },
+    {
+      "id": "cuda-008-q06",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "bank-conflicts"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the up-sweep of a 2,048-float tile with plain indices, at offset 16 the 32 threads of a warp write the right children `16 * (2t + 2) - 1`. On compute capability 7.5, with 32 banks of 4-byte words, how many passes does that warp's write take?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "1, because each thread writes a different address.",
+          "correct": false,
+          "feedback": "Distinct addresses only help when they fall in distinct banks; these are 32 apart and all land in one bank."
+        },
+        {
+          "key": "b",
+          "text": "2, because the indices are odd.",
+          "correct": false,
+          "feedback": "Being odd puts them in odd banks, but the spacing of 32 puts all of them in the same one."
+        },
+        {
+          "key": "c",
+          "text": "16, because half the threads are idle at that level.",
+          "correct": false,
+          "feedback": "At offset 16 of a 2,048 tile 64 threads are active, so every lane of the first two warps writes; the conflict degree comes from the spacing."
+        },
+        {
+          "key": "d",
+          "text": "32, because the indices `32t + 31` all fall in bank 31.",
+          "correct": true,
+          "feedback": "Right: 32 distinct addresses in one bank take 32 passes, the worst case the model prints for offsets 16 and 32."
+        }
+      ],
+      "explanation": "Section 4: `16 * (2t + 2) - 1 = 32t + 31`, so every address is in bank 31 and the warp's access is a 32-way bank conflict; the model's table gives 32 for offset 16 with plain indices and 1 with the offset `index + (index >> 5)`.",
+      "hints": [
+        "Simplify the index expression.",
+        "The bank of a 4-byte word is its index modulo 32."
+      ]
+    },
+    {
+      "id": "cuda-008-q07",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 6,
+      "tags": [
+        "bank-conflicts",
+        "padding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "At offset 8 of the up-sweep the first warp's 32 threads touch the right children `8 * (2t + 2) - 1` for `t` = 0 to 31. With 32 banks of 4-byte words, give the number of passes of that access (a) with the plain index and (b) with the padded slot `index + (index >> 5)`.",
+      "answer": {
+        "parts": [
+          {
+            "label": "passes, plain index",
+            "value": 16,
+            "tolerance": 0,
+            "unit": "passes"
+          },
+          {
+            "label": "passes, padded index",
+            "value": 1,
+            "tolerance": 0,
+            "unit": "passes"
+          }
+        ]
+      },
+      "precision_note": "Plain: 8(2t + 2) - 1 = 16t + 15, so even t land in bank 15 and odd t in bank 31, 16 distinct addresses each: 16 passes. Padded: 16t + 15 + (t >> 1); even t = 2u give bank 15 + u (15 to 30), odd t give 31 + u mod 32 (31, 0 to 14), 32 distinct banks: 1 pass. scan_model.py's table row for offset 8 prints 16 and 1. Counting only the 2 banks touched (answering 2) confuses banks with passes.",
+      "explanation": "Section 4: a warp access takes as many passes as the most distinct addresses in any one bank. The plain index puts 16 addresses in each of two banks; the skipped slot after every 32 shifts each group of 32 indices one bank further and spreads them over all 32 banks.",
+      "hints": [
+        "Write the index as $16t + 15$ and take it modulo 32 for even and odd $t$.",
+        "For the padded index, add $\\lfloor (16t + 15) / 32 \\rfloor = \\lfloor t / 2 \\rfloor$ before taking the bank."
+      ]
+    },
+    {
+      "id": "cuda-008-q08",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o6"
+      ],
+      "section": "7",
+      "est_minutes": 10,
+      "tags": [
+        "stream-compaction",
+        "exclusive-scan"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `exclusive_scan` and `compact` as the post builds stream compaction: a 0/1 predicate, its exclusive scan as each kept value's output index, and a scatter into an output whose length is the number of kept values. Both functions take Python lists.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def exclusive_scan(xs):\n    \"\"\"Return the exclusive prefix sums of xs: element i is the sum of xs[0], ..., xs[i - 1].\"\"\"\n    raise NotImplementedError\n\n\ndef compact(values, keep):\n    \"\"\"Stream compaction: return the values v with keep(v) true, in their original order, by computing a 0/1\n    predicate, its exclusive scan (each kept value's output index), and a scatter into a list of the right length.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def exclusive_scan(xs):\n    \"\"\"Return the exclusive prefix sums of xs: element i is the sum of xs[0], ..., xs[i - 1].\"\"\"\n    out, run = [], 0\n    for x in xs:\n        out.append(run)\n        run += x\n    return out\n\n\ndef compact(values, keep):\n    \"\"\"Stream compaction: return the values v with keep(v) true, in their original order, by computing a 0/1\n    predicate, its exclusive scan (each kept value's output index), and a scatter into a list of the right length.\"\"\"\n    pred = [1 if keep(v) else 0 for v in values]\n    pos = exclusive_scan(pred)\n    total = (pos[-1] + pred[-1]) if values else 0\n    out = [None] * total\n    for i, v in enumerate(values):\n        if pred[i]:\n            out[pos[i]] = v\n    return out\n",
+      "tests": "assert exclusive_scan([3, 1, 7, 0, 4, 1, 6, 3]) == [0, 3, 4, 11, 11, 15, 16, 22]\nassert exclusive_scan([5]) == [0]\nassert exclusive_scan([]) == []\nassert compact([3, -1, 7, 0, -2, 4, 1, -5, 6], lambda v: v > 0) == [3, 7, 4, 1, 6]\nassert compact([1, 2, 3, 4, 5, 6], lambda v: v % 2 == 0) == [2, 4, 6]\nassert compact([1, 2, 3], lambda v: True) == [1, 2, 3]\nassert compact([1, 2, 3], lambda v: False) == []\nassert compact([], lambda v: True) == []\nassert compact([-4, 9, -1, 9, 0, 2], lambda v: v >= 0) == [9, 9, 0, 2]\nprint(\"ok\")\n",
+      "explanation": "Section 7: the exclusive scan of the predicate counts the kept values before each element, which is its index in the output, and the predicate's total is the output's length (the last scan value plus the last predicate). Each element's write is independent of the others.",
+      "hints": [
+        "Write the exclusive scan first and check it on `[3, 1, 7, 0]`.",
+        "The output length is the scan's last value plus the last predicate, not the last scan value alone."
+      ]
+    },
+    {
+      "id": "cuda-008-q09",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o1",
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 8,
+      "tags": [
+        "hillis-steele",
+        "race",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`hillis_steele` models the Hillis-Steele scan on the CPU, but its loop updates the list in place while one step is still reading it, so `[1, 1, 1, 1]` comes out as `[1, 2, 4, 6]`. Fix it so that every step reads only the values of the previous step, as the two ping-pong halves of `hillisSteele` guarantee.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def hillis_steele(xs):\n    \"\"\"Inclusive scan by Hillis-Steele: at stride s = 1, 2, 4, ..., every element t >= s adds the element s places\n    back, all elements of one step at once (as the threads of hillisSteele do). Returns a new list.\"\"\"\n    a = list(xs)\n    s = 1\n    while s < len(a):\n        for t in range(len(a)):\n            if t >= s:\n                a[t] = a[t] + a[t - s]\n        s *= 2\n    return a\n",
+      "solution": "def hillis_steele(xs):\n    \"\"\"Inclusive scan by Hillis-Steele: at stride s = 1, 2, 4, ..., every element t >= s adds the element s places\n    back, all elements of one step at once (as the threads of hillisSteele do). Returns a new list.\"\"\"\n    a = list(xs)\n    s = 1\n    while s < len(a):\n        old = list(a)                      # read the previous step, write the new one (the ping-pong halves)\n        for t in range(len(a)):\n            if t >= s:\n                a[t] = old[t] + old[t - s]\n        s *= 2\n    return a\n",
+      "tests": "from itertools import accumulate\nfor xs in ([3, 1, 7, 0, 4, 1, 6, 3], [1, 1, 1, 1], [5], [], [2, 0, 1, 3, 9], [1] * 13, list(range(16))):\n    assert hillis_steele(xs) == list(accumulate(xs)), (xs, hillis_steele(xs))\nassert hillis_steele([3, 1, 7, 0]) == [3, 4, 11, 11]\nprint(\"ok\")\n",
+      "explanation": "Section 2: all threads of one step must read the old values before any thread overwrites them. The kernel keeps two halves of shared memory and a barrier per step; the model keeps a copy of the previous step (or, equivalently on one CPU thread, walks `t` from high to low).",
+      "hints": [
+        "Element `t - s` may already hold this step's value when element `t` reads it.",
+        "Read from a copy of the list made before the step."
+      ]
+    },
+    {
+      "id": "cuda-008-q10",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "measurement",
+        "work-efficiency"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On the author's GTX 1650 the three-phase Blelloch scan with plain indices took 4.808 ms for 16,777,216 floats and the Hillis-Steele scan 3.965 ms, although Blelloch does about a tenth of the additions. Which explanation does the post give?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Inside one block both are limited by barriers and shared-memory passes, and plain Blelloch has more of both: 23 barriers to 11, and bank conflicts.",
+          "correct": true,
+          "feedback": "Right: the additions are cheap inside a block; the 22 sweep levels and the 2,681 against 476 shared passes are what cost."
+        },
+        {
+          "key": "b",
+          "text": "Blelloch's timing included the CUB temporary-storage allocation.",
+          "correct": false,
+          "feedback": "CUB's storage is allocated once outside the timed loop and belongs to the CUB row only."
+        },
+        {
+          "key": "c",
+          "text": "Blelloch reads the input twice from global memory, Hillis-Steele once.",
+          "correct": false,
+          "feedback": "Both load each element once in phase 1 and both pay the same phase 3; Blelloch's tile is simply twice as large."
+        },
+        {
+          "key": "d",
+          "text": "The GPU was throttling during the Blelloch row only.",
+          "correct": false,
+          "feedback": "The post reports three runs agreeing within 0.05 ms per row at a held clock; the order is the card's, not noise."
+        }
+      ],
+      "explanation": "Section 6: work-efficiency alone does not win inside a block. Both kernels wait on barriers and shared-memory passes rather than on additions; the conflict-free offset makes Blelloch 1.42 times faster and puts it ahead of Hillis-Steele.",
+      "hints": [
+        "Ask what a block spends its time on when each step is a barrier and a shared-memory access.",
+        "Count the levels of each kernel's loops for a 2,048-element and a 1,024-element tile."
+      ]
+    },
+    {
+      "id": "cuda-008-q11",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 5,
+      "tags": [
+        "three-phase",
+        "bandwidth"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A three-phase scan of $N = 4{,}194{,}304$ floats runs on a card whose copy kernel reaches 140 GB/s. Counting only phases 1 and 3, each reading and writing every 4-byte element once, give (a) the bytes the scan moves at least and (b) the shortest time it can take in milliseconds at the copy's rate.",
+      "answer": {
+        "parts": [
+          {
+            "label": "bytes moved",
+            "value": 67108864,
+            "tolerance": 0,
+            "unit": "bytes"
+          },
+          {
+            "label": "shortest time",
+            "value": 0.479,
+            "tolerance": 0.005,
+            "unit": "ms"
+          }
+        ]
+      },
+      "precision_note": "Each phase moves 8N = 33,554,432 bytes; two phases move 16N = 67,108,864. At 140 GB/s (decimal, 1.4e11 bytes per second) that takes 67,108,864 / 1.4e11 s = 0.4793 ms. Counting one pass (8N) would give half, the bound of a single-pass scan such as CUB's.",
+      "explanation": "Section 5: phases 1 and 3 each read and write the whole array, so a three-phase scan moves $16N$ bytes, twice a single pass, and at best runs at half the copy's effective rate.",
+      "hints": [
+        "One phase reads $N$ floats and writes $N$ floats.",
+        "Divide bytes by $1.4 \\times 10^{11}$ bytes per second."
+      ]
+    },
+    {
+      "id": "cuda-008-q12",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 2,
+      "tags": [
+        "three-phase",
+        "barrier"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the three-phase scan, phase 1 scans each block and saves its total, and the totals are scanned afterwards in their own launches. Why can phase 1 not just call `__syncthreads()` and then read the totals of the blocks before it?",
+      "answer": {
+        "model": "`__syncthreads()` only synchronizes the threads of one block; blocks cannot wait for each other inside a kernel, so only a new launch guarantees that every block's total is written.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*__syncthreads[\\s\\S]*\\b(only|just)\\b[\\s\\S]*\\b(one|a single|its own|the same|each|its|a)\\s+(thread\\s+)?block\\b",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)(?![\\s\\S]*\\bnot\\s+(only\\s+)?(within|inside)\\b)[\\s\\S]*\\b(within|inside)\\s+(a|one|the|each|its own|a single)\\s+(thread\\s+)?block\\b",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\bblocks?\\b[\\s\\S]*\\b(cannot|can't|can not|do not|don't|never)\\b[\\s\\S]*\\b(wait|synchroni[sz]e|sync|coordinate|see each other)",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\b(no|not a|there is no|there's no)\\s+(grid-wide|grid wide|grid-level|global|device-wide|device wide|inter-block|cross-block)\\s+(barrier|sync|synchronization)",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\bonly\\s+(a\\s+)?(new|separate|second)\\s+(kernel\\s+)?launch",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\b(only|just)\\b[\\s\\S]*\\bthreads?\\s+(of|in)\\s+(the same|one|a single|its own|its|a|the|each)\\s+block\\b",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\b(block-level|per-block|per block)\\s+(barrier|sync|synchroni[sz]ation)",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\b(only|just)\\s+(covers|affects|applies to|orders|synchroni[sz]es|syncs|waits for)\\s+(the\\s+threads\\s+(of|in)\\s+)?(one|a single|its own|the same|its|this|a)\\s+(thread\\s+)?block\\b",
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure)\\b)(?![\\s\\S]*\\b(can|does|will)\\s+(sync|synchroni[sz]e|wait for|coordinate)\\s+(all|every|the other|other)\\s+blocks\\b)(?![\\s\\S]*__syncthreads(\\(\\))?\\s+(does\\s+)?(synchroni[sz]es|syncs|waits for|orders|covers)\\s+(all|every|the other|other)\\b)(?![\\s\\S]*\\b(all|every)\\s+threads?\\s+(of|in)\\s+the\\s+grid\\b)(?![\\s\\S]*\\b(and|also)\\s+across\\s+(the\\s+)?(blocks|grid)\\b)(?![\\s\\S]*\\bacross\\s+(the\\s+)?(blocks|grid)\\s+(too|as well)\\b)(?![\\s\\S]*\\bnot\\s+(only|just)\\b)(?![\\s\\S]*\\bblocks\\s+can\\s+(wait|synchroni[sz]e|sync)\\b)[\\s\\S]*\\b(no effect on|does not (affect|wait for|reach|cover|order)|doesn't (affect|wait for|reach|cover|order))\\s+(the\\s+)?(other|another|different|all)\\s+blocks?\\b"
+        ]
+      },
+      "explanation": "Section 5: a block barrier orders the threads of one block and nothing else, and blocks may run in any order, so a block cannot wait inside the kernel for the totals of other blocks. Ending the launch is what orders every block; post 09 states the rule.",
+      "hints": [
+        "Which threads does `__syncthreads()` wait for?",
+        "What orders every block of a grid?"
+      ]
+    },
+    {
+      "id": "cuda-008-q13",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o5",
+        "o3"
+      ],
+      "section": "5",
+      "est_minutes": 15,
+      "tags": [
+        "reduction",
+        "three-phase",
+        "decoupled-look-back"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 04 summed 16,777,216 floats in one launch: a grid-stride loop, a tree per block, and one `atomicAdd` per block into a single total. This post's scan of the same array needs three phases. Explain (1) how the Blelloch up-sweep relates to post 04's tree, (2) why the reduction can combine its blocks inside one launch while the three-phase scan cannot, and (3) what CUB's decoupled look-back changes and what the GTX 1650 measurements show it buys.",
+      "kind": "connect",
+      "solution": "1. The up-sweep is the reduction tree run in place: at each level the right element of each pair adds the left, and the block's last element ends with the block's total, as post 04's tree ends with the sum in element 0. The scan keeps the partial sums the tree leaves behind and uses them in the down-sweep, where the reduction discards them.\n2. The reduction needs only one number from each block and the order in which the block totals are added does not matter (up to rounding), so each block adds its total with an `atomicAdd` whenever it finishes. A scan needs, for block $b$, the total of exactly the blocks before $b$, which is an order-dependent value; `__syncthreads()` orders only one block, so inside one ordinary launch a block cannot wait for the others. The three-phase scheme gets the order from launches: phase 1 writes all totals, a separate scan of the totals computes each block's offset, and phase 3 adds it.\n3. Phases 1 and 3 each read and write the whole array, $16N$ bytes in all, twice a single pass. CUB's decoupled look-back has each block publish its total and read the running totals that earlier blocks publish, so one pass suffices. On the GTX 1650 CUB scanned the array in 0.961 ms, within 0.5% of the 0.957 ms copy, while the best three-phase scan took 2.337 ms, above the 1.914 ms floor of two copies.",
+      "rubric": [
+        {
+          "criterion": "Identifies the up-sweep as the reduction tree in place, with the total in the last element and the partial sums kept",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that a reduction's block totals commute and can be combined with one atomic per block, while a scan needs the ordered total of earlier blocks",
+          "points": 3
+        },
+        {
+          "criterion": "States that `__syncthreads()` orders only one block, so the order comes from separate launches",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that three phases move twice the bytes and that decoupled look-back does it in one pass, citing the measured 0.961 ms against 0.957 ms copy and 2.337 ms",
+          "points": 3
+        }
+      ],
+      "answer_length": "three short paragraphs",
+      "explanation": "Sections 3, 5 and 6, with post 04's tree: the reduction needs only an order-free combination of block totals, the scan an ordered one, which three phases buy with an extra pass over memory and CUB with decoupled look-back.",
+      "hints": [
+        "Compare what each algorithm needs from the other blocks: any order, or the blocks before this one.",
+        "Count the passes over the array that each scheme makes."
+      ],
+      "connects": [
+        "cuda-004",
+        "cuda-009"
+      ]
+    },
+    {
+      "id": "cuda-008-q14",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "6",
+      "est_minutes": 12,
+      "tags": [
+        "design",
+        "algorithm-choice"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A kernel needs three scans: (a) the 32 values held by the lanes of one warp, (b) the 2,048 values of one block's shared-memory tile, and (c) 100,000,000 floats in global memory. For each, choose a method from this post, justify it by what is expensive at that scale (additions, steps and barriers, or passes over memory), and cite the GTX 1650 measurements where they apply.",
+      "kind": "design",
+      "solution": "(a) One warp: Hillis-Steele with register shuffles, `__shfl_up_sync` at offsets 1, 2, 4, 8, 16. Its $N \\log_2 N$ additions are free because the 32 lanes execute each step as one instruction anyway, and it needs no shared memory and no barrier; five steps is the minimum depth.\n(b) One block of 2,048 values: a Blelloch scan with the conflict-free offset `index + (index >> 5)`, or a warp-shuffle scan per warp followed by a scan of the warp totals. Inside a block the cost is barriers and shared-memory passes, not additions: plain Blelloch (4.808 ms for the whole array) was slower than Hillis-Steele (3.965 ms), the padded version faster (3.390 ms), and the warp-shuffle block scan fastest of the hand-written ones (2.337 ms).\n(c) 100,000,000 floats: a library single-pass scan, `cub::DeviceScan::ExclusiveSum` or `InclusiveSum`. Here the cost is passes over memory: any three-phase scan moves $16N$ bytes and can reach at most half the copy's rate, while CUB's decoupled look-back reached 0.961 ms against the copy's 0.957 ms for 16,777,216 floats. A Hillis-Steele scan in global memory with one launch per step would read and write the array 27 times ($\\lceil \\log_2 10^8 \\rceil$).",
+      "rubric": [
+        {
+          "criterion": "Chooses a warp-shuffle Hillis-Steele for the warp and explains why its extra additions cost nothing there",
+          "points": 2
+        },
+        {
+          "criterion": "Chooses a conflict-free Blelloch or a warp-shuffle block scan for the block, citing barriers and bank conflicts as the cost and the measured order of the rows",
+          "points": 3
+        },
+        {
+          "criterion": "Chooses a single-pass library scan for the large array and explains the 16N bytes of a three-phase scan against CUB's copy-speed run",
+          "points": 3
+        },
+        {
+          "criterion": "Rejects global-memory Hillis-Steele for the large array because each step is a pass over memory",
+          "points": 2
+        }
+      ],
+      "answer_length": "three short paragraphs",
+      "explanation": "Sections 2, 4, 5 and 6: the right scan depends on what a step costs where it runs: an instruction in a warp, a barrier and shared-memory passes in a block, a full pass over global memory for a whole array.",
+      "hints": [
+        "For each scale, ask what one step of the algorithm costs.",
+        "Use the table of section 6 for the block and the array cases."
+      ]
+    },
+    {
+      "id": "cuda-008-q15",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3",
+        "o6"
+      ],
+      "section": "7",
+      "est_minutes": 3,
+      "tags": [
+        "vocabulary",
+        "blelloch",
+        "stream-compaction"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each step to what it computes.",
+      "left": [
+        {
+          "key": "a",
+          "text": "Up-sweep"
+        },
+        {
+          "key": "b",
+          "text": "Clearing the root"
+        },
+        {
+          "key": "c",
+          "text": "Down-sweep"
+        },
+        {
+          "key": "d",
+          "text": "Predicate"
+        },
+        {
+          "key": "e",
+          "text": "Scatter"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "Partial sums of a reduction tree, with the total in the last element"
+        },
+        {
+          "key": "q",
+          "text": "The identity at the position that will become element 0's prefix"
+        },
+        {
+          "key": "r",
+          "text": "Every element's sum of all elements before it"
+        },
+        {
+          "key": "s",
+          "text": "A 1 for each element to keep and a 0 for each to drop"
+        },
+        {
+          "key": "t",
+          "text": "Each kept element written to the index its exclusive scan gives"
+        },
+        {
+          "key": "u",
+          "text": "Every element's sum of all elements up to and including it"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s",
+        "e": "t"
+      },
+      "explanation": "Sections 3 and 7: the up-sweep is a reduction tree, the cleared root seeds the exclusive scan with 0, the down-sweep distributes the exclusive prefixes; compaction's predicate marks survivors and the scatter writes them. The inclusive description is a distractor: Blelloch's down-sweep gives the exclusive scan.",
+      "hints": [
+        "Blelloch produces an exclusive scan.",
+        "Compaction's three steps are predicate, scan, scatter."
+      ]
+    },
+    {
+      "id": "cuda-008-q16",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "bank-conflicts",
+        "padding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Why does storing element `k` at slot `k + (k >> 5)` remove most of the Blelloch tree's bank conflicts on a 32-bank GPU?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Indices 32 apart, which shared one bank, are shifted by different amounts and land in different banks.",
+          "correct": true,
+          "feedback": "Right: each run of 32 consecutive indices moves one bank further than the run before, so a stride of 32 no longer maps to one bank."
+        },
+        {
+          "key": "b",
+          "text": "It halves the number of active threads at each level, so fewer threads collide.",
+          "correct": false,
+          "feedback": "The padding changes where values live, not how many threads work; the active counts per level are the same."
+        },
+        {
+          "key": "c",
+          "text": "It makes every access a broadcast, since threads read the same padded address.",
+          "correct": false,
+          "feedback": "A broadcast needs one address for the whole warp; the padded addresses are all distinct."
+        },
+        {
+          "key": "d",
+          "text": "It aligns every tree node to a 128-byte segment, so global loads coalesce.",
+          "correct": false,
+          "feedback": "The tree lives in shared memory, where banks and not 128-byte segments decide the cost; the offset does not align anything to 128 bytes."
+        }
+      ],
+      "explanation": "Section 4: the tree's indices at large offsets are multiples of 32 apart and fall in one bank; adding `k >> 5` shifts each group of 32 one bank further, and the model's count drops from 2,681 passes to 511 against an ideal 476.",
+      "hints": [
+        "Compare the banks of `k` and `k + 32` before and after the offset.",
+        "`(k + 32) >> 5` is one more than `k >> 5`."
+      ]
+    },
+    {
+      "id": "cuda-008-q17",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o6"
+      ],
+      "section": "7",
+      "est_minutes": 2,
+      "tags": [
+        "stream-compaction"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A predicate over nine values is `1 0 1 0 0 1 1 0 1` and its exclusive scan is `0 1 1 2 2 2 3 4 4`. How many values does the compacted output hold?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "4, the last value of the exclusive scan.",
+          "correct": false,
+          "feedback": "The exclusive scan's last value counts the kept elements before the last one and misses the last element itself, which is kept."
+        },
+        {
+          "key": "b",
+          "text": "5, the last scan value plus the last predicate.",
+          "correct": true,
+          "feedback": "Right: the output length is the total of the predicate, the exclusive scan's last value plus the last flag."
+        },
+        {
+          "key": "c",
+          "text": "9, the length of the input.",
+          "correct": false,
+          "feedback": "Compaction drops the elements whose predicate is 0; the output is shorter than the input."
+        },
+        {
+          "key": "d",
+          "text": "19, the sum of the scan values.",
+          "correct": false,
+          "feedback": "The scan values are output indices; their sum has no meaning for the output's length."
+        }
+      ],
+      "explanation": "Section 7: the predicate's total, 5, is the output length, equal to the exclusive scan's last value, 4, plus the last predicate, 1; the model keeps `[3, 7, 4, 1, 6]`.",
+      "hints": [
+        "The exclusive scan at position $i$ counts kept elements strictly before $i$."
+      ]
+    }
+  ]
+}

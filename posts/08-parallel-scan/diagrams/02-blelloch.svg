@@ -1,69 +1,373 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">The Blelloch scan builds partial sums in an up-sweep, then distributes them in a down-sweep to produce an exclusive scan</title>
-  <desc id="d">Three rows showing the work-efficient Blelloch scan in place on the array 3, 1, 7, 0, 4, 1, 6, 3. The first row is the input. The up-sweep phase builds partial sums like a reduction tree, giving the second row 3, 4, 7, 11, 4, 5, 6, 25, where the last element 25 is the total sum, highlighted. Then the last element is set to zero and the down-sweep phase distributes values back down, giving the third row, the exclusive scan 0, 3, 4, 11, 11, 15, 16, 22, drawn green. The whole thing does about 2N additions, order N work, instead of the N log N of the simpler Hillis-Steele scan.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:14px;fill:var(--cuda-ink);}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .tot{fill:var(--cuda-surface);stroke:var(--cuda-ink);stroke-width:1.5;}
-    .outc{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .flow{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Blelloch scan: up-sweep builds sums, down-sweep distributes them</text>
-  <text class="small" x="40" y="66">Work-efficient: about 2N additions (O(N) work) instead of Hillis-Steele's N log N.</text>
-
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
-  </defs>
-
-  <text class="label" x="120" y="104">input</text>
-  <g>
-    <rect class="cell" x="120" y="114" width="80" height="46"/><text class="mono" x="160" y="143" text-anchor="middle">3</text>
-    <rect class="cell" x="208" y="114" width="80" height="46"/><text class="mono" x="248" y="143" text-anchor="middle">1</text>
-    <rect class="cell" x="296" y="114" width="80" height="46"/><text class="mono" x="336" y="143" text-anchor="middle">7</text>
-    <rect class="cell" x="384" y="114" width="80" height="46"/><text class="mono" x="424" y="143" text-anchor="middle">0</text>
-    <rect class="cell" x="472" y="114" width="80" height="46"/><text class="mono" x="512" y="143" text-anchor="middle">4</text>
-    <rect class="cell" x="560" y="114" width="80" height="46"/><text class="mono" x="600" y="143" text-anchor="middle">1</text>
-    <rect class="cell" x="648" y="114" width="80" height="46"/><text class="mono" x="688" y="143" text-anchor="middle">6</text>
-    <rect class="cell" x="736" y="114" width="80" height="46"/><text class="mono" x="776" y="143" text-anchor="middle">3</text>
-  </g>
-
-  <path class="flow" d="M480,164 L480,196" marker-end="url(#a)"/>
-  <text class="small" x="500" y="186">up-sweep: build partial sums (a reduction tree)</text>
-
-  <text class="label" x="120" y="246">after up-sweep</text>
-  <g>
-    <rect class="cell" x="120" y="256" width="80" height="46"/><text class="mono" x="160" y="285" text-anchor="middle">3</text>
-    <rect class="cell" x="208" y="256" width="80" height="46"/><text class="mono" x="248" y="285" text-anchor="middle">4</text>
-    <rect class="cell" x="296" y="256" width="80" height="46"/><text class="mono" x="336" y="285" text-anchor="middle">7</text>
-    <rect class="cell" x="384" y="256" width="80" height="46"/><text class="mono" x="424" y="285" text-anchor="middle">11</text>
-    <rect class="cell" x="472" y="256" width="80" height="46"/><text class="mono" x="512" y="285" text-anchor="middle">4</text>
-    <rect class="cell" x="560" y="256" width="80" height="46"/><text class="mono" x="600" y="285" text-anchor="middle">5</text>
-    <rect class="cell" x="648" y="256" width="80" height="46"/><text class="mono" x="688" y="285" text-anchor="middle">6</text>
-    <rect class="tot"  x="736" y="256" width="80" height="46"/><text class="mono" x="776" y="285" text-anchor="middle">25</text>
-  </g>
-  <text class="small" x="824" y="285">total sum</text>
-
-  <path class="flow" d="M480,306 L480,338" marker-end="url(#a)"/>
-  <text class="small" x="500" y="328">set last = 0, then down-sweep: distribute back down</text>
-
-  <text class="label" x="120" y="388" fill="var(--cuda-success)">exclusive scan</text>
-  <g>
-    <rect class="outc" x="120" y="398" width="80" height="46"/><text class="mono" x="160" y="427" text-anchor="middle">0</text>
-    <rect class="outc" x="208" y="398" width="80" height="46"/><text class="mono" x="248" y="427" text-anchor="middle">3</text>
-    <rect class="outc" x="296" y="398" width="80" height="46"/><text class="mono" x="336" y="427" text-anchor="middle">4</text>
-    <rect class="outc" x="384" y="398" width="80" height="46"/><text class="mono" x="424" y="427" text-anchor="middle">11</text>
-    <rect class="outc" x="472" y="398" width="80" height="46"/><text class="mono" x="512" y="427" text-anchor="middle">11</text>
-    <rect class="outc" x="560" y="398" width="80" height="46"/><text class="mono" x="600" y="427" text-anchor="middle">15</text>
-    <rect class="outc" x="648" y="398" width="80" height="46"/><text class="mono" x="688" y="427" text-anchor="middle">16</text>
-    <rect class="outc" x="736" y="398" width="80" height="46"/><text class="mono" x="776" y="427" text-anchor="middle">22</text>
-  </g>
-
-  <text class="small" x="40" y="492">Each output is the sum of everything before it.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="cuda-02-blelloch-title" aria-describedby="cuda-02-blelloch-desc">
+<title id="cuda-02-blelloch-title">Blelloch: sum up the tree, then pass prefixes down</title>
+<desc id="cuda-02-blelloch-desc">Two panels on the values 3 1 7 0 4 1 6 3. Up-sweep, top to bottom: at offset 1 the right element of each pair adds the left, giving 3 4 7 7 4 5 6 9; at offset 2, 3 4 7 11 4 5 6 14; at offset 4, 3 4 7 11 4 5 6 25, the total last. Down-sweep: the root is cleared to 0 (purple), giving 3 4 7 11 4 5 6 0; at offsets 4, 2 and 1 each left child takes its parent's value and each right child the parent plus the old left value, giving 3 4 7 0 4 5 6 11, then 3 0 7 4 4 11 6 16, then the exclusive scan 0 3 4 11 11 15 16 22. Orange cells are written at that level, and the total and the finished scan are outlined green; 14 additions in all.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green { fill: var(--cuda-green); }
+  .f-green-ink { fill: var(--cuda-green-ink); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-purple { fill: var(--cuda-purple); }
+  .f-purple-soft { fill: var(--cuda-purple-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-purple { stroke: var(--cuda-purple); }
+</style>
+<defs>
+<marker id="cuda-02-blelloch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-02-blelloch-arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-orange"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="720"/>
+<text x="40" y="48" class="t-title" data-w="618">Blelloch: sum up the tree, then pass prefixes down</text>
+<text x="40" y="76" class="t-subtitle" data-w="719">The post's eight values, with the tree indices of scan.cu; the end rows are printed by scan_model.py.</text>
+<text x="40" y="120" class="t-head" data-w="288">Up-sweep: a reduction tree in place</text>
+<g data-grid="skip">
+<rect x="112" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="154" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="196" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="238" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="280" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="322" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="364" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="406" y="160" width="42" height="40" class="cell f-green-soft"/>
+</g>
+<rect x="112" y="160" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="133" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="175" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="217" y="186" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="259" y="186" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="301" y="186" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="343" y="186" text-anchor="middle" class="t-cell16" data-w="10">1</text>
+<text x="385" y="186" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="427" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+</g>
+<text x="40" y="184" class="t-label" data-w="34">input</text>
+<g data-grid="skip">
+<rect x="112" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="154" y="280" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="196" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="238" y="280" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="322" y="280" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="364" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="406" y="280" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="112" y="280" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="133" y="306" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="175" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="217" y="306" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="259" y="306" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="301" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="343" y="306" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="385" y="306" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="427" y="306" text-anchor="middle" class="t-cell16" data-w="10">9</text>
+</g>
+<text x="40" y="304" class="t-label" data-w="51">offset 1</text>
+<path d="M132,204 L166.66,273.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M184,204 L176.33,273.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M216,204 L250.66,273.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M268,204 L260.33,273.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M300,204 L334.66,273.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M352,204 L344.33,273.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M384,204 L418.66,273.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M436,204 L428.33,273.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<g data-grid="skip">
+<rect x="112" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="154" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="196" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="238" y="400" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="280" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="322" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="364" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="406" y="400" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="112" y="400" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="133" y="426" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="175" y="426" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="217" y="426" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="259" y="426" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="301" y="426" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="343" y="426" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="385" y="426" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="427" y="426" text-anchor="middle" class="t-cell16" data-w="19">14</text>
+</g>
+<text x="40" y="424" class="t-label" data-w="51">offset 2</text>
+<path d="M176,324 L249.82,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M268,324 L260.33,393.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M344,324 L417.82,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M436,324 L428.33,393.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<g data-grid="skip">
+<rect x="112" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="154" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="196" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="238" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="280" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="322" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="364" y="520" width="42" height="40" class="cell f-green-soft"/>
+<rect x="406" y="520" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="112" y="520" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="133" y="546" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="175" y="546" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="217" y="546" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="259" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="301" y="546" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="343" y="546" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="385" y="546" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="427" y="546" text-anchor="middle" class="t-cell16" data-w="19">25</text>
+</g>
+<text x="40" y="544" class="t-label" data-w="51">offset 4</text>
+<path d="M260,444 L417.26,514.77" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M436,444 L428.33,513.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<g data-grid="skip">
+<rect x="406" y="520" width="42" height="40" class="emph s-green" data-fit="skip"/>
+</g>
+<text x="428" y="588" text-anchor="middle" class="t-label f-green-ink" data-w="56">the total</text>
+<text x="496" y="120" class="t-head" data-w="293">Down-sweep: prefixes passed down</text>
+<g data-grid="skip">
+<rect x="568" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="610" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="652" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="694" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="736" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="778" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="820" y="160" width="42" height="40" class="cell f-green-soft"/>
+<rect x="862" y="160" width="42" height="40" class="cell f-purple-soft"/>
+</g>
+<rect x="568" y="160" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="589" y="186" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="631" y="186" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="673" y="186" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="715" y="186" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="757" y="186" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="799" y="186" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="841" y="186" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="883" y="186" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+</g>
+<text x="496" y="184" class="t-label" data-w="54">root = 0</text>
+<g data-grid="skip">
+<rect x="568" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="610" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="652" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="694" y="280" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="736" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="778" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="820" y="280" width="42" height="40" class="cell f-green-soft"/>
+<rect x="862" y="280" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="568" y="280" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="589" y="306" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="631" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="673" y="306" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="715" y="306" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="757" y="306" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="799" y="306" text-anchor="middle" class="t-cell16" data-w="10">5</text>
+<text x="841" y="306" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="883" y="306" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+</g>
+<text x="496" y="304" class="t-label" data-w="51">offset 4</text>
+<path d="M884,204 L726.74,274.77" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M716,204 L873.26,274.77" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M892,204 L884.33,273.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<g data-grid="skip">
+<rect x="568" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="610" y="400" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="652" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="694" y="400" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="736" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="778" y="400" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="820" y="400" width="42" height="40" class="cell f-green-soft"/>
+<rect x="862" y="400" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="568" y="400" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="589" y="426" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="631" y="426" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="673" y="426" text-anchor="middle" class="t-cell16" data-w="10">7</text>
+<text x="715" y="426" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="757" y="426" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="799" y="426" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="841" y="426" text-anchor="middle" class="t-cell16" data-w="10">6</text>
+<text x="883" y="426" text-anchor="middle" class="t-cell16" data-w="19">16</text>
+</g>
+<text x="496" y="424" class="t-label" data-w="51">offset 2</text>
+<path d="M716,324 L642.18,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M632,324 L705.82,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M724,324 L716.33,393.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M884,324 L810.18,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M800,324 L873.82,393.94" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M892,324 L884.33,393.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<g data-grid="skip">
+<rect x="568" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="610" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="652" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="694" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="736" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="778" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="820" y="520" width="42" height="40" class="cell f-orange-soft"/>
+<rect x="862" y="520" width="42" height="40" class="cell f-orange-soft"/>
+</g>
+<rect x="568" y="520" width="336" height="40" class="frame" data-fit="skip"/>
+<g data-grid="skip">
+<text x="589" y="546" text-anchor="middle" class="t-cell16" data-w="10">0</text>
+<text x="631" y="546" text-anchor="middle" class="t-cell16" data-w="10">3</text>
+<text x="673" y="546" text-anchor="middle" class="t-cell16" data-w="10">4</text>
+<text x="715" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="757" y="546" text-anchor="middle" class="t-cell16" data-w="19">11</text>
+<text x="799" y="546" text-anchor="middle" class="t-cell16" data-w="19">15</text>
+<text x="841" y="546" text-anchor="middle" class="t-cell16" data-w="19">16</text>
+<text x="883" y="546" text-anchor="middle" class="t-cell16" data-w="19">22</text>
+</g>
+<text x="496" y="544" class="t-label" data-w="51">offset 1</text>
+<path d="M632,444 L597.34,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M588,444 L622.66,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M640,444 L632.33,513.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M716,444 L681.34,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M672,444 L706.66,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M724,444 L716.33,513.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M800,444 L765.34,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M756,444 L790.66,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M808,444 L800.33,513.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M884,444 L849.34,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M840,444 L874.66,513.32" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<path d="M892,444 L884.33,513.02" class="s-orange w1 nofill" marker-end="url(#cuda-02-blelloch-arrow-orange)"/>
+<rect x="568" y="520" width="336" height="40" class="emph s-green" data-fit="skip"/>
+<text x="736" y="588" text-anchor="middle" class="t-label f-green-ink" data-w="123">the exclusive scan</text>
+<rect x="40" y="632" width="16" height="16" class="f-orange s-orange w1"/>
+<text x="72" y="644" class="t-label" data-w="127">written at this level</text>
+<rect x="232" y="632" width="16" height="16" class="f-green s-green w1"/>
+<text x="264" y="644" class="t-label" data-w="155">unchanged at this level</text>
+<rect x="448" y="632" width="16" height="16" class="s-green w15 nofill"/>
+<text x="480" y="644" class="t-label" data-w="38">result</text>
+<rect x="544" y="632" width="16" height="16" class="f-purple s-purple w1"/>
+<text x="576" y="644" class="t-label" data-w="111">root cleared to 0</text>
+<text x="40" y="684" class="t-note" data-w="577">Each sweep has log₂ 8 = 3 levels and 7 additions, 14 in all, against 17 for Hillis-Steele.</text>
 </svg>

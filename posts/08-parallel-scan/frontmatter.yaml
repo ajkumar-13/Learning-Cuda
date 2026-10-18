@@ -1,8 +1,30 @@
 id: cuda-008
 slug: 08-parallel-scan
-title: "08 · Parallel scan — breaking the dependency chain of a prefix sum"
+title: "08 - Parallel scan: breaking the dependency chain of a prefix sum"
+summary: "How a prefix sum, where every total waits on the one before it, runs in a logarithmic number of parallel steps: Hillis-Steele, Blelloch's two sweeps, conflict-free addressing, multi-block scans, and stream compaction."
 date: 2026-07-12
-tags: [parallel-patterns, cuda, scan]
-hero: diagrams/01-scan-dependency.svg
-reading_time: 16
+updated: 2026-10-18
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 17
+tags: [cuda, scan, prefix-sum, parallel-patterns, shared-memory, stream-compaction]
+hero: diagrams/01-scan-dependency.svg
+prerequisites: [cuda-004]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain why a prefix sum looks serial and how trading extra additions for fewer parallel steps breaks the chain."
+  - id: o2
+    text: "Count the additions and parallel steps of Hillis-Steele and Blelloch, and pick one for a warp, a block, or a whole array."
+  - id: o3
+    text: "Walk the Blelloch up-sweep and down-sweep by hand on eight values and say what each phase computes."
+  - id: o4
+    text: "Count the bank conflicts of the Blelloch tree indices and remove them with the offset `index + (index >> 5)`."
+  - id: o5
+    text: "Scan an array larger than one block in three phases, and explain why that moves twice the bytes of a single-pass library scan."
+  - id: o6
+    text: "Implement stream compaction as predicate, exclusive scan, and scatter."
+recommended: [cuda-006]
+compute: gpu-small
+hardware: gtx-1650
