@@ -1,8 +1,26 @@
 id: cuda-013
 slug: 13-cuda-graphs
-title: "13 · Cutting launch overhead — CUDA Graphs and stream-ordered allocation"
+title: "13 - Cutting launch overhead: CUDA Graphs and stream-ordered allocation"
+summary: "Measures what a kernel launch and an allocation cost on a GTX 1650, then cuts both: a CUDA graph replays short kernels at about half the overhead per kernel, and a stream-ordered pool avoids the device-wide stall of cudaFree."
 date: 2026-07-24
-tags: [systems-execution, cuda, cuda-graphs, memory-pools]
-hero: diagrams/01-launch-overhead.svg
-reading_time: 14
+updated: 2026-10-18
+status: complete
 part: "Part IV - Systems & Execution"
+level: intermediate
+reading_time: 17
+tags: [cuda, cuda-graphs, launch-overhead, memory-pools, stream-ordered-allocation, streams]
+hero: diagrams/01-launch-overhead.svg
+prerequisites: [cuda-012]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain why a stream of many short kernels is bound by the cost of each launch rather than by compute, and measure that cost per kernel."
+  - id: o2
+    text: "Capture a stream's kernels into a CUDA graph between `cudaStreamBeginCapture` and `cudaStreamEndCapture`, instantiate it once, and replay it."
+  - id: o3
+    text: "Use the launch-overhead model, fed with measured costs, to say when a graph helps, when it does not, and after how many kernels it repays its build."
+  - id: o4
+    text: "Replace a per-step `cudaMalloc` and the device-synchronizing `cudaFree` with `cudaMallocAsync` and `cudaFreeAsync` on a pool that keeps its memory."
+recommended: [cuda-010]
+compute: gpu-small
+hardware: gtx-1650

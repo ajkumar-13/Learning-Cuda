@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-03-launch-sweep-title" aria-describedby="cuda-03-launch-sweep-desc">
+<title id="cuda-03-launch-sweep-title">A graph pays off only for kernels a few µs long</title>
+<desc id="cuda-03-launch-sweep-desc">Speedup of graph replay over direct launches against kernel length W from 0 to 32 µs. Measured points: 2.34 at 0, 1.25 at 2, 1.15 at 4, 1.06 at 8, 1.04 at 16 and 1.02 at 32 µs. The dashed model curve, from L of 1.54 µs and l of 0.81 µs per kernel over 10,000 kernels, starts at 1.89, passes through the other points and crosses the 1.1 line at 6.4 µs.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-ink { fill: var(--cuda-ink); }
+  .f-ink-muted { fill: var(--cuda-ink-muted); }
+  .f-red { fill: var(--cuda-red); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-surface { stroke: var(--cuda-surface); }
+</style>
+<defs>
+<marker id="cuda-03-launch-sweep-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<clipPath id="cuda-03-launch-sweep-clip-1"><rect x="90" y="138" width="780" height="252"/></clipPath>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="568">A graph pays off only for kernels a few µs long</text>
+<text x="40" y="76" class="t-subtitle" data-w="802">Points measured on the author's GTX 1650 (7.5), CUDA 12.3, October 2026; curve derived by graphs_model.py.</text>
+<text x="40" y="120" class="t-head" data-w="302">Speedup, direct time over graph time</text>
+<g data-grid="skip">
+<path d="M96,369H864M96,294H864M96,219H864M96,144H864" class="gridline"/>
+<text x="88" y="373" text-anchor="end" class="t-tick" data-w="19">1.0</text>
+<text x="88" y="298" text-anchor="end" class="t-tick" data-w="19">1.5</text>
+<text x="88" y="223" text-anchor="end" class="t-tick" data-w="19">2.0</text>
+<text x="88" y="148" text-anchor="end" class="t-tick" data-w="19">2.5</text>
+<text x="96" y="404" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="288" y="404" text-anchor="middle" class="t-tick" data-w="8">8</text>
+<text x="480" y="404" text-anchor="middle" class="t-tick" data-w="16">16</text>
+<text x="672" y="404" text-anchor="middle" class="t-tick" data-w="16">24</text>
+<text x="864" y="404" text-anchor="middle" class="t-tick" data-w="16">32</text>
+<path d="M96,144V384H864" class="axis"/>
+<path d="M96,354H864" class="s-ink-muted w1 nofill d-ref"/>
+<g clip-path="url(#cuda-03-launch-sweep-clip-1)">
+<path d="M96,236.25 L102,267.43 L108,286.75 L114,299.9 L120,309.42 L126,316.63 L132,322.29 L138,326.84 L144,330.59 L150,333.72 L156,336.38 L162,338.67 L168,340.66 L174,342.4 L180,343.94 L186,345.32 L192,346.55 L198,347.65 L204,348.66 L210,349.57 L216,350.41 L222,351.17 L228,351.88 L234,352.53 L240,353.14 L246,353.7 L252,354.22 L258,354.71 L264,355.17 L270,355.6 L276,356 L282,356.38 L288,356.74 L294,357.07 L300,357.39 L306,357.7 L312,357.99 L318,358.26 L324,358.52 L330,358.77 L336,359 L342,359.23 L348,359.45 L354,359.65 L360,359.85 L366,360.04 L372,360.22 L378,360.4 L384,360.56 L390,360.73 L396,360.88 L402,361.03 L408,361.17 L414,361.31 L420,361.45 L426,361.58 L432,361.7 L438,361.82 L444,361.94 L450,362.05 L456,362.16 L462,362.27 L468,362.37 L474,362.47 L480,362.57 L486,362.67 L492,362.76 L498,362.85 L504,362.93 L510,363.02 L516,363.1 L522,363.18 L528,363.25 L534,363.33 L540,363.4 L546,363.47 L552,363.54 L558,363.61 L564,363.68 L570,363.74 L576,363.81 L582,363.87 L588,363.93 L594,363.99 L600,364.04 L606,364.1 L612,364.16 L618,364.21 L624,364.26 L630,364.31 L636,364.36 L642,364.41 L648,364.46 L654,364.51 L660,364.55 L666,364.6 L672,364.64 L678,364.69 L684,364.73 L690,364.77 L696,364.81 L702,364.85 L708,364.89 L714,364.93 L720,364.97 L726,365.01 L732,365.04 L738,365.08 L744,365.11 L750,365.15 L756,365.18 L762,365.22 L768,365.25 L774,365.28 L780,365.31 L786,365.34 L792,365.37 L798,365.4 L804,365.43 L810,365.46 L816,365.49 L822,365.52 L828,365.55 L834,365.58 L840,365.6 L846,365.63 L852,365.65 L858,365.68 L864,365.71" class="s-ink-muted w15 nofill d-proj"/>
+</g>
+<text x="876" y="359" class="t-note f-ink-muted" data-w="31">1.1×</text>
+</g>
+<text x="480" y="428" text-anchor="middle" class="t-note" data-w="129">kernel length W, µs</text>
+<g data-grid="skip">
+<circle cx="96" cy="168" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<circle cx="144" cy="331.5" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<circle cx="192" cy="346.5" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<circle cx="288" cy="360" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<circle cx="480" cy="363" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<circle cx="864" cy="366" r="5" class="f-ink s-surface w1"/>
+</g>
+<g data-grid="skip">
+<path d="M249.42,348 L255.42,354 L249.42,360 L243.42,354 Z" class="f-red s-surface w1"/>
+</g>
+<g data-grid="skip">
+<text x="261.42" y="342" class="t-note" data-w="143">model: 1.1× at 6.4 µs</text>
+</g>
+<g data-grid="skip">
+<text x="110" y="173" class="t-note" data-w="134">empty kernel, 2.34×</text>
+</g>
+<g data-grid="skip">
+<text x="156" y="321.5" class="t-note" data-w="89">1.25× at 2 µs</text>
+</g>
+<circle cx="48" cy="472" r="5" class="f-ink s-surface w1"/>
+<text x="72" y="476" class="t-label" data-w="67">measured</text>
+<path d="M168,472 H192" class="s-ink-muted w15 nofill d-proj"/>
+<text x="200" y="476" class="t-label" data-w="100">model, derived</text>
+<path d="M336,466 L342,472 L336,478 L330,472 Z" class="f-red s-surface w1"/>
+<text x="360" y="476" class="t-label" data-w="91">1.1× crossing</text>
+</svg>

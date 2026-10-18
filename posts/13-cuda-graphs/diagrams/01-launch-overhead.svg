@@ -1,59 +1,555 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Direct launches leave a host gap before every kernel; a graph replay closes the gaps</title>
-  <desc id="d">Two timelines. The top, labelled direct launches, alternates a grey host-gap segment and a neutral kernel block six times, so the sequence is long and the GPU idles in every grey gap while the CPU issues the next launch. The bottom, labelled graph replay, is a single green launch marker followed by six kernel blocks packed back to back with no gaps, so it finishes much sooner. A dashed bracket marks the time saved by removing the per-launch host gaps.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:12px;fill:var(--cuda-ink);}
-    .kernel{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .gap{fill:var(--cuda-grid);stroke:none;}
-    .gk{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-    .glaunch{fill:var(--cuda-success);stroke:none;}
-    .gtxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-success);}
-    .saved{stroke:var(--cuda-ink-muted);stroke-width:1;stroke-dasharray:4 3;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Launch overhead: the CPU gap before every kernel</text>
-  <text class="small" x="40" y="66">Direct launches wait on the host each time; a graph replays the whole sequence with one call.</text>
-
-  <!-- Row A: direct launches -->
-  <text class="label" x="40" y="130">Direct: N launches, a host gap before each</text>
-  <g>
-    <rect class="gap"    x="150" y="150" width="44" height="46"/>
-    <rect class="kernel" x="194" y="150" width="70" height="46" rx="4"/><text class="mono" x="229" y="178" text-anchor="middle">K1</text>
-    <rect class="gap"    x="264" y="150" width="44" height="46"/>
-    <rect class="kernel" x="308" y="150" width="70" height="46" rx="4"/><text class="mono" x="343" y="178" text-anchor="middle">K2</text>
-    <rect class="gap"    x="378" y="150" width="44" height="46"/>
-    <rect class="kernel" x="422" y="150" width="70" height="46" rx="4"/><text class="mono" x="457" y="178" text-anchor="middle">K3</text>
-    <rect class="gap"    x="492" y="150" width="44" height="46"/>
-    <rect class="kernel" x="536" y="150" width="70" height="46" rx="4"/><text class="mono" x="571" y="178" text-anchor="middle">K4</text>
-    <rect class="gap"    x="606" y="150" width="44" height="46"/>
-    <rect class="kernel" x="650" y="150" width="70" height="46" rx="4"/><text class="mono" x="685" y="178" text-anchor="middle">K5</text>
-    <rect class="gap"    x="720" y="150" width="44" height="46"/>
-    <rect class="kernel" x="764" y="150" width="70" height="46" rx="4"/><text class="mono" x="799" y="178" text-anchor="middle">K6</text>
-  </g>
-  <text class="small" x="172" y="222" text-anchor="middle">host gap</text>
-  <text class="small" x="150" y="244">The GPU idles in every grey gap, waiting for the CPU to issue the next launch.</text>
-
-  <!-- Row B: graph replay -->
-  <text class="label" x="40" y="330">Graph: instantiate once, then replay with a single call</text>
-  <g>
-    <rect class="glaunch" x="150" y="350" width="40" height="46" rx="4"/>
-    <rect class="gk" x="194" y="350" width="70" height="46" rx="4"/><text class="mono" x="229" y="378" text-anchor="middle">K1</text>
-    <rect class="gk" x="264" y="350" width="70" height="46" rx="4"/><text class="mono" x="299" y="378" text-anchor="middle">K2</text>
-    <rect class="gk" x="334" y="350" width="70" height="46" rx="4"/><text class="mono" x="369" y="378" text-anchor="middle">K3</text>
-    <rect class="gk" x="404" y="350" width="70" height="46" rx="4"/><text class="mono" x="439" y="378" text-anchor="middle">K4</text>
-    <rect class="gk" x="474" y="350" width="70" height="46" rx="4"/><text class="mono" x="509" y="378" text-anchor="middle">K5</text>
-    <rect class="gk" x="544" y="350" width="70" height="46" rx="4"/><text class="mono" x="579" y="378" text-anchor="middle">K6</text>
-  </g>
-  <text class="gtxt" x="170" y="342" text-anchor="middle">launch</text>
-  <text class="small" x="150" y="422">One cudaGraphLaunch replays all six kernels; the gaps are gone.</text>
-
-  <!-- time saved bracket between the two end points -->
-  <path class="saved" d="M614,300 L614,470 M834,300 L834,470 M614,470 L834,470"/>
-  <text class="small" x="724" y="490" text-anchor="middle">time saved</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-launch-overhead-title" aria-describedby="cuda-01-launch-overhead-desc">
+<title id="cuda-01-launch-overhead-title">A graph replay narrows the gap before every kernel</title>
+<desc id="cuda-01-launch-overhead-desc">Two timelines of twenty kernels of 2 µs each, drawn to scale from measured averages. Direct launches: the host row shows twenty launch calls of 1.75 µs each, done after 35 µs; on the GPU row every kernel follows a gap of 1.52 µs and the twentieth ends at 70.4 µs. Graph replay: the host row shows one cudaGraphLaunch call of 5.6 µs; on the GPU row the gaps shrink to 0.81 µs and the twentieth kernel ends at 56.2 µs.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-blue-soft { fill: var(--cuda-blue-soft); }
+  .f-orange { fill: var(--cuda-orange); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .s-blue { stroke: var(--cuda-blue); }
+  .s-blue-line { stroke: var(--cuda-blue-line); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-red { stroke: var(--cuda-red); }
+</style>
+<defs>
+<marker id="cuda-01-launch-overhead-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="623">A graph replay narrows the gap before every kernel</text>
+<text x="40" y="76" class="t-subtitle" data-w="716">graphs.cu averages on the author's GTX 1650 (7.5), CUDA 12.3, October 2026; to scale, not a trace.</text>
+<text x="40" y="124" class="t-head" data-w="157">Direct: 20 launches</text>
+<text x="40" y="156" class="t-label" data-w="30">host</text>
+<text x="40" y="196" class="t-label" data-w="32">GPU</text>
+<g data-grid="skip">
+<rect x="160" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="160" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="175.17" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="175.17" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="190.33" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="190.33" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="205.5" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="205.5" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="220.67" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="220.67" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="235.83" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="235.83" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="251" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="251" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="266.17" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="266.17" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="281.33" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="281.33" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="296.5" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="296.5" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="311.67" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="311.67" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="326.83" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="326.83" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="342" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="342" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="357.17" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="357.17" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="372.33" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="372.33" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="387.5" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="387.5" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="402.67" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="402.67" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="417.83" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="417.83" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="433" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="433" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="448.17" y="136" width="13" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="448.17" y="136" width="13" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="160" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="173.17" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="190.51" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="203.68" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="221.01" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="234.19" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="251.52" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="264.69" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="282.03" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="295.2" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="312.53" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="325.71" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="343.04" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="356.21" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="373.55" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="386.72" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="404.05" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="417.23" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="434.56" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="447.73" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="465.07" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="478.24" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="495.57" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="508.75" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="526.08" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="539.25" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="556.59" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="569.76" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="587.09" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="600.27" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="617.6" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="630.77" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="648.11" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="661.28" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="678.61" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="691.79" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="709.12" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="722.29" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="739.63" y="176" width="13.17" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="752.8" y="176" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<text x="778.13" y="197" class="t-value" data-w="108">ends at 70.4 µs</text>
+</g>
+<g data-grid="skip">
+<text x="471.33" y="157" class="t-note" data-w="119">issued after 35 µs</text>
+<text x="160" y="232" class="t-note f-red-ink" data-w="207">gap 1.52 µs before each kernel</text>
+</g>
+<text x="40" y="292" class="t-head" data-w="224">Graph: 1 cudaGraphLaunch</text>
+<text x="40" y="324" class="t-label" data-w="30">host</text>
+<text x="40" y="364" class="t-label" data-w="32">GPU</text>
+<g data-grid="skip">
+<rect x="160" y="304" width="48.53" height="32" class="f-blue-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="160" y="304" width="48.53" height="32" class="w1 nofill s-blue-line" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="160" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="167.02" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="184.35" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="191.37" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="208.71" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="215.73" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="233.06" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="240.08" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="257.41" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="264.43" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="281.77" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="288.79" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="306.12" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="313.14" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="330.47" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="337.49" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="354.83" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="361.85" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="379.18" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="386.2" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="403.53" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="410.55" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="427.89" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="434.91" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="452.24" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="459.26" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="476.59" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="483.61" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="500.95" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="507.97" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="525.3" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="532.32" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="549.65" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="556.67" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="574.01" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="581.03" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="598.36" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="605.38" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="622.71" y="344" width="7.02" height="32" class="f-red-soft" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<rect x="629.73" y="344" width="17.33" height="32" class="f-orange" data-fit="skip"/>
+</g>
+<g data-grid="skip">
+<text x="655.07" y="365" class="t-value" data-w="108">ends at 56.2 µs</text>
+</g>
+<g data-grid="skip">
+<text x="216.53" y="325" class="t-note" data-w="101">one call, 5.6 µs</text>
+<text x="160" y="400" class="t-note f-red-ink" data-w="79">gap 0.81 µs</text>
+</g>
+<g data-grid="skip">
+<path d="M160,432 L784,432" class="s-ink-muted w1 nofill"/>
+<path d="M160,432 L160,436" class="s-ink-muted w1 nofill"/>
+<text x="160" y="452" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<path d="M246.67,432 L246.67,436" class="s-ink-muted w1 nofill"/>
+<text x="246.67" y="452" text-anchor="middle" class="t-tick" data-w="16">10</text>
+<path d="M333.33,432 L333.33,436" class="s-ink-muted w1 nofill"/>
+<text x="333.33" y="452" text-anchor="middle" class="t-tick" data-w="16">20</text>
+<path d="M420,432 L420,436" class="s-ink-muted w1 nofill"/>
+<text x="420" y="452" text-anchor="middle" class="t-tick" data-w="16">30</text>
+<path d="M506.67,432 L506.67,436" class="s-ink-muted w1 nofill"/>
+<text x="506.67" y="452" text-anchor="middle" class="t-tick" data-w="16">40</text>
+<path d="M593.33,432 L593.33,436" class="s-ink-muted w1 nofill"/>
+<text x="593.33" y="452" text-anchor="middle" class="t-tick" data-w="16">50</text>
+<path d="M680,432 L680,436" class="s-ink-muted w1 nofill"/>
+<text x="680" y="452" text-anchor="middle" class="t-tick" data-w="16">60</text>
+<path d="M766.67,432 L766.67,436" class="s-ink-muted w1 nofill"/>
+<text x="766.67" y="452" text-anchor="middle" class="t-tick" data-w="16">70</text>
+</g>
+<text x="40" y="452" class="t-tick" data-w="50">time, µs</text>
+<rect x="160" y="476" width="16" height="16" class="f-blue-soft s-blue w1"/>
+<text x="192" y="488" class="t-label" data-w="56">host call</text>
+<rect x="280" y="476" width="16" height="16" class="f-orange s-orange w1"/>
+<text x="312" y="488" class="t-label" data-w="77">kernel, 2 µs</text>
+<rect x="416" y="476" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="448" y="488" class="t-label" data-w="109">gap on the GPU</text>
 </svg>

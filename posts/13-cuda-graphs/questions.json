@@ -1,0 +1,668 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-013",
+  "next_ordinal": 16,
+  "questions": [
+    {
+      "id": "cuda-013-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "launch-overhead"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On the author's GTX 1650 the loop of direct launches returned after about 1.75 µs per kernel, yet each kernel of length $W$ still cost about $W + 1.5$ µs until the stream finished. What does that show?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The host is the only bottleneck: each kernel waits for the CPU to finish issuing its launch before it can start.",
+          "correct": false,
+          "feedback": "The host ran ahead: for 2 µs kernels the loop returned after 3.5 ms while the stream needed 7.0 ms, so the host was not what the kernels waited on."
+        },
+        {
+          "key": "b",
+          "text": "The kernels ran slower than $W$ because the spin loop is inaccurate.",
+          "correct": false,
+          "feedback": "The extra 1.5 µs is the same for every $W$ and shrinks to 0.8 µs from a graph with the same kernels, so it is not the kernel body."
+        },
+        {
+          "key": "c",
+          "text": "Besides the host's issue time, consecutive kernels of a stream leave a gap on the GPU that each launch pays.",
+          "correct": true,
+          "feedback": "Right: the overhead is in the launch path (driver submission and the front end starting each grid), which asynchronous issue cannot hide."
+        },
+        {
+          "key": "d",
+          "text": "CUDA events add 1.5 µs to every kernel they time.",
+          "correct": false,
+          "feedback": "The harness timed the whole pass on the host with std::chrono, not with an event per kernel."
+        }
+      ],
+      "explanation": "Section 2: the issue time stays near 1.75 µs whatever $W$ is, so the host runs ahead and the queue fills, yet the done time is $W$ plus about 1.5 µs per kernel; the cost is a gap between consecutive kernels on the GPU, set by how the driver submits and the front end starts each grid.",
+      "hints": [
+        "Compare when the loop of calls returns with when the stream finishes."
+      ]
+    },
+    {
+      "id": "cuda-013-q02",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 2,
+      "tags": [
+        "cuda-graphs",
+        "instantiate"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A program captures one step of its stream into a graph. Which statement about `cudaGraphInstantiate` is right?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It builds an executable graph once; each `cudaGraphLaunch` then replays it without repeating the setup.",
+          "correct": true,
+          "feedback": "Right: instantiation is the one-time cost, 59.9 µs for 20 kernels here, and replay is one call per step."
+        },
+        {
+          "key": "b",
+          "text": "It runs the captured kernels once so that their results can be reused by later replays.",
+          "correct": false,
+          "feedback": "Instantiation runs nothing; the kernels run at each `cudaGraphLaunch`, on fresh data every time."
+        },
+        {
+          "key": "c",
+          "text": "It must be called again before every `cudaGraphLaunch`, because each launch consumes the executable graph it is given.",
+          "correct": false,
+          "feedback": "An executable graph is replayed many times; instantiating it every step pays the setup each time and repays nothing."
+        },
+        {
+          "key": "d",
+          "text": "It records the kernels issued to the stream as nodes.",
+          "correct": false,
+          "feedback": "Recording is done by the capture, between `cudaStreamBeginCapture` and `cudaStreamEndCapture`; instantiation comes after."
+        }
+      ],
+      "explanation": "Section 3: capture defines the graph, `cudaGraphInstantiate` checks it and builds a `cudaGraphExec_t` once (CUDA 12 form: graph and flags), and each `cudaGraphLaunch` replays it with one host call.",
+      "hints": [
+        "Separate the three stages: definition, instantiation, execution.",
+        "Which stage is paid once?"
+      ]
+    },
+    {
+      "id": "cuda-013-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "launch-overhead",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the post's sweep, kernels of length $W = 4$ µs cost 5.54 µs each launched directly and 4.79 µs each replayed from a graph. A program runs 2,000 such kernels. Give (a) the total time launched directly and (b) the total time replayed from a graph that is already built, in milliseconds.",
+      "answer": {
+        "parts": [
+          {
+            "label": "direct",
+            "value": 11.08,
+            "tolerance": 0.02,
+            "unit": "ms"
+          },
+          {
+            "label": "graph",
+            "value": 9.58,
+            "tolerance": 0.02,
+            "unit": "ms"
+          }
+        ]
+      },
+      "precision_note": "2,000 x 5.54 µs = 11,080 µs = 11.08 ms; 2,000 x 4.79 µs = 9,580 µs = 9.58 ms (the W = 4 row of graphs.cu in section 2). Using W alone, 8.00 ms for both, is the method the tolerance rejects.",
+      "explanation": "Section 2: the done time per kernel is what the stream costs, so the total is the count times the per-kernel time; the 0.75 µs difference per kernel is the graph's saving.",
+      "hints": [
+        "Use the done columns, not the issue columns.",
+        "Multiply by 2,000 and convert µs to ms."
+      ]
+    },
+    {
+      "id": "cuda-013-q04",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 6,
+      "tags": [
+        "model",
+        "break-even"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On another machine a graph of 25 kernels takes 120 µs to capture and instantiate, a direct launch costs $L = 2.0$ µs per kernel beyond its work and a graph replay $\\ell = 0.8$ µs. Using the post's model, give (a) how many kernels the graph must replay before it has repaid its build, and (b) the speedup for kernels of $W = 4$ µs once the build is spread over a very large number of kernels.",
+      "answer": {
+        "parts": [
+          {
+            "label": "kernels to repay the build",
+            "value": 100,
+            "tolerance": 1,
+            "unit": "kernels"
+          },
+          {
+            "label": "speedup at W = 4 µs",
+            "value": 1.25,
+            "tolerance": 0.01,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "Break-even T_build / (L - l) = 120 / 1.2 = 100 kernels (4 replays of 25); speedup (L + W) / (l + W) = 6.0 / 4.8 = 1.25 as T_build / N goes to 0. Dividing the build by L alone gives 60, which the tolerance rejects.",
+      "explanation": "Section 4: the graph saves $L - \\ell$ per kernel, so it repays a one-time build after $T_\\text{build}/(L - \\ell)$ kernels; for large $N$ the speedup is $(L + W)/(\\ell + W)$.",
+      "hints": [
+        "The saving per kernel is the difference of the two overheads.",
+        "For (b), the build term $T_\\text{build}/N$ vanishes."
+      ]
+    },
+    {
+      "id": "cuda-013-q05",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 5,
+      "tags": [
+        "memory-pool",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The harness printed, per step of allocate, kernel, free and `cudaStreamSynchronize` (4 MiB, µs): `cudaMalloc + cudaFree` 519.32 and `pool, release threshold maximum` 45.81. For a loop of 1,000 steps, give (a) the time saved by the kept pool, in milliseconds, and (b) how many times cheaper its step is.",
+      "stimulus": {
+        "kind": "code",
+        "language": "text",
+        "content": "                                          step   allocate       free   synchronize\n  cudaMalloc + cudaFree                  519.32     112.33     399.42          4.35\n  pool, release threshold 0 (default)  2004.06     158.90       2.76       1818.46\n  pool, release threshold maximum        45.81       1.66       1.14         39.19"
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "time saved",
+            "value": 473.5,
+            "tolerance": 0.2,
+            "unit": "ms"
+          },
+          {
+            "label": "times cheaper",
+            "value": 11.3,
+            "tolerance": 0.05,
+            "unit": ""
+          }
+        ]
+      },
+      "precision_note": "(519.32 - 45.81) x 1,000 µs = 473,510 µs = 473.5 ms; 519.32 / 45.81 = 11.34, which graphs_model.py prints as 11.3x and 473.5 ms saved. Comparing with the default pool (2,004.06) instead gives a negative saving, which is rejected.",
+      "explanation": "Section 6: at the maximum release threshold the pool keeps its block, so each step pays 1.66 µs to allocate and 1.14 µs to free instead of a real allocation and a device-synchronizing free.",
+      "hints": [
+        "Use the step column.",
+        "Subtract, multiply by 1,000 steps, convert µs to ms; then divide the two step times."
+      ]
+    },
+    {
+      "id": "cuda-013-q06",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "model",
+        "when-not-to-use"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "An application replays 50 kernels per step, each about 100 µs long, from a graph instead of launching them directly. Using the post's fitted costs ($L = 1.54$ µs, $\\ell = 0.81$ µs), what speedup should it expect?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "About 2.3 times, the speedup the post measured for empty kernels.",
+          "correct": false,
+          "feedback": "That is the $W = 0$ limit; at 100 µs the kernel's own work dominates both paths."
+        },
+        {
+          "key": "b",
+          "text": "About 1.9 times, the limit the model gives for very short kernels.",
+          "correct": false,
+          "feedback": "The limit holds only as $W \\to 0$; the speedup falls as $W$ grows."
+        },
+        {
+          "key": "c",
+          "text": "About 1.1 times, the line where the model says graphs stop mattering.",
+          "correct": false,
+          "feedback": "The speedup is 1.1 at about 6.4 µs; 100 µs kernels are far past it."
+        },
+        {
+          "key": "d",
+          "text": "About 1.01 times, since 0.73 µs per kernel is lost in 100 µs.",
+          "correct": true,
+          "feedback": "Right: $(1.54 + 100)/(0.81 + 100) \\approx 1.007$; the derived table prints 1.01x at 100 µs."
+        }
+      ],
+      "explanation": "Section 4: the graph saves a fixed $L - \\ell = 0.73$ µs per kernel, so the speedup $(L + W)/(\\ell + W)$ approaches 1 as $W$ grows; for a few long kernels a graph buys nothing measurable.",
+      "hints": [
+        "Compare the saving per kernel with the kernel's length.",
+        "Evaluate $(L + W)/(\\ell + W)$ at $W = 100$."
+      ]
+    },
+    {
+      "id": "cuda-013-q07",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 3,
+      "tags": [
+        "memory-pool",
+        "release-threshold"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In the harness, a step of `cudaMallocAsync`, kernel, `cudaFreeAsync` and `cudaStreamSynchronize` cost 2,004 µs with the pool at its default settings, against 519 µs for `cudaMalloc` and `cudaFree`. Why was the pool slower?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`cudaMallocAsync` synchronizes the whole device, just as `cudaFree` does, so every step waits for all streams.",
+          "correct": false,
+          "feedback": "It did not: beside a 20.6 ms kernel on another stream the pool round trip returned in 15.4 µs or less."
+        },
+        {
+          "key": "b",
+          "text": "At release threshold 0 the pool gives its memory back at every synchronize and must map it again next step.",
+          "correct": true,
+          "feedback": "Right: 1,818 µs of the step was inside the synchronize and 159 µs in the next allocation; at the maximum threshold the step fell to 45.8 µs."
+        },
+        {
+          "key": "c",
+          "text": "The pool cannot reuse a block freed on the same stream, so every allocation in the loop is a fresh one.",
+          "correct": false,
+          "feedback": "Reuse within a stream is the pool's normal case; with the threshold at its maximum the allocation cost 1.66 µs."
+        },
+        {
+          "key": "d",
+          "text": "The empty kernel inside the step runs slower when the memory it is given comes from a pool rather than `cudaMalloc`.",
+          "correct": false,
+          "feedback": "The kernel is the same in all three rows; the split by call shows where the time went: the synchronize."
+        }
+      ],
+      "explanation": "Section 6: the Guide says the allocator releases memory above the release threshold at the next stream, event or device synchronize, and Kini and Hemstad state the default threshold is zero, so a loop that synchronizes every step gives back and re-acquires its memory every step.",
+      "hints": [
+        "Look at which column holds most of the 2,004 µs.",
+        "Ask what a pool does with memory it holds above its release threshold when the stream synchronizes."
+      ]
+    },
+    {
+      "id": "cuda-013-q08",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "cudafree",
+        "synchronization"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A 20.6 ms kernel runs on stream `other`. On the host, which call held the host until that kernel had finished?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`cudaMalloc`",
+          "correct": false,
+          "feedback": "It returned in 145.2 µs without waiting on this driver, though the Guide still lists an allocation among the operations that prevent overlap."
+        },
+        {
+          "key": "b",
+          "text": "`cudaMallocAsync` from the pool",
+          "correct": false,
+          "feedback": "The pool round trip returned in 9.2 to 15.4 µs; it is ordered in its own stream only."
+        },
+        {
+          "key": "c",
+          "text": "`cudaFree`",
+          "correct": true,
+          "feedback": "Right: it held the host for 20.3 ms, 99% of the kernel: it waits for the whole device."
+        },
+        {
+          "key": "d",
+          "text": "`cudaFreeAsync`",
+          "correct": false,
+          "feedback": "It is stream-ordered; Kini and Hemstad: unlike `cudaFree`, it does not implicitly synchronize the device."
+        }
+      ],
+      "explanation": "Section 5: `cudaFree` blocked for 20,343.4 µs beside the 20.6 ms kernel, `cudaMalloc` for 145.2 µs and the pool round trip for microseconds.",
+      "hints": [
+        "One call waited for the whole device."
+      ]
+    },
+    {
+      "id": "cuda-013-q09",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "stream-capture"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which runtime call puts a stream into capture mode, so that the kernels issued to it are recorded as graph nodes instead of being run?",
+      "answer": {
+        "model": "cudaStreamBeginCapture",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\b\\W+cudastreambegincapture)[\\s\\S]*\\bcudastreambegincapture\\b"
+        ]
+      },
+      "explanation": "Section 3: `cudaStreamBeginCapture(s, cudaStreamCaptureModeGlobal)` starts the capture, the launches that follow become nodes, and `cudaStreamEndCapture` returns the graph.",
+      "hints": [
+        "Its name says that it begins a capture on a stream."
+      ]
+    },
+    {
+      "id": "cuda-013-q10",
+      "type": "short",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "6",
+      "est_minutes": 2,
+      "tags": [
+        "memory-pool",
+        "release-threshold"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A training loop allocates with `cudaMallocAsync` and calls `cudaStreamSynchronize` every step. Which attribute of the default memory pool should it set, and to what value, so the pool keeps its memory across the synchronizes?",
+      "answer": {
+        "model": "Set cudaMemPoolAttrReleaseThreshold (the release threshold) to its maximum, UINT64_MAX, with cudaMemPoolSetAttribute.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|don't|do not)\\b[^.;]{0,60}(max|uint64|largest|highest))(?![\\s\\S]*(?<!not )(?<!defaults )(?<!default )(?<!never )\\b(to|at)\\s+(0|zero)\\b(?![\\s\\S]*\\b(to|at)\\s+(the\\s+|its\\s+)?(max|uint64|largest|highest)))(?=[\\s\\S]*release[ _]?threshold)(?=[\\s\\S]*(uint64_max|\\bmax(imum)?\\b|largest|highest))"
+        ]
+      },
+      "explanation": "Section 6: the release threshold is the memory a pool holds before releasing the rest at a synchronize; it defaults to 0, and at `UINT64_MAX` the step fell from 2,004 µs to 45.8 µs.",
+      "hints": [
+        "The attribute decides how much memory survives a synchronize.",
+        "Its default is 0."
+      ]
+    },
+    {
+      "id": "cuda-013-q11",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "cuda-graphs",
+        "workflow"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps in order for a loop that replays one captured step many times.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Create a stream with `cudaStreamNonBlocking`."
+        },
+        {
+          "key": "b",
+          "text": "Call `cudaStreamBeginCapture` on it."
+        },
+        {
+          "key": "c",
+          "text": "Issue the step's kernels to the stream."
+        },
+        {
+          "key": "d",
+          "text": "Call `cudaStreamEndCapture` to get the graph."
+        },
+        {
+          "key": "e",
+          "text": "Call `cudaGraphInstantiate` once."
+        },
+        {
+          "key": "f",
+          "text": "Call `cudaGraphLaunch` once per step."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "explanation": "Section 3: the stream exists before capture begins; the issued kernels become nodes; ending the capture returns the graph; instantiation is paid once; each step is one `cudaGraphLaunch`.",
+      "hints": [
+        "Definition comes before instantiation, which comes before execution."
+      ]
+    },
+    {
+      "id": "cuda-013-q12",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 12,
+      "tags": [
+        "model",
+        "break-even"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement the post's launch-overhead model. `graph_speedup(L, ell, build, n, w)` returns the speedup of `n` kernels of length `w` replayed from a graph built once (cost `build`) over `n` direct launches, with per-kernel overheads `L` (direct) and `ell` (graph). `crossover_w(L, ell, build, n, target)` returns the kernel length at which that speedup falls to `target`, or `0.0` if the speedup is already at or below `target` for empty kernels. All times are in µs.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def graph_speedup(L, ell, build, n, w):\n    \"\"\"Speedup of n kernels of length w replayed from a graph built once, over n direct launches.\"\"\"\n    raise NotImplementedError\n\n\ndef crossover_w(L, ell, build, n, target):\n    \"\"\"The kernel length w at which graph_speedup falls to target, or 0.0 if it never reaches it.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def graph_speedup(L, ell, build, n, w):\n    \"\"\"Speedup of n kernels of length w replayed from a graph built once, over n direct launches.\"\"\"\n    return n * (L + w) / (build + n * (ell + w))\n\n\ndef crossover_w(L, ell, build, n, target):\n    \"\"\"The kernel length w at which graph_speedup falls to target, or 0.0 if it never reaches it.\"\"\"\n    base = ell + build / n\n    w = (L - target * base) / (target - 1)\n    return max(w, 0.0)\n",
+      "tests": "import math\ns = graph_speedup(1.54, 0.81, 59.9, 10000, 0.0)\nassert abs(s - 15400 / 8159.9) < 1e-9, s\nassert abs(graph_speedup(1.54, 0.81, 59.9, 10000, 2.0) - 35400 / 28159.9) < 1e-9\nassert abs(graph_speedup(2.0, 1.0, 0.0, 5, 0.0) - 2.0) < 1e-12\nassert graph_speedup(1.54, 0.81, 59.9, 10, 0.0) < 1.0          # ten kernels do not repay the build\nw = crossover_w(1.54, 0.81, 59.9, 10000, 1.1)\nassert abs(w - 6.42411) < 1e-4, w\nassert abs(graph_speedup(1.54, 0.81, 59.9, 10000, w) - 1.1) < 1e-6\nassert abs(crossover_w(2.0, 1.0, 0.0, 1000, 1.5) - 1.0) < 1e-6\nassert crossover_w(1.54, 0.81, 59.9, 10, 1.1) == 0.0\nassert crossover_w(1.0, 0.95, 0.0, 1000, 1.1) == 0.0\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 4: $T_\\text{direct} = N(L + W)$ and $T_\\text{graph} = T_\\text{build} + N(\\ell + W)$; setting their ratio to a target $s$ gives $W = (L - s(\\ell + T_\\text{build}/N))/(s - 1)$, which is 6.4 µs for the post's inputs at $s = 1.1$ and negative, so 0, when the graph never reaches $s$.",
+      "hints": [
+        "Write both totals, then divide.",
+        "Solve $(L + W) = s(\\ell + T_\\text{build}/N + W)$ for $W$.",
+        "Clamp a negative result to 0."
+      ]
+    },
+    {
+      "id": "cuda-013-q13",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "1",
+      "est_minutes": 15,
+      "tags": [
+        "launch-overhead",
+        "roofline",
+        "fusion"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 02 measured vector addition over 1,000 elements at 3.6 µs, about 2% of the card's bandwidth, and post 10's roofline cannot explain that time. Using this post's measurements and model, explain (1) why that kernel is bound by the launch rather than by memory, (2) what replaying a step of many such kernels from a graph would and would not change, with numbers from the sweep, and (3) why post 14's fusion can do better than a graph when the kernels can be merged.",
+      "kind": "connect",
+      "solution": "1. At 1,000 elements the kernel moves 12,000 bytes, which at the card's 160 GB/s peak takes under 0.1 µs; the measured 3.6 µs is almost all fixed cost. This post measures that cost directly: an empty kernel costs 1.80 µs per direct launch on the same card, and each kernel of a stream pays about 1.5 µs beyond its work, a gap between kernels on the GPU that the host's 1.75 µs of issue time, overlapped with the previous kernel, does not explain. The roofline models steady-state throughput and has no term for a per-launch constant.\n2. A graph replay cuts the per-kernel overhead from about 1.54 to 0.81 µs (the model's fit) and the host's issue time from 1.76 to 0.29 µs per kernel. For 2 µs kernels the derived table gives 1.26 times and the sweep measured 1.25 times; empty kernels measured 2.34 times. It does not remove the kernels' own work, the memory traffic between them, or the 0.8 µs that each node still costs; and it pays a one-time build, 59.9 µs, repaid after about 82 kernels.\n3. Fusion merges the kernels into one, so the launches disappear entirely rather than shrinking, and the intermediate results stay in registers instead of being written to and read back from DRAM. For memory-bound elementwise chains that removes both the launch overhead this post measures and most of the bytes post 10 counts. A graph is the tool when the kernels cannot be merged (different libraries, different shapes, many distinct steps).",
+      "rubric": [
+        {
+          "criterion": "Shows the vector add's bytes take far less than 3.6 µs and ties the time to the measured per-launch cost",
+          "points": 3
+        },
+        {
+          "criterion": "States what a graph changes, with the measured or modeled per-kernel overheads and host issue times",
+          "points": 3
+        },
+        {
+          "criterion": "States what a graph does not change: the work, the traffic, the remaining node cost and the build",
+          "points": 2
+        },
+        {
+          "criterion": "Explains that fusion removes the launches and the intermediate traffic, and when a graph is still the tool",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "connects": [
+        "cuda-002",
+        "cuda-010",
+        "cuda-014"
+      ],
+      "explanation": "Section 1 places the launch regime outside the roofline, sections 2 and 4 measure and model the cost and the graph's saving, and section 7 names fusion as the alternative when kernels can become fewer.",
+      "hints": [
+        "Compute how long 12,000 bytes take at 160 GB/s.",
+        "Separate the per-kernel overhead a graph shrinks from the costs it leaves."
+      ]
+    },
+    {
+      "id": "cuda-013-q14",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4",
+        "o1"
+      ],
+      "section": "5",
+      "est_minutes": 15,
+      "tags": [
+        "diagnosis",
+        "memory-pool",
+        "streams"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A training loop overlaps copies and kernels on three streams as in post 12, and each step allocates a 4 MiB workspace with `cudaMalloc`, launches 30 short kernels, frees the workspace with `cudaFree`, and synchronizes. A profile shows the streams no longer overlap and the steps are slow. Diagnose the causes with this post's measurements and give the fixes in order of what they buy.",
+      "kind": "design",
+      "solution": "Causes. (1) `cudaFree` waits for the whole device: beside a 20.6 ms kernel on another stream it held the host for 20.3 ms, so every step drains all three streams and the overlap of post 12 is lost; `cudaMalloc` also costs time (145 µs beside the kernel, 408 µs per idle pair with `cudaFree`) and the Guide lists a device allocation among the operations that keep commands of different streams from overlapping. (2) The 30 short kernels each pay about 1.5 µs of launch overhead beyond their work, about 46 µs per step for 30 kernels at the fitted $L = 1.54$ µs.\nFixes, in order. (a) Take the allocation out of the step: allocate once before the loop, or use `cudaMallocAsync` and `cudaFreeAsync` on the stream that uses the workspace, and set the pool's release threshold to its maximum, because the loop synchronizes: the measured step fell from 519 µs with `cudaMalloc` to 45.8 µs, while the default threshold of 0 made it 2,004 µs. This also restores the overlap. (b) Capture the step's 30 kernels (and the stream-ordered allocation, which captures as nodes, where `cudaMalloc` is refused) into a graph once and replay it: the overhead falls to about 0.81 µs per kernel and the host issues one call per step; the build, about 60 µs, is repaid after about 82 kernels, three steps. (c) Measure the kernels' length: if they are tens of microseconds long, the graph buys little and the allocation fix was the whole win; if adjacent kernels can be merged, fusion (post 14) removes launches outright.",
+      "rubric": [
+        {
+          "criterion": "Identifies cudaFree as a device-wide wait that destroys the overlap, with the measured 20.3 ms",
+          "points": 3
+        },
+        {
+          "criterion": "Fixes allocation with a one-time buffer or a stream-ordered pool at the maximum release threshold, with the step costs",
+          "points": 3
+        },
+        {
+          "criterion": "Estimates the launch overhead of 30 kernels and applies a graph with its break-even",
+          "points": 2
+        },
+        {
+          "criterion": "Notes that the default threshold makes the pool slower in a synchronizing loop, and that the graph's gain depends on kernel length",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Section 5 measures `cudaFree` waiting for another stream's kernel, section 6 the per-step costs and the release threshold, and sections 2 to 4 the launch overhead a graph removes and when it pays.",
+      "hints": [
+        "Which call in the step waits for every stream?",
+        "Price each fix with the step costs and the per-kernel overheads the post measured."
+      ]
+    },
+    {
+      "id": "cuda-013-q15",
+      "type": "mcq",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "9",
+      "est_minutes": 2,
+      "tags": [
+        "measurement",
+        "clock"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A run of the harness prints `SM clock: 225 MHz before the timed rows` and 21.75 µs per empty kernel launched directly, against 1.80 µs in the run the post uses. What should be done with it?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Average it with the earlier run, so that the published table reflects typical working conditions.",
+          "correct": false,
+          "feedback": "A run at a fraction of the clock measures a different machine state; averaging mixes it into the table."
+        },
+        {
+          "key": "b",
+          "text": "Discard it and rerun when the GPU is idle and the clock lines read near the boost clock.",
+          "correct": true,
+          "feedback": "Right: the printed clock is how such a run is caught; the post's table is from a run at 1,743 and 1,529 MHz."
+        },
+        {
+          "key": "c",
+          "text": "Keep it: launch overhead is a host-side cost, so the GPU clock cannot affect it.",
+          "correct": false,
+          "feedback": "The per-kernel cost includes the GPU starting each grid; at 225 MHz it was 12 times larger."
+        },
+        {
+          "key": "d",
+          "text": "Report the graph column from it, since a graph replay does not depend on the clock.",
+          "correct": false,
+          "feedback": "The graph column of that run was also inflated; every row of a run at the wrong clock is suspect."
+        }
+      ],
+      "explanation": "Section 9: a run started while another program kept the GPU at 100% printed 225 MHz and 21.75 µs per empty kernel; the clock lines exist so such a run is caught and discarded.",
+      "hints": [
+        "What do the clock lines in the output exist for?"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-02-graph-capture-title" aria-describedby="cuda-02-graph-capture-desc">
+<title id="cuda-02-graph-capture-title">Capture records the stream as a graph, built once</title>
+<desc id="cuda-02-graph-capture-desc">Left: the capture code of graphs.cu, cudaStreamBeginCapture, twenty launches, cudaStreamEndCapture and cudaGraphInstantiate. Middle: the graph it records, kernel 1 to kernel 20 joined by dependency edges in stream order. Right: instantiation costs 59.9 µs once; each cudaGraphLaunch then issues all twenty kernels for 0.28 µs of host time per kernel. Bottom: a captured poolRoundTrip becomes three nodes, cudaMallocAsync, the kernel and cudaFreeAsync.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-blue { fill: var(--cuda-blue); }
+  .f-blue-soft { fill: var(--cuda-blue-soft); }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-purple { fill: var(--cuda-purple); }
+  .s-blue { stroke: var(--cuda-blue); }
+  .s-blue-line { stroke: var(--cuda-blue-line); }
+  .s-green-line { stroke: var(--cuda-green-line); }
+  .s-orange-line { stroke: var(--cuda-orange-line); }
+  .s-purple { stroke: var(--cuda-purple); }
+</style>
+<defs>
+<marker id="cuda-02-graph-capture-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<marker id="cuda-02-graph-capture-arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-purple"/></marker>
+<marker id="cuda-02-graph-capture-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="f-blue"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="605">Capture records the stream as a graph, built once</text>
+<text x="40" y="76" class="t-subtitle" data-w="700">graphs.cu on the author's GTX 1650 (7.5), CUDA 12.3, October 2026; times measured, layout not.</text>
+<text x="40" y="120" class="t-head" data-w="160">1. Capture a stream</text>
+<rect x="40" y="136" width="312" height="172" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="56" y="168" class="t-code" data-w="265">cudaStreamBeginCapture(s, ...);</text>
+<text x="56" y="192" class="t-code" data-w="205">for (k = 0; k &lt; 20; ++k)</text>
+<text x="72" y="216" class="t-code" data-w="154">launch(s, cycles);</text>
+<text x="56" y="240" class="t-code" data-w="274">cudaStreamEndCapture(s, &amp;graph);</text>
+<text x="56" y="264" class="t-code" data-w="231">cudaGraphInstantiate(&amp;exec,</text>
+<text x="72" y="288" class="t-code" data-w="86">graph, 0);</text>
+<text x="424" y="120" class="t-head" data-w="178">2. The recorded graph</text>
+<rect x="424" y="136" width="152" height="32" class="f-orange-soft"/>
+<rect x="424" y="136" width="152" height="32" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="500" y="156" text-anchor="middle" class="t-label" data-w="53">kernel 1</text>
+<rect x="424" y="192" width="152" height="32" class="f-orange-soft"/>
+<rect x="424" y="192" width="152" height="32" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="500" y="212" text-anchor="middle" class="t-label" data-w="53">kernel 2</text>
+<text x="500" y="268" text-anchor="middle" class="t-label" data-w="15">⋮</text>
+<rect x="424" y="304" width="152" height="32" class="f-orange-soft"/>
+<rect x="424" y="304" width="152" height="32" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="500" y="324" text-anchor="middle" class="t-label" data-w="62">kernel 20</text>
+<path d="M500,168 L500,189" class="s-purple w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-purple)"/>
+<path d="M500,224 L500,245" class="s-purple w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-purple)"/>
+<path d="M500,280 L500,301" class="s-purple w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-purple)"/>
+<text x="588" y="228" class="t-note" data-w="77">edges from</text>
+<text x="588" y="248" class="t-note" data-w="87">stream order</text>
+<path d="M352,200 L413,200" class="s-blue w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-blue)"/>
+<text x="704" y="120" class="t-head" data-w="166">3. Instantiate, replay</text>
+<rect x="704" y="136" width="216" height="76" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="720" y="168" class="t-label" data-w="112">instantiate: once</text>
+<text x="720" y="192" class="t-label" data-w="49">59.9 µs</text>
+<rect x="704" y="248" width="216" height="100" rx="8" class="f-blue-soft s-blue-line w1"/>
+<text x="720" y="280" class="t-label" data-w="164">each cudaGraphLaunch:</text>
+<text x="720" y="304" class="t-label" data-w="73">20 kernels,</text>
+<text x="720" y="328" class="t-label" data-w="152">0.28 µs host time each</text>
+<path d="M576,152 L701,152" class="s-blue w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-blue)"/>
+<path d="M812,212 L812,245" class="s-blue w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-blue)"/>
+<text x="40" y="408" class="t-head" data-w="273">poolRoundTrip captured: 3 nodes</text>
+<rect x="40" y="424" width="200" height="40" class="f-green-soft"/>
+<rect x="40" y="424" width="200" height="40" class="w1 nofill s-green-line" data-fit="skip"/>
+<text x="140" y="448" text-anchor="middle" class="t-code" data-w="129">cudaMallocAsync</text>
+<rect x="296" y="424" width="136" height="40" class="f-orange-soft"/>
+<rect x="296" y="424" width="136" height="40" class="w1 nofill s-orange-line" data-fit="skip"/>
+<text x="364" y="448" text-anchor="middle" class="t-label" data-w="41">kernel</text>
+<rect x="488" y="424" width="200" height="40" class="f-green-soft"/>
+<rect x="488" y="424" width="200" height="40" class="w1 nofill s-green-line" data-fit="skip"/>
+<text x="588" y="448" text-anchor="middle" class="t-code" data-w="112">cudaFreeAsync</text>
+<path d="M240,444 L293,444" class="s-purple w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-purple)"/>
+<path d="M432,444 L485,444" class="s-purple w15 nofill" marker-end="url(#cuda-02-graph-capture-arrow-purple)"/>
+<text x="712" y="448" class="t-note" data-w="147">cudaMalloc is refused</text>
+<text x="40" y="504" class="t-note" data-w="511">Stream order becomes edges; the setup is paid once, before the first replay.</text>
+</svg>
