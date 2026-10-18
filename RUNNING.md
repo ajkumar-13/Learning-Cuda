@@ -14,7 +14,7 @@ Every post ships its companions in its own `snippets/` folder: a CPU model (`.py
 |---|---|---|---|
 | Part I - First Kernels | 01 to 03 | Python and NumPy | CUDA Toolkit 12.x and any NVIDIA card it supports, built with that card's `-arch` |
 | Part II - Parallel Patterns | 04 to 09 | Python and NumPy | as Part I |
-| Part III - Understanding Performance | 10 to 11 | Python and NumPy (post 10 is a model only) | as Part I; post 11 also uses Nsight Systems, Nsight Compute and `compute-sanitizer`, which ship with the toolkit |
+| Part III - Understanding Performance | 10 to 11 | Python and NumPy | as Part I; post 11 also uses Nsight Systems, Nsight Compute and `compute-sanitizer`, which ship with the toolkit |
 | Part IV - Systems & Execution | 12 to 15 | Python and NumPy | as Part I; post 15's `async_pipeline.cu` needs `sm_80` |
 | Part V - Tensor & Attention | 16 to 19 | Python and NumPy; post 19's `triton_matmul.py` also needs PyTorch and Triton on Linux | as Part I; post 17 needs compute capability 7.0 or above; post 18's `flash_attention.cu` needs `sm_80` |
 
@@ -76,8 +76,8 @@ Post 01's `device_query.cu` is the smallest end-to-end test. Built with the line
 
 ## Posts whose companions differ
 
-- Post 10 ([How fast can a kernel be](posts/10-roofline/index.md)) ships only its model, `roofline_model.py`, which derives the roofline and occupancy numbers by counting.
-- Post 11 ([Profiling and debugging](posts/11-profiling-debugging/index.md)) ships only `occupancy_demo.cu`, a kernel made to be put under Nsight and `compute-sanitizer`.
+- Post 10 ([How fast can a kernel be](posts/10-roofline/index.md)) ships its model, `roofline_model.py`, which derives the roofline and occupancy numbers by counting, and `occupancy_check.cu`, which compares the model's occupancy rule with the runtime's `cudaOccupancyMaxActiveBlocksPerMultiprocessor` and launches no kernel.
+- Post 11 ([Profiling and debugging](posts/11-profiling-debugging/index.md)) ships `occupancy_demo.cu`, the kernel it measures, and `missing_guard.cu` and `shared_race.cu`, whose bugs run behind command-line flags for `compute-sanitizer`. On Windows, Nsight Systems and Nsight Compute may need administrator rights: Nsight Compute stops with `ERR_NVGPUCTRPERM` until the NVIDIA Control Panel allows all users the GPU performance counters.
 - Post 18 ([FlashAttention](posts/18-flash-attention/index.md)) ships `flash_attention.cu` as an illustrative excerpt with no `main()`: it compiles with `-c` for `sm_80` and does not link. Its CPU model, `flash_attention.py`, is the runnable and verified companion.
 - Post 19 ([CUTLASS and Triton](posts/19-cutlass-triton/index.md)) ships Python only: `tools_model.py` (NumPy) and `triton_matmul.py` (PyTorch and Triton, Linux).
 

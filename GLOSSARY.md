@@ -16,11 +16,11 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Kernel.** A `__global__` function that runs on the GPU, written from the point of view of one thread and launched over a grid with `kernel<<<blocksPerGrid, blockSize>>>(args)`. On the GPU the grid is the loop. See [post 01](posts/01-introduction-to-cuda/index.md).
 
-**Latency hiding.** Keeping enough warps resident that, while some wait hundreds of cycles for global memory, the scheduler issues instructions from others; it is the GPU's answer to memory latency, where a CPU answers with large caches. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 10](posts/10-roofline/index.md).
+**Latency hiding.** Keeping enough independent work in flight, from many resident warps or from independent loads within each thread, that while some instructions wait hundreds of cycles for global memory the scheduler issues others; it is the GPU's answer to memory latency, where a CPU answers with large caches. See [post 01](posts/01-introduction-to-cuda/index.md) and [post 10](posts/10-roofline/index.md).
 
 **nvcc, PTX, cubin.** `nvcc` is the CUDA compiler driver: it splits a `.cu` file into host code (passed to the host C++ compiler) and device code, which it compiles to PTX, a virtual instruction set, and then to a cubin, the machine code for one architecture. See [post 01](posts/01-introduction-to-cuda/index.md).
 
-**Occupancy.** The ratio of warps resident on a streaming multiprocessor to the most it can hold. Theoretical occupancy is capped by whichever runs out first of the block size, the registers per thread and the shared memory per block; higher occupancy gives the scheduler more warps to hide latency with, up to a point. Derived by counting in [post 10](posts/10-roofline/index.md) and measured with Nsight Compute in [post 11](posts/11-profiling-debugging/index.md).
+**Occupancy.** The ratio of warps resident on a streaming multiprocessor to the most it can hold. Theoretical occupancy is capped by whichever runs out first of the block size, the registers per thread and the shared memory per block; higher occupancy gives the scheduler more warps to hide latency with, up to a point. Derived by counting in [post 10](posts/10-roofline/index.md) and checked with the CUDA runtime's occupancy API in [post 11](posts/11-profiling-debugging/index.md); achieved occupancy, the warps actually resident during a run, is a performance-counter reading that Nsight Compute reports.
 
 **SIMT (single instruction, multiple threads).** The GPU's execution style: the threads of a warp run one instruction stream together, each on its own data and registers. See [post 01](posts/01-introduction-to-cuda/index.md).
 
@@ -114,7 +114,7 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 **Asynchronous copy (`cp.async`).** An instruction of compute capability 8.0 and above (`sm_80`) that copies from global to shared memory in the background without passing through registers, so a block can compute on one tile while the next loads. See [post 15](posts/15-async-copy-pipelining/index.md).
 
-**Compute Sanitizer.** The CUDA toolkit's correctness tool, `compute-sanitizer`, with the tools memcheck (out-of-bounds and misaligned accesses), racecheck (shared-memory races) and synccheck (illegal barrier use). See [post 11](posts/11-profiling-debugging/index.md).
+**Compute Sanitizer.** The CUDA toolkit's correctness tool, `compute-sanitizer`, with the tools memcheck (out-of-bounds and misaligned accesses), racecheck (shared-memory races), synccheck (illegal barrier use) and initcheck (reads of uninitialized global memory). See [post 11](posts/11-profiling-debugging/index.md).
 
 **CUDA Graph.** A recorded sequence of kernels and copies with their dependencies, captured once from a stream and replayed with one launch, which removes most of the per-launch CPU overhead. See [post 13](posts/13-cuda-graphs/index.md).
 

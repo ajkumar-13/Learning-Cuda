@@ -96,8 +96,9 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 ## Post 10 - How fast can a kernel be: roofline, arithmetic intensity, and occupancy
 
 - Williams, S., Waterman, A. and Patterson, D. "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4), 2009. <https://doi.org/10.1145/1498765.1498785>
-- NVIDIA. *CUDA C++ Best Practices Guide*. Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/>
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Occupancy Calculator". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#occupancy-calculator>
+- NVIDIA. *CUDA C++ Best Practices Guide*, sections "Occupancy" and "Calculating Occupancy". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Occupancy Calculator" and "Technical Specifications per Compute Capability". Consulted October 2026 (CUDA 12.3 edition). <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#occupancy-calculator>
+- NVIDIA. `cuda_occupancy.h`, the CUDA Occupancy Calculator header of CUDA Toolkit 12.3 (`include/`): `cudaOccSubPartitionsPerMultiprocessor` and `cudaOccMaxBlocksPerSMRegsLimit`.
 - Volkov, V. "Better Performance at Lower Occupancy." GPU Technology Conference, 22 September 2010. <https://www.nvidia.com/content/GTC-2010/pdfs/2238_GTC2010.pdf>
 
 ---
@@ -107,6 +108,9 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 - NVIDIA. *Nsight Compute Documentation*. Consulted October 2026. <https://docs.nvidia.com/nsight-compute/>
 - NVIDIA. *Nsight Systems Documentation*. Consulted October 2026. <https://docs.nvidia.com/nsight-systems/>
 - NVIDIA. *Compute Sanitizer Documentation*. Consulted October 2026. <https://docs.nvidia.com/compute-sanitizer/>
+- NVIDIA. *CUDA Toolkit 12.0 Release Notes*, section "Deprecated Features". Consulted October 2026. <https://docs.nvidia.com/cuda/archive/12.0.0/cuda-toolkit-release-notes/index.html>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Occupancy Calculator" and "Launch Bounds". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/>
+- NVIDIA. "ERR_NVGPUCTRPERM: Permission issue with Performance Counters." NVIDIA Developer. Consulted October 2026. <https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters>
 - Williams, S., Waterman, A. and Patterson, D. "Roofline: An Insightful Visual Performance Model for Multicore Architectures." *Communications of the ACM* 52(4), 2009. <https://doi.org/10.1145/1498765.1498785>
 - NVIDIA. *CUDA C++ Best Practices Guide*. Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/>
 

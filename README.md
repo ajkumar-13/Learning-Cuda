@@ -8,7 +8,7 @@ Every post ships a CPU model in Python and NumPy that reproduces the kernel's lo
 
 - A kernel written from one thread's point of view: the global index `blockIdx.x * blockDim.x + threadIdx.x`, the guard on the surplus threads, the copies across the host and device boundary, and a shared-memory tiled matrix multiplication with its barriers in the right places.
 - The five parallel patterns (reduce, histogram, transpose, stencil, scan) as working kernels, with coalescing, bank conflicts, atomic contention and warp divergence read off a kernel's indexing, and the guarantees of `__syncthreads`, `__syncwarp`, atomics, fences and scopes stated as rules.
-- A performance model built by counting: arithmetic intensity, the roofline of a named card, theoretical occupancy, then the same values measured with Nsight Compute and correctness proved with compute-sanitizer.
+- A performance model built by counting: arithmetic intensity, the roofline of a named card, theoretical occupancy, then a kernel's bandwidth measured against that model, its occupancy checked with the CUDA runtime, and its correctness proved with compute-sanitizer.
 - The systems half: copies and compute overlapped across streams, a captured and replayed CUDA Graph, an elementwise chain fused into its producer kernel, and a double-buffered `cp.async` tile loop.
 - The modern half: a float read as sign, exponent and mantissa, mixed precision and a stable softmax, a WMMA matrix multiplication on Tensor Cores, the online-softmax update that makes FlashAttention memory-linear, and a reasoned choice between raw CUDA, CUTLASS, Triton and a library call.
 
@@ -35,7 +35,7 @@ After this part a reader owns reduce, histogram, transpose, stencil and scan as 
 
 ### Part III - Understanding Performance
 
-After this part a reader can count a kernel's arithmetic intensity, place it on the roofline of a named card, derive its theoretical occupancy, measure the achieved values with Nsight Compute, and prove its correctness with compute-sanitizer.
+After this part a reader can count a kernel's arithmetic intensity, place it on the roofline of a named card, derive its theoretical occupancy and check it with the CUDA runtime, measure its bandwidth against that roofline, and prove its correctness with compute-sanitizer.
 
 10. [10 - How fast can a kernel be: roofline, arithmetic intensity, and occupancy](posts/10-roofline/index.md)
 11. [11 - Profiling and debugging: Nsight, compute-sanitizer, and measured occupancy](posts/11-profiling-debugging/index.md)
