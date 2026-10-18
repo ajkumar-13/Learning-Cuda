@@ -88,7 +88,7 @@ The naive matrix multiplication is the instructive point. Its count gives a roof
 
 ## 5. Occupancy: filling the warp slots
 
-Reaching the roof takes keeping memory busy, which the GPU does by switching to a ready warp while one waits ([post 01](../01-introduction-to-cuda/index.md)). The CUDA C++ Best Practices Guide (section "Occupancy") defines **occupancy** as "the ratio of the number of active warps per multiprocessor to the maximum number of possible active warps". Theoretical occupancy is what the launch allows; achieved occupancy is post 11's.
+Reaching the roof takes keeping memory busy, which the GPU does by switching to a ready warp while one waits ([post 01](../01-introduction-to-cuda/index.md)). The CUDA C++ Best Practices Guide (section "Occupancy") defines **occupancy** as "the ratio of the number of active warps per multiprocessor to the maximum number of possible active warps". Theoretical occupancy is what the launch allows; achieved occupancy is a counter reading, which post 11 describes.
 
 The CUDA C++ Programming Guide's table for compute capability 7.5 gives the limits per SM: 32 resident warps (1,024 threads), 16 resident blocks, 65,536 32-bit registers, and 64 KB of shared memory (48 KB per block unless the kernel opts in to 64 KB). A launch spends three resources, and each caps the blocks that fit:
 
