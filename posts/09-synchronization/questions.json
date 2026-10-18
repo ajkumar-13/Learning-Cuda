@@ -1,0 +1,780 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-009",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-009-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 1,
+      "tags": [
+        "race-condition",
+        "lost-update"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Thousands of threads each run `counter += 1` once on one global `int`, with no atomic. Why does the final value come out far below the number of threads?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Each increment is a read, an add and a write; when several threads read the same old value before any of them writes, their writes overwrite each other.",
+          "correct": true,
+          "feedback": "Right: the read-modify-write is three steps, and interleaved steps make several increments produce one."
+        },
+        {
+          "key": "b",
+          "text": "The 32-bit counter overflows and wraps around once the count passes the number of resident threads.",
+          "correct": false,
+          "feedback": "A 32-bit `int` holds over two billion; a few thousand increments cannot overflow it. The loss comes from interleaving."
+        },
+        {
+          "key": "c",
+          "text": "Writes to global memory from different blocks are discarded unless the kernel ends with `cudaDeviceSynchronize()`.",
+          "correct": false,
+          "feedback": "Writes are not discarded; `cudaDeviceSynchronize()` is a host call that waits for the kernel. Overlapping read-modify-writes lose the updates."
+        },
+        {
+          "key": "d",
+          "text": "The compiler removes the increment because the counter is never read inside the kernel.",
+          "correct": false,
+          "feedback": "The compiler keeps a store to global memory that the host reads later; what goes wrong is the interleaving at run time."
+        }
+      ],
+      "explanation": "Section 1: `counter += 1` runs as READ, add, WRITE. If two threads READ before either WRITEs, both write the same value and one increment is lost; with thousands of threads most are lost (the GTX 1650 kept 548 of 6,553,600).",
+      "hints": [
+        "Write `counter += 1` as the separate steps a thread performs."
+      ]
+    },
+    {
+      "id": "cuda-009-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 4,
+      "tags": [
+        "race-model",
+        "lockstep"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Run the post's race model with $T = 512$ threads and $K = 50$ increments each. Give (a) the intended final counter, (b) the final counter under warp lockstep (32 lanes read, add and write together, warps take turns) and (c) under full lockstep (all 512 threads collide on every step).",
+      "answer": {
+        "parts": [
+          {
+            "label": "intended",
+            "value": 25600,
+            "tolerance": 0,
+            "unit": "increments"
+          },
+          {
+            "label": "warp lockstep",
+            "value": 800,
+            "tolerance": 0,
+            "unit": "increments"
+          },
+          {
+            "label": "full lockstep",
+            "value": 50,
+            "tolerance": 0,
+            "unit": "increments"
+          }
+        ]
+      },
+      "precision_note": "Intended $T \\times K = 25{,}600$. Warp lockstep: each of the $512 / 32 = 16$ warps adds 1 per step for 50 steps, 800. Full lockstep: one group, 1 per step, 50. race_model.simulate(lockstep(512, 50, 32)) and lockstep(512, 50, 512) print the same.",
+      "explanation": "Section 1: in a lockstep group every lane reads the same value before any writes, so the whole group adds 1 per step. With $T / 32$ warps taking turns over $K$ steps the counter ends at $(T / 32) K$; with one group of all threads, at $K$.",
+      "hints": [
+        "A lockstep group adds exactly 1 per step, however many lanes it has.",
+        "Count the groups, then multiply by the steps."
+      ]
+    },
+    {
+      "id": "cuda-009-q03",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "atomics",
+        "memory-order"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The Programming Guide gives the plain atomic functions such as `atomicAdd` one memory order from the C++ vocabulary. Which order is it?",
+      "answer": {
+        "model": "Relaxed (`cuda::memory_order_relaxed`): the atomic is indivisible but orders none of the thread's other memory operations.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|isn't|never|no longer)\\s+(cuda::)?(memory_order_)?relaxed)(?![\\s\\S]*\\brelaxed\\b\\s*,?\\s*(or|and)\\s+(cuda::)?(memory_order_)?(seq_cst|sequential(ly)?[ -]consistent|acq_rel|acquire|release)\\b)(?![\\s\\S]*\\b(than|instead of)\\s+(cuda::)?(memory_order_)?relaxed\\b)(?!((?!\\bweaker than\\b)[\\s\\S])*(?<!not )(?<!no )(?<!nor )(?<!or )(?<!and )\\b(cuda::)?(memory_order_)?(seq_cst|sequential(ly)?[ -]consistent|acq_rel|acquire|release)\\b)[\\s\\S]*\\b(cuda::)?(memory_order_)?relaxed\\b"
+        ]
+      },
+      "explanation": "Section 4 quotes the Guide: the atomic functions \"have ordering `cuda::memory_order_relaxed`\". That is why an atomic flag alone does not publish other data: ordering needs a fence or an acquire-release atomic.",
+      "hints": [
+        "It is the weakest order: atomicity and nothing else."
+      ]
+    },
+    {
+      "id": "cuda-009-q04",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "barrier",
+        "divergence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In a 256-thread block, `if (threadIdx.x < 32) { work(); __syncthreads(); }` is compiled for compute capability 7.5. Which statement is correct?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The behavior is undefined: the barrier waits for threads that may never reach it, so the block can hang or pass with its phases paired wrongly.",
+          "correct": true,
+          "feedback": "Right: the Guide allows a barrier in conditional code only when the condition is the same for the whole block."
+        },
+        {
+          "key": "b",
+          "text": "It always deadlocks, so a test run will catch it at once.",
+          "correct": false,
+          "feedback": "From compute capability 7.0 the barrier waits only for threads that have not exited; two such variants ran to completion on the GTX 1650. That is what makes the bug dangerous."
+        },
+        {
+          "key": "c",
+          "text": "It is safe, because the 32 threads that take the branch form one whole warp.",
+          "correct": false,
+          "feedback": "`__syncthreads()` counts the whole block, not a warp; the other 224 threads still never reach this barrier."
+        },
+        {
+          "key": "d",
+          "text": "The compiler rejects a `__syncthreads()` inside a conditional.",
+          "correct": false,
+          "feedback": "It compiles; the Guide only states when the result is defined."
+        }
+      ],
+      "explanation": "Section 2: `__syncthreads()` \"is allowed in conditional code but only if the conditional evaluates identically across the entire thread block\". Otherwise the outcome depends on what the other threads do: exit (the waiting threads go on), reach another barrier (wrong pairing), or wait (a hang).",
+      "hints": [
+        "Ask which threads the barrier waits for.",
+        "From compute capability 7.0 on, exited threads are not waited for."
+      ]
+    },
+    {
+      "id": "cuda-009-q05",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "syncwarp",
+        "warp-shuffle"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On compute capability 7.5, which of these places needs a `__syncwarp()`?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Between two consecutive `__shfl_down_sync(0xffffffff, v, off)` calls of a full-warp register reduction.",
+          "correct": false,
+          "feedback": "The `_sync` shuffle synchronizes the lanes in its mask itself and passes the data in registers; post 04's `warpReduce` is correct without a `__syncwarp()`."
+        },
+        {
+          "key": "b",
+          "text": "Between one lane's write of `s[tid]` in shared memory and another lane's read of that element in the next step of a one-warp tail.",
+          "correct": true,
+          "feedback": "Right: lanes that exchange data through memory need `__syncwarp()` to order the write before the read."
+        },
+        {
+          "key": "c",
+          "text": "After every `atomicAdd` to a shared counter, so that the next atomic sees the update.",
+          "correct": false,
+          "feedback": "Atomics on one address are already indivisible; a later atomic sees every earlier one's result."
+        },
+        {
+          "key": "d",
+          "text": "Before a `__syncthreads()`, so that the warp's lanes arrive at the block barrier together.",
+          "correct": false,
+          "feedback": "`__syncthreads()` waits for every thread of the block by itself; nothing needs to gather the warp first."
+        }
+      ],
+      "explanation": "Section 3: the `_sync` primitives synchronize the lanes in their mask and exchange registers inside the call, so consecutive shuffles need nothing between them. `__syncwarp()` \"guarantees memory ordering among threads participating in the barrier\", which is what lanes talking through shared memory need.",
+      "hints": [
+        "Ask where the data travels between the lanes: registers inside one call, or memory between two instructions.",
+        "`__syncwarp()` is the tool that orders memory among the lanes of a mask."
+      ]
+    },
+    {
+      "id": "cuda-009-q06",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 1,
+      "tags": [
+        "warp-mask",
+        "warp-vote"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Only the lanes with `threadIdx.x < n` will call a `_sync` shuffle inside a branch. Which warp vote function, called by the whole warp with the full mask before the branch, computes the mask for that shuffle?",
+      "answer": {
+        "model": "`__ballot_sync(0xffffffff, threadIdx.x < n)`: it returns a bit for every lane whose condition is true.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|instead of|rather than|avoid)\\s+(the\\s+)?(`)?(__)?ballot[_ ]sync)(?!(?![\\s\\S]*\\b(not|never|instead of|rather than)\\b)[\\s\\S]*activemask)[\\s\\S]*\\b(`)?(__)?ballot[_ ]sync\\b"
+        ]
+      },
+      "explanation": "Section 3: the mask comes from the program's logic, computed before the branch; `__ballot_sync` with the full mask returns exactly the lanes whose condition holds. `__activemask()` only reports the lanes that happen to be converged at the call.",
+      "hints": [
+        "It is a vote that returns one bit per lane."
+      ]
+    },
+    {
+      "id": "cuda-009-q07",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "memory-fence",
+        "last-block"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of one block in `sumLastBlock`, after its own 256 values are summed into `s[0]`, in the order the kernel performs them.",
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "items": [
+        {
+          "key": "a",
+          "text": "Thread 0 stores the block's partial sum in `partial[blockIdx.x]`."
+        },
+        {
+          "key": "b",
+          "text": "Thread 0 executes `__threadfence()`."
+        },
+        {
+          "key": "c",
+          "text": "Thread 0 runs `atomicInc(&count, gridDim.x)`."
+        },
+        {
+          "key": "d",
+          "text": "Thread 0 sets the shared flag `isLastBlockDone` from the value the atomic returned."
+        },
+        {
+          "key": "e",
+          "text": "Every thread of the block passes a `__syncthreads()`."
+        },
+        {
+          "key": "f",
+          "text": "If the block is the last one done, its threads add all the partial sums."
+        }
+      ],
+      "explanation": "Section 5: publish the data, fence, then raise the flag (the atomic counter); the returned value says whether this block is last, and a block barrier lets every thread read that shared flag before the last block reads the partial sums.",
+      "hints": [
+        "The fence goes between the data and the flag.",
+        "The other threads must not read the shared flag before thread 0 has set it."
+      ]
+    },
+    {
+      "id": "cuda-009-q08",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "fence-scope",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Part 4 of `sync.cu` printed these nanoseconds per iteration of a store-then-fence loop on the GTX 1650. Compute (a) how many times longer a device-scope iteration took than a block-scope one, and (b) how many times longer a system-scope iteration took than a device-scope one.",
+      "stimulus": {
+        "kind": "code",
+        "language": "text",
+        "content": "  scope                     ns per iteration\n  no fence                        39\n  __threadfence_block()          166\n  __threadfence()                328\n  __threadfence_system()        2919"
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "device / block",
+            "value": 1.98,
+            "tolerance": 0.02,
+            "unit": "times"
+          },
+          {
+            "label": "system / device",
+            "value": 8.9,
+            "tolerance": 0.05,
+            "unit": "times"
+          }
+        ]
+      },
+      "precision_note": "328 / 166 = 1.976 and 2,919 / 328 = 8.899, from the run pasted in section 6. Subtracting the no-fence 39 ns first gives 2.28 and 9.97, which the tolerance rejects.",
+      "explanation": "Section 6: each wider scope cost more per fence on this card, about 2.0 times from block to device and 8.9 times from device to system, at the 1,754 MHz SM clock the harness printed; at a quarter of that clock every row took four to seven times longer.",
+      "hints": [
+        "Divide the wider scope's time by the narrower one's.",
+        "Use the printed totals, not the totals minus the no-fence row."
+      ]
+    },
+    {
+      "id": "cuda-009-q09",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 4,
+      "tags": [
+        "atomics",
+        "warp-aggregation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The compiler turned part 1's `atomicKernel` into one atomic add per warp per loop iteration, each adding the warp's count of active lanes. For a launch of 512 blocks of 128 threads, each thread looping 50 times over `atomicAdd(c, 1)`, give (a) the increments counted and (b) the atomic adds that reach memory, all lanes active.",
+      "answer": {
+        "parts": [
+          {
+            "label": "increments",
+            "value": 3276800,
+            "tolerance": 0,
+            "unit": "increments"
+          },
+          {
+            "label": "atomic adds",
+            "value": 102400,
+            "tolerance": 0,
+            "unit": "atomics"
+          }
+        ]
+      },
+      "precision_note": "Increments: 512 x 128 x 50 = 3,276,800. Warps: 512 x 128 / 32 = 2,048; atomic adds: 2,048 x 50 = 102,400. Section 4's own launch gives 6,553,600 and 204,800.",
+      "explanation": "Section 4: `cuobjdump -sass` shows the warp counting its active lanes and issuing one `RED.E.ADD` per warp per iteration, so the count is unchanged and the memory system sees one atomic per 32 increments.",
+      "hints": [
+        "Count the warps first.",
+        "One atomic per warp per iteration."
+      ]
+    },
+    {
+      "id": "cuda-009-q10",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 10,
+      "tags": [
+        "race-model",
+        "simulation"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `lockstep_final(T, K, group)`, a replay of the race model's lockstep schedule: it returns the final counter when `T` threads each do `K` plain increments in lockstep groups of `group` threads that take turns. The last group may be smaller than `group`.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def lockstep_final(T, K, group):\n    \"\"\"Final value of a counter that starts at 0 when T threads each run K plain increments\n    (read, add, write) in lockstep groups of `group` threads: within a group every lane reads,\n    then every lane adds, then every lane writes; the groups run one after another, and the\n    last group may be smaller than `group`. Replay the micro-ops; do not use a formula.\"\"\"\n    raise NotImplementedError\n",
+      "solution": "def lockstep_final(T, K, group):\n    \"\"\"Final value of a counter that starts at 0 when T threads each run K plain increments\n    (read, add, write) in lockstep groups of `group` threads: within a group every lane reads,\n    then every lane adds, then every lane writes; the groups run one after another, and the\n    last group may be smaller than `group`. Replay the micro-ops; do not use a formula.\"\"\"\n    counter = 0\n    reg = [0] * T\n    for base in range(0, T, group):\n        lanes = range(base, min(base + group, T))\n        for _ in range(K):\n            for i in lanes:\n                reg[i] = counter\n            for i in lanes:\n                reg[i] += 1\n            for i in lanes:\n                counter = reg[i]\n    return counter\n",
+      "tests": "assert lockstep_final(1024, 100, 32) == 3200\nassert lockstep_final(1024, 100, 1024) == 100\nassert lockstep_final(1024, 100, 1) == 102400\nassert lockstep_final(100, 3, 32) == 12\nassert lockstep_final(5, 7, 2) == 21\nassert lockstep_final(1, 1, 32) == 1\nassert lockstep_final(0, 10, 32) == 0\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 1: in a lockstep group every lane reads the same value before any lane writes, so each group step adds exactly 1; with $\\lceil T / g \\rceil$ groups taking turns over $K$ steps the counter ends at $\\lceil T / g \\rceil K$ (3,200 for the post's 1,024 threads in warps of 32).",
+      "hints": [
+        "Keep one private register per thread and one shared counter.",
+        "Within one step of a group: all reads, then all adds, then all writes.",
+        "A last, smaller group still adds 1 per step."
+      ]
+    },
+    {
+      "id": "cuda-009-q11",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o6",
+        "o2"
+      ],
+      "section": "7",
+      "est_minutes": 15,
+      "tags": [
+        "grid-barrier",
+        "launch-boundary",
+        "reduction",
+        "scan"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 04 summed an array in one launch, each block adding its total to one result with `atomicAdd`; post 08 scanned an array in phases separated by launches. Explain (1) why the reduction needs no grid-wide barrier while the scan does, (2) why a scan cannot replace its launch boundaries with a loop in which every block spins until all blocks have written their totals, and (3) what this post's last-block pattern does instead of waiting, and why it is safe.",
+      "kind": "connect",
+      "solution": "1. A reduction needs only the sum of the block totals, and they may be added in any order (for floats only the last bits of rounding change), so each block adds its total with one `atomicAdd` whenever it finishes; no block needs another's result. A scan needs, for block $b$, the total of exactly the blocks before $b$, so block $b$ must wait until they are written: that is a grid-wide ordering, and the only one an ordinary kernel has is its end, hence post 08's launches between its phases.\n2. Blocks are independent: they run in any order and only as many at a time as the SMs hold. A block spinning for a block that has not been scheduled holds its SM and can wait forever, which is the deadlock Sorensen et al. (OOPSLA 2016) describe; `__syncthreads()` orders one block only, and Cooperative Groups' `grid.sync()` works only in a cooperative launch with every block resident.\n3. In the last-block pattern no block waits. Each block publishes its partial sum, fences, and increments a counter with an atomic; the block that receives `gridDim.x - 1` knows every other partial sum was written before the counter reached it, because each writer fenced before its increment, and it adds them. Every block finishes whatever the schedule, so nothing can deadlock.",
+      "rubric": [
+        {
+          "criterion": "Explains that the reduction's block totals commute and combine with one atomic each, while a scan needs the ordered totals of earlier blocks",
+          "points": 3
+        },
+        {
+          "criterion": "Identifies the kernel boundary as the only grid-wide barrier of an ordinary launch",
+          "points": 2
+        },
+        {
+          "criterion": "Explains the deadlock of spinning on unscheduled blocks from block independence and residency",
+          "points": 3
+        },
+        {
+          "criterion": "Describes the last-block pattern (publish, fence, atomic counter, last block works) and why the fence makes it correct and no block waits",
+          "points": 3
+        }
+      ],
+      "answer_length": "half a page",
+      "explanation": "Section 7 gives the launch boundary as the grid-wide barrier and the deadlock of waiting across blocks; section 5 gives the last-block pattern, in which the fence before the atomic counter is what lets the last block trust every partial sum.",
+      "hints": [
+        "Ask whether a block needs another block's result, or only a total that order does not change.",
+        "What happens to a block that waits for a block the scheduler has not started?"
+      ],
+      "connects": [
+        "cuda-004",
+        "cuda-008"
+      ]
+    },
+    {
+      "id": "cuda-009-q12",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 10,
+      "tags": [
+        "warp-synchronous",
+        "volatile",
+        "racecheck"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The `volatile` tail of part 2 (no barrier inside the warp) gave 0 wrong block sums out of 327,680 on the GTX 1650. A reviewer concludes it is correct. Critique the conclusion and give two correct replacements for the tail.",
+      "kind": "critique",
+      "solution": "The count shows only that this card, this compiler and these runs happened to execute the warp's lanes in an order that worked. Since compute capability 7.0 independent thread scheduling lets the lanes of a warp run apart, and the Guide states that assuming lockstep execution or visibility across a warp without synchronization is invalid; Lin and Grover call such implicit warp-synchronous code unsafe because it may break with another architecture, toolkit release or even run. `compute-sanitizer --tool racecheck` reported races in this tail although its sums were right. Two correct replacements: (1) keep shared memory and put `__syncwarp()` between each step's read and its write and after the write, so every read of a step precedes every write and every write precedes the next read (one `__syncwarp()` per step is not enough, since a read and the neighbor's write of the same element then sit between the same two barriers); (2) move the tail into registers and reduce with `__shfl_down_sync(0xffffffff, v, off)` at offsets 16 to 1, which synchronizes its lanes itself and needs no barrier.",
+      "rubric": [
+        {
+          "criterion": "States that a passing count does not prove correctness and names independent thread scheduling as the reason the code is unsafe",
+          "points": 3
+        },
+        {
+          "criterion": "Mentions the rule violation is detectable (racecheck) or depends on compiler, card or run",
+          "points": 1
+        },
+        {
+          "criterion": "Gives the `__syncwarp()` fix with reads and writes separated",
+          "points": 2
+        },
+        {
+          "criterion": "Gives the shuffle fix and says it needs no `__syncwarp()`",
+          "points": 2
+        }
+      ],
+      "answer_length": "one paragraph",
+      "explanation": "Section 3: the `volatile` tail passed on this card and was still reported by racecheck; the rules call for `__syncwarp()` between memory reads and writes, or a `_sync` shuffle that orders its own lanes.",
+      "hints": [
+        "What changed at compute capability 7.0 about a warp's lanes?",
+        "One fix keeps shared memory; the other avoids it."
+      ]
+    },
+    {
+      "id": "cuda-009-q13",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "memory-fence"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Thread 0 of a block runs `partial[b] = s; __threadfence(); atomicInc(&count, n);`. Which statement about the `__threadfence()` is correct?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "No thread of the device can observe the counter's update before the store to `partial[b]`; the fence does not wait for any other thread.",
+          "correct": true,
+          "feedback": "Right: a fence orders the calling thread's own writes as other threads observe them, and nothing more."
+        },
+        {
+          "key": "b",
+          "text": "It makes every thread of the grid wait until thread 0's store has reached memory.",
+          "correct": false,
+          "feedback": "That would be a barrier across the grid, which does not exist inside an ordinary kernel; a fence makes no other thread wait."
+        },
+        {
+          "key": "c",
+          "text": "It makes the store to `partial[b]` visible to every other thread immediately, so a reader needs no ordering of its own.",
+          "correct": false,
+          "feedback": "The Guide says fences do not by themselves make writes visible; the reader still needs an acquire side, such as a fence or a `volatile` read after seeing the flag."
+        },
+        {
+          "key": "d",
+          "text": "It is redundant, because `atomicInc` already orders the thread's earlier stores.",
+          "correct": false,
+          "feedback": "The atomic functions are relaxed: they order nothing but themselves, which is why the fence is there."
+        }
+      ],
+      "explanation": "Section 5: `__threadfence()` orders the calling thread's writes as observed by the device's threads; it waits for no other thread, and it does not by itself make the writes visible to a reader that does not order its own reads.",
+      "hints": [
+        "A fence concerns one thread's own accesses.",
+        "Atomics are relaxed."
+      ]
+    },
+    {
+      "id": "cuda-009-q14",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2",
+        "o4",
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 3,
+      "tags": [
+        "vocabulary",
+        "synchronization"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each primitive to what it guarantees.",
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s",
+        "e": "t"
+      },
+      "left": [
+        {
+          "key": "a",
+          "text": "`__syncthreads()`"
+        },
+        {
+          "key": "b",
+          "text": "`__syncwarp(mask)`"
+        },
+        {
+          "key": "c",
+          "text": "`atomicAdd`"
+        },
+        {
+          "key": "d",
+          "text": "`__threadfence()`"
+        },
+        {
+          "key": "e",
+          "text": "The end of a kernel launch"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "Every thread of the block arrives, and their earlier memory accesses are visible to the block"
+        },
+        {
+          "key": "q",
+          "text": "The lanes named in the mask meet, with memory ordered among them"
+        },
+        {
+          "key": "r",
+          "text": "One indivisible read-modify-write, ordering nothing else"
+        },
+        {
+          "key": "s",
+          "text": "The device's threads observe the calling thread's writes before it as occurring before its writes after it"
+        },
+        {
+          "key": "t",
+          "text": "Every block has finished before the next launch in the stream begins"
+        },
+        {
+          "key": "u",
+          "text": "Every block of the grid waits at this point until all have arrived"
+        }
+      ],
+      "explanation": "Sections 2 to 7: the block barrier waits and publishes within a block, `__syncwarp()` within the lanes of a mask, an atomic is indivisible and relaxed, a fence orders one thread's writes, and only the kernel boundary orders every block. No in-kernel primitive of an ordinary launch makes the grid wait, which is the distractor.",
+      "hints": [
+        "One right-hand item describes a barrier that an ordinary kernel does not have."
+      ]
+    },
+    {
+      "id": "cuda-009-q15",
+      "type": "mcq",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "6",
+      "est_minutes": 2,
+      "tags": [
+        "fence-scope"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A producer thread in block 3 publishes a result for a consumer thread in block 9 of the same kernel on one GPU, through global memory and a flag. Which is the narrowest fence the producer may use between the result and the flag?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "`__threadfence_block()`",
+          "correct": false,
+          "feedback": "It orders the writes only as seen by threads of block 3; the consumer in block 9 is outside that scope."
+        },
+        {
+          "key": "b",
+          "text": "`__threadfence()`",
+          "correct": true,
+          "feedback": "Right: the consumer is another block on the same device, so the device scope is the narrowest that reaches it."
+        },
+        {
+          "key": "c",
+          "text": "`__threadfence_system()`",
+          "correct": false,
+          "feedback": "It works but reaches host threads and peer GPUs too, and cost 8.9 times the device fence in section 6; it is wider than needed."
+        },
+        {
+          "key": "d",
+          "text": "No fence: the `atomicExch` that sets the flag already orders the result.",
+          "correct": false,
+          "feedback": "The atomic functions are relaxed and order nothing but themselves."
+        }
+      ],
+      "explanation": "Section 6: the Guide's rule is the block fence for threads of one block, `__threadfence()` for threads of different blocks on one device, and the system fence across devices or with the host. Pick the narrowest scope that reaches the reader.",
+      "hints": [
+        "Where is the reader, relative to the writer's block?",
+        "A fence's scope must contain the reader; any wider scope costs more."
+      ]
+    },
+    {
+      "id": "cuda-009-q16",
+      "type": "short",
+      "track": "edge",
+      "difficulty": 1,
+      "outcomes": [
+        "o6"
+      ],
+      "section": "7",
+      "est_minutes": 1,
+      "tags": [
+        "grid-barrier",
+        "launch-boundary"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Inside one ordinary `<<<...>>>` launch, no barrier orders every block of the grid. What does a program use instead when one phase must finish in every block before the next phase starts?",
+      "answer": {
+        "model": "It ends the kernel and starts the next phase as a new launch: the kernel boundary is the grid-wide barrier.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![^;\\n]*(?<!not )(?<!no )(?<!without )(?<!never )\\b(grid\\.sync|cooperative|__syncthreads|syncthreads|threadfence|atomic))(?![\\s\\S]*\\b(not|never|isn't|no)\\s+(a\\s+)?(new|second|separate|another|kernel)\\b)(?![\\s\\S]*\\b(launch|kernel)\\b[^.;\\n]*\\b(not needed|unnecessary|isn't needed|is not needed|not required)\\b)[\\s\\S]*(\\b(new|second|separate|next|another|subsequent)\\s+(kernel\\s+)?launch|\\bkernel\\s+(boundary|boundaries|completion|end|ends|exit|exits|returns)|\\b(end|ending|finish|finishing|completion|end of|termination)\\s+(of\\s+)?(the\\s+)?(current\\s+)?kernel|\\blaunch(ing|es)?\\s+(a\\s+)?(new|second|separate|another|next)\\s+kernel|\\b(as|in|into)\\s+(a\\s+)?(new|second|separate|another)\\s+kernel|\\b(separate|two|several|multiple)\\s+(kernels|launches)\\b|\\blaunch\\s+boundar(y|ies))"
+        ]
+      },
+      "explanation": "Section 7: every block of a launch finishes before the next launch in the stream begins, so splitting the phases across launches is the grid-wide barrier; `grid.sync()` exists only for cooperative launches.",
+      "hints": [
+        "Think of post 08's three phases."
+      ]
+    },
+    {
+      "id": "cuda-009-q17",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 1,
+      "tags": [
+        "atomicCAS"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "What does `atomicCAS(addr, expected, desired)` return?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The value `*addr` held before the call, whether or not the swap happened.",
+          "correct": true,
+          "feedback": "Right: the retry loop compares this old value with `expected` to learn whether its update was installed."
+        },
+        {
+          "key": "b",
+          "text": "`true` if the swap happened and `false` otherwise.",
+          "correct": false,
+          "feedback": "That is the C++ `compare_exchange` style; CUDA's `atomicCAS` returns the old value."
+        },
+        {
+          "key": "c",
+          "text": "`desired`, the value now stored at `addr`.",
+          "correct": false,
+          "feedback": "If another thread changed `*addr` first, `desired` was not stored; the function returns what it found there."
+        },
+        {
+          "key": "d",
+          "text": "Nothing; the caller must read `*addr` again to see the result.",
+          "correct": false,
+          "feedback": "A second read could see a later thread's update; the returned old value is the reliable one."
+        }
+      ],
+      "explanation": "Section 4: `atomicCAS` stores `desired` only if `*addr` equals `expected`, and returns the old value either way; the loop retries until the returned value equals the value it assumed.",
+      "hints": [
+        "The loop's condition is `assumed != old`."
+      ]
+    }
+  ]
+}

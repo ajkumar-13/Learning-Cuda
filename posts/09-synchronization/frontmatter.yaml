@@ -1,8 +1,30 @@
 id: cuda-009
 slug: 09-synchronization
-title: "09 · When threads share data — barriers, atomics, and the memory model"
+title: "09 - When threads share data: barriers, atomics, and the memory model"
+summary: "What a block barrier, a warp's sync primitives, an atomic and a memory fence each guarantee when threads share data, from the lost update to fence scopes, and why only a new launch synchronizes the whole grid."
 date: 2026-07-16
-tags: [parallel-patterns, cuda, synchronization, atomics]
-hero: diagrams/01-race-condition.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 16
+tags: [cuda, synchronization, atomics, memory-model, barriers, warp-primitives]
+hero: diagrams/01-race-condition.svg
+prerequisites: [cuda-005, cuda-008]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain the lost-update race of a plain read-modify-write, and use the race model to count what each schedule loses."
+  - id: o2
+    text: "Place `__syncthreads()` where every thread of the block reaches it, and say why a barrier inside divergent code is undefined."
+  - id: o3
+    text: "Order the lanes of one warp: a `_sync` primitive with a mask derived from the program's logic, or `__syncwarp()` between shared-memory reads and writes."
+  - id: o4
+    text: "Use `atomicAdd` and `atomicCAS`, and separate what an atomic guarantees (no lost update) from what it does not (the order of other writes)."
+  - id: o5
+    text: "Publish data to other threads with a fence or an acquire-release atomic at the narrowest scope that reaches them: block, device, or system."
+  - id: o6
+    text: "Explain why no barrier spans the grid inside an ordinary kernel, and why a new launch is the grid-wide barrier."
+recommended: [cuda-001]
+compute: gpu-small
+hardware: gtx-1650

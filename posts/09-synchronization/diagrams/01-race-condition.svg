@@ -1,55 +1,240 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">A lost update: two threads read the same counter, both add one, and one increment is overwritten</title>
-  <desc id="d">Two thread rows each perform read, add one, write on a shared counter that starts at 7. Thread 0 reads 7, computes 8, writes 8. Thread 1 reads 7 before thread 0's write lands, also computes 8, and writes 8 on top. Both arrows feed a counter box that ends at 8, with a red note that the correct answer is 9 and one increment was lost.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .box{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:13px;fill:var(--cuda-ink);}
-    .edge{stroke:var(--cuda-ink-muted);stroke-width:1.5;fill:none;}
-    .lost{stroke:var(--cuda-alert);stroke-width:1.5;fill:none;}
-    .losttxt{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-alert);}
-    .counter{fill:var(--cuda-surface);stroke:var(--cuda-ink);stroke-width:1.5;}
-    .big{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:30px;fill:var(--cuda-ink);}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">A lost update: counter += 1 is really read, add, write</text>
-  <text class="small" x="40" y="66">Both threads read 7 before either writes, so the second write of 8 overwrites the first.</text>
-
-  <text class="label" x="150" y="120" text-anchor="middle">read</text>
-  <text class="label" x="360" y="120" text-anchor="middle">add one</text>
-  <text class="label" x="560" y="120" text-anchor="middle">write</text>
-
-  <!-- thread 0 -->
-  <text class="label" x="40" y="182">thread 0</text>
-  <rect class="box" x="110" y="158" width="90" height="44" rx="4"/><text class="mono" x="155" y="185" text-anchor="middle">reads 7</text>
-  <rect class="box" x="300" y="158" width="120" height="44" rx="4"/><text class="mono" x="360" y="185" text-anchor="middle">7 + 1 = 8</text>
-  <rect class="box" x="500" y="158" width="120" height="44" rx="4"/><text class="mono" x="560" y="185" text-anchor="middle">writes 8</text>
-
-  <!-- thread 1 -->
-  <text class="label" x="40" y="342">thread 1</text>
-  <rect class="box" x="110" y="318" width="90" height="44" rx="4"/><text class="mono" x="155" y="345" text-anchor="middle">reads 7</text>
-  <rect class="box" x="300" y="318" width="120" height="44" rx="4"/><text class="mono" x="360" y="345" text-anchor="middle">7 + 1 = 8</text>
-  <rect class="box" x="500" y="318" width="120" height="44" rx="4" stroke="var(--cuda-alert)" stroke-width="1.5"/><text class="mono" x="560" y="345" text-anchor="middle">writes 8</text>
-
-  <!-- counter -->
-  <rect class="counter" x="770" y="210" width="140" height="100" rx="8"/>
-  <text class="small" x="840" y="234" text-anchor="middle">counter</text>
-  <text class="big" x="840" y="278" text-anchor="middle">8</text>
-
-  <!-- write arrows into counter -->
-  <path class="edge" d="M620,180 L770,250" marker-end="url(#a)"/>
-  <path class="lost" d="M620,340 L770,272" marker-end="url(#ar)"/>
-
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-ink-muted)"/></marker>
-    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--cuda-alert)"/></marker>
-  </defs>
-
-  <text class="losttxt" x="840" y="352" text-anchor="middle">should be 9</text>
-  <text class="losttxt" x="490" y="410">One increment is lost: two adds, one counted. This is the race.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-01-race-condition-title" aria-describedby="cuda-01-race-condition-desc">
+<title id="cuda-01-race-condition-title">Two threads add one each; the counter gains one</title>
+<desc id="cuda-01-race-condition-desc">Two timelines of six time slots, each with rows for thread 0, the shared counter and thread 1. Top, a plain counter += 1: thread 0 reads 7 in slot 1, thread 1 reads 7 in slot 2, both compute 8, thread 0 writes 8 in slot 5 and thread 1 writes 8 in slot 6; the counter reads 7, 7, 7, 7, 8, 8 and ends at 8, not 9, the second write in red as the lost update. Bottom, atomicAdd: thread 0's indivisible add takes the counter from 7 to 8 in slots 1 to 3 while thread 1 waits, then thread 1's takes it to 9 in slots 4 to 6.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green-soft { fill: var(--cuda-green-soft); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-purple-soft { fill: var(--cuda-purple-soft); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-purple { stroke: var(--cuda-purple); }
+  .s-red { stroke: var(--cuda-red); }
+  .s-rule { stroke: var(--cuda-rule); }
+</style>
+<defs>
+<marker id="cuda-01-race-condition-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="600">Two threads add one each; the counter gains one</text>
+<text x="40" y="76" class="t-subtitle" data-w="722">Two threads, one increment each, the counter starting at 7; the schedule of snippets/race_model.py.</text>
+<text x="40" y="128" class="t-head" data-w="171">Plain read, add, write</text>
+<text x="40" y="160" class="t-label" data-w="56">thread 0</text>
+<text x="40" y="192" class="t-code" data-w="60">counter</text>
+<text x="40" y="224" class="t-label" data-w="56">thread 1</text>
+<rect x="160" y="140" width="120" height="32" class="f-orange-soft"/>
+<rect x="160" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="220" y="160" text-anchor="middle" class="t-label" data-w="50">reads 7</text>
+<rect x="160" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="160" y="172" width="120" height="32" class="f-green-soft"/>
+<rect x="160" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="220" y="192" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="280" y="204" width="120" height="32" class="f-orange-soft"/>
+<rect x="280" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="340" y="224" text-anchor="middle" class="t-label" data-w="50">reads 7</text>
+<rect x="280" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="280" y="172" width="120" height="32" class="f-green-soft"/>
+<rect x="280" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="340" y="192" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="400" y="140" width="120" height="32" class="f-orange-soft"/>
+<rect x="400" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="460" y="160" text-anchor="middle" class="t-label" data-w="79">computes 8</text>
+<rect x="400" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="400" y="172" width="120" height="32" class="f-green-soft"/>
+<rect x="400" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="460" y="192" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="520" y="204" width="120" height="32" class="f-orange-soft"/>
+<rect x="520" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="580" y="224" text-anchor="middle" class="t-label" data-w="79">computes 8</text>
+<rect x="520" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="520" y="172" width="120" height="32" class="f-green-soft"/>
+<rect x="520" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="580" y="192" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="640" y="140" width="120" height="32" class="f-orange-soft"/>
+<rect x="640" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="700" y="160" text-anchor="middle" class="t-label" data-w="53">writes 8</text>
+<rect x="640" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="640" y="172" width="120" height="32" class="f-green-soft"/>
+<rect x="640" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="700" y="192" text-anchor="middle" class="t-label" data-w="9">8</text>
+<rect x="760" y="204" width="120" height="32" class="f-red-soft"/>
+<rect x="760" y="204" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="820" y="224" text-anchor="middle" class="t-label f-red-ink" data-w="53">writes 8</text>
+<rect x="760" y="140" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="760" y="172" width="120" height="32" class="f-red-soft"/>
+<rect x="760" y="172" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="820" y="192" text-anchor="middle" class="t-label f-red-ink" data-w="51">8, not 9</text>
+<text x="40" y="296" class="t-head" data-w="300">atomicAdd: one indivisible step each</text>
+<text x="40" y="328" class="t-label" data-w="56">thread 0</text>
+<text x="40" y="360" class="t-code" data-w="60">counter</text>
+<text x="40" y="392" class="t-label" data-w="56">thread 1</text>
+<rect x="160" y="308" width="360" height="32" class="f-purple-soft"/>
+<rect x="160" y="308" width="360" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="340" y="328" text-anchor="middle" class="t-label" data-w="120">atomicAdd: 7 → 8</text>
+<rect x="520" y="308" width="360" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<rect x="160" y="372" width="360" height="32" class="f-red-soft"/>
+<rect x="160" y="372" width="360" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="340" y="392" text-anchor="middle" class="t-label" data-w="86">waits its turn</text>
+<rect x="520" y="372" width="360" height="32" class="f-purple-soft"/>
+<rect x="520" y="372" width="360" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="700" y="392" text-anchor="middle" class="t-label" data-w="120">atomicAdd: 8 → 9</text>
+<rect x="160" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="160" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="220" y="360" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="280" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="280" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="340" y="360" text-anchor="middle" class="t-label" data-w="9">7</text>
+<rect x="400" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="400" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="460" y="360" text-anchor="middle" class="t-label" data-w="9">8</text>
+<rect x="520" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="520" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="580" y="360" text-anchor="middle" class="t-label" data-w="9">8</text>
+<rect x="640" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="640" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="700" y="360" text-anchor="middle" class="t-label" data-w="9">8</text>
+<rect x="760" y="340" width="120" height="32" class="f-green-soft"/>
+<rect x="760" y="340" width="120" height="32" class="w1 nofill s-rule" data-fit="skip"/>
+<text x="820" y="360" text-anchor="middle" class="t-label" data-w="9">9</text>
+<g data-grid="skip">
+<text x="220" y="424" text-anchor="middle" class="t-tick" data-w="8">1</text>
+<text x="340" y="424" text-anchor="middle" class="t-tick" data-w="8">2</text>
+<text x="460" y="424" text-anchor="middle" class="t-tick" data-w="8">3</text>
+<text x="580" y="424" text-anchor="middle" class="t-tick" data-w="8">4</text>
+<text x="700" y="424" text-anchor="middle" class="t-tick" data-w="8">5</text>
+<text x="820" y="424" text-anchor="middle" class="t-tick" data-w="8">6</text>
+</g>
+<text x="40" y="424" class="t-tick" data-w="54">time slot</text>
+<rect x="160" y="440" width="16" height="16" class="f-orange-soft s-orange w1"/>
+<text x="192" y="452" class="t-label" data-w="100">a thread's step</text>
+<rect x="320" y="440" width="16" height="16" class="f-green-soft s-green w1"/>
+<text x="352" y="452" class="t-label" data-w="141">counter after the slot</text>
+<rect x="520" y="440" width="16" height="16" class="f-purple-soft s-purple w1"/>
+<text x="552" y="452" class="t-label" data-w="46">atomic</text>
+<rect x="624" y="440" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="656" y="452" class="t-label" data-w="125">lost update or wait</text>
+<text x="40" y="504" class="t-note" data-w="438">Two increments, one counted: the second write lands on the first.</text>
 </svg>
