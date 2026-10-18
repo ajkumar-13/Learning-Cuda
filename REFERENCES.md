@@ -85,10 +85,10 @@ Full citations for the series, grouped by post. Each post's "Further reading" se
 
 ## Post 09 - When threads share data: barriers, atomics, and the memory model
 
-- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Memory Fence Functions" and "Atomic Functions". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#memory-fence-functions>
+- NVIDIA. *CUDA C++ Programming Guide (Legacy)*, sections "Synchronization Functions", "Memory Fence Functions", "Atomic Functions", "Warp Vote Functions", "Warp Shuffle Functions" and "Grid Synchronization". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#memory-fence-functions>
 - NVIDIA. *CUDA C++ Programming Guide (Legacy)*, section "Independent Thread Scheduling". Consulted October 2026. <https://docs.nvidia.com/cuda/cuda-c-programming-guide/#independent-thread-scheduling>
 - Lin, Y. and Grover, V. "Using CUDA Warp-Level Primitives." NVIDIA Technical Blog, 15 January 2018. <https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/>
-- Sorensen, T., Donaldson, A. F., Batty, M., Gopalakrishnan, G. and Rakamarić, Z. "Portable Inter-Workgroup Barrier Synchronisation for GPUs." OOPSLA, 2016.
+- Sorensen, T., Donaldson, A. F., Batty, M., Gopalakrishnan, G. and Rakamarić, Z. "Portable Inter-Workgroup Barrier Synchronisation for GPUs." OOPSLA, 2016. <https://doi.org/10.1145/2983990.2984032>
 - Boehm, H.-J. and Adve, S. V. "Foundations of the C++ Concurrency Memory Model." PLDI, 2008. <https://doi.org/10.1145/1375581.1375591>
 
 ---

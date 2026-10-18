@@ -6,7 +6,7 @@ Every post ships its companions in its own `snippets/` folder: a CPU model (`.py
 
 - Every `.py` model runs on a CPU with Python and NumPy. No GPU is needed to follow any post, because the model prints every number the post derives.
 - Every `.cu` kernel runs on one NVIDIA GPU with the CUDA Toolkit 12.x and a host C++ compiler (MSVC on Windows, g++ or clang on Linux). The kernels default to `-arch=sm_75`, the GeForce GTX 1650 (compute capability 7.5) the early posts were measured on.
-- Feature floors: `__syncwarp` semantics and Tensor Cores need compute capability 7.0 or above (post 09, post 17); `cp.async`, BF16 arithmetic and `flash_attention.cu` need `sm_80`, an Ampere card or newer (post 15, post 18); Triton needs Linux (post 19).
+- Feature floors: Tensor Cores need compute capability 7.0 or above (post 17), where independent thread scheduling also starts and makes `__syncwarp()` necessary in warp-level code (post 09); `cp.async`, BF16 arithmetic and `flash_attention.cu` need `sm_80`, an Ampere card or newer (post 15, post 18); Triton needs Linux (post 19).
 
 ## What each part needs
 

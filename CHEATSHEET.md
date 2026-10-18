@@ -64,9 +64,9 @@ A launch is asynchronous: the CPU queues it and runs on. Synchronize before read
 
 | Call | What it guarantees |
 |---|---|
-| `__syncthreads()` | every thread of the block arrives before any continues; never inside a branch some threads skip |
-| `__syncwarp(mask)` | the lanes in `mask` meet; needed since compute capability 7.0, where a warp is not guaranteed to run in lockstep |
-| `atomicAdd(&x, v)` | one indivisible read-modify-write: no lost update, but no ordering of other writes |
+| `__syncthreads()` | every thread of the block arrives before any continues, and their earlier accesses are visible to the block; never inside a branch some threads skip |
+| `__syncwarp(mask)` | the lanes in `mask` meet and their memory accesses are ordered; needed between shared-memory steps of warp-level code since compute capability 7.0; not needed between `_sync` shuffles |
+| `atomicAdd(&x, v)` | one indivisible read-modify-write (relaxed order, device scope; `_block` and `_system` set other scopes): no lost update, but no ordering of other writes |
 | `__threadfence()` | this thread's writes are seen in order across the device; `_block` and `_system` set other scopes |
 | a new kernel launch | the only barrier across the whole grid |
 

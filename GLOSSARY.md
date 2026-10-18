@@ -90,13 +90,13 @@ The terms used across Learning CUDA, one entry each, grouped by topic and alphab
 
 ## Synchronization
 
-**Barrier (`__syncthreads`).** A point every thread of a block must reach before any continues; it orders the block's shared-memory writes before the reads that follow. Placed inside a branch that not every thread takes, it deadlocks the block. See [post 03](posts/03-matrix-multiplication/index.md) and [post 09](posts/09-synchronization/index.md).
+**Barrier (`__syncthreads`).** A point every thread of a block must reach before any continues; it orders the block's shared-memory writes before the reads that follow. Placed inside a branch that not every thread of the block takes, it is undefined: it can hang the block or release it with its phases paired wrongly. See [post 03](posts/03-matrix-multiplication/index.md) and [post 09](posts/09-synchronization/index.md).
 
-**Memory fence (`__threadfence`).** An instruction that orders a thread's memory writes as seen by other threads within a scope; unlike a barrier, it does not wait for any other thread. See [post 09](posts/09-synchronization/index.md).
+**Memory fence (`__threadfence`).** An instruction that orders a thread's memory reads and writes as seen by other threads within a scope; unlike a barrier, it does not wait for any other thread, and it does not by itself make the writes visible to a reader that does not order its own reads. See [post 09](posts/09-synchronization/index.md).
 
 **Thread scope.** The set of threads whose view of memory a fence or an atomic orders: block, device or system, nested like rings, the wider costing more. See [post 09](posts/09-synchronization/index.md).
 
-**Warp synchronization (`__syncwarp`).** A barrier over the lanes of one warp named by a 32-bit mask; needed because, since compute capability 7.0, the lanes of a warp are not guaranteed to run in lockstep. See [post 09](posts/09-synchronization/index.md).
+**Warp synchronization (`__syncwarp`).** A barrier over the lanes of one warp named by a 32-bit mask that also orders their memory accesses; needed between the shared-memory steps of warp-level code because, since compute capability 7.0, the lanes of a warp are not guaranteed to run in lockstep. The `_sync` shuffles and votes synchronize their own lanes and need no `__syncwarp()` between them. See [post 09](posts/09-synchronization/index.md).
 
 ## Performance
 

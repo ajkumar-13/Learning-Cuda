@@ -98,7 +98,7 @@ The sentence after every table of numbers says which kind the table holds. Where
 | GeForce RTX 3080 | Ampere | 8.6 | `sm_86` |
 | A100 | Ampere | 8.0 | `sm_80` |
 
-The snippets default to `-arch=sm_75`, the GTX 1650 the early posts were measured on, and the header comment of every `.cu` states its build line and `-arch`. Compute capability is written `major.minor` (7.5) and the architecture flag `sm_XX` (`sm_75`), the same number with the dot dropped. The feature floors: `__syncwarp` semantics and Tensor Cores need compute capability 7.0 or above (posts 09 and 17); `cp.async`, BF16 arithmetic and `flash_attention.cu` need `sm_80` (posts 15 and 18); Triton needs Linux (post 19).
+The snippets default to `-arch=sm_75`, the GTX 1650 the early posts were measured on, and the header comment of every `.cu` states its build line and `-arch`. Compute capability is written `major.minor` (7.5) and the architecture flag `sm_XX` (`sm_75`), the same number with the dot dropped. The feature floors: Tensor Cores need compute capability 7.0 or above (post 17), where independent thread scheduling also starts and makes `__syncwarp()` necessary in warp-level code (post 09); `cp.async`, BF16 arithmetic and `flash_attention.cu` need `sm_80` (posts 15 and 18); Triton needs Linux (post 19).
 
 ## 7. House conventions
 
