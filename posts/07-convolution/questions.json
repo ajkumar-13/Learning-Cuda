@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "0",
+          "correct": false,
+          "feedback": "Neighboring outputs read overlapping windows; that overlap is the reuse the post is about."
+        },
+        {
+          "key": "b",
           "text": "6",
           "correct": true,
           "feedback": "Yes. The windows cover columns col - 1 to col + 1 and col to col + 2, so they share two columns of three rows."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "3",
           "correct": false,
           "feedback": "That is one shared column; the windows overlap by two columns, not one."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "9",
           "correct": false,
           "feedback": "The windows are shifted by one column, so three of each window's nine pixels are not in the other."
-        },
-        {
-          "key": "d",
-          "text": "0",
-          "correct": false,
-          "feedback": "Neighboring outputs read overlapping windows; that overlap is the reuse the post is about."
         }
       ],
       "explanation": "Section 1 and the hero figure: two horizontally adjacent outputs of a 3 x 3 stencil share two of the three columns of their windows, 6 of 9 pixels, which is why a naive kernel re-reads most of the input.",
@@ -119,27 +119,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The kernel computes a cross-correlation; flipping a symmetric filter changes nothing, flipping the edge filter negates it.",
-          "correct": true,
-          "feedback": "Yes. Flipping `[-1, 0, 1]` gives `[1, 0, -1]`, so the two results differ in sign, while the box blur is its own flip."
-        },
-        {
-          "key": "b",
-          "text": "The edge filter has negative weights, which zero padding handles differently from positive ones.",
-          "correct": false,
-          "feedback": "Zero padding adds nothing for any weight; the difference appears in the interior too, not only at the edges."
-        },
-        {
-          "key": "c",
           "text": "Floating-point rounding is larger for filters whose weights sum to zero.",
           "correct": false,
           "feedback": "Rounding errors are tiny; the two results here differ by whole pixel values because one filter is the mirror of the other."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The kernel needs a larger halo for an asymmetric filter.",
           "correct": false,
           "feedback": "The halo depends only on the radius, which is the same for both 3 x 3 filters."
+        },
+        {
+          "key": "c",
+          "text": "The kernel computes a cross-correlation; flipping a symmetric filter changes nothing, flipping the edge filter negates it.",
+          "correct": true,
+          "feedback": "Yes. Flipping `[-1, 0, 1]` gives `[1, 0, -1]`, so the two results differ in sign, while the box blur is its own flip."
+        },
+        {
+          "key": "d",
+          "text": "The edge filter has negative weights, which zero padding handles differently from positive ones.",
+          "correct": false,
+          "feedback": "Zero padding adds nothing for any weight; the difference appears in the interior too, not only at the edges."
         }
       ],
       "explanation": "Section 1: the sum without a flip is a cross-correlation. For a symmetric filter it equals the true convolution, which the model confirms for the box blur; for an asymmetric filter the two differ, so a reference must use the same convention as the kernel.",
@@ -527,27 +527,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The two passes move 16 bytes per pixel through global memory instead of 8, and at 125 GB/s that traffic, not arithmetic, sets the time.",
-          "correct": true,
-          "feedback": "Yes. 33.2 MB in 0.266 ms is 125 GB/s, close to the copy kernel's 130.8: the kernel is bound by its doubled traffic."
-        },
-        {
-          "key": "b",
           "text": "The second launch costs about 0.06 ms by itself on this card.",
           "correct": false,
           "feedback": "At the copy kernel's 130.8 GB/s the 33.2 MB the two passes move take 0.254 ms by themselves, which leaves about 0.01 ms of the 0.266 ms for everything else, the second launch included."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "A separable filter needs more multiply-adds than the 2D filter at 3 x 3.",
           "correct": false,
           "feedback": "It needs fewer, 6 against 9; the multiply-adds are not what limits either kernel here."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "The row pass cannot use constant memory, so its weights come from global memory.",
           "correct": false,
           "feedback": "The passes read `c_row` and `c_col`, which are `__constant__` arrays."
+        },
+        {
+          "key": "d",
+          "text": "The two passes move 16 bytes per pixel through global memory instead of 8, and at 125 GB/s that traffic, not arithmetic, sets the time.",
+          "correct": true,
+          "feedback": "Yes. 33.2 MB in 0.266 ms is 125 GB/s, close to the copy kernel's 130.8: the kernel is bound by its doubled traffic."
         }
       ],
       "explanation": "Section 6: at 3 x 3 the separable kernel is memory bound on twice the traffic; at 7 x 7, where it saves 35 of 49 multiply-adds, it is the fastest kernel, 2.5 times faster than constant memory.",

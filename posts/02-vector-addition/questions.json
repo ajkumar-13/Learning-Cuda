@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "Into the host code, which calls the kernel once per element from a loop around the launch line.",
+          "correct": false,
+          "feedback": "The host launches the kernel once; that single launch starts all the threads."
+        },
+        {
+          "key": "b",
           "text": "Into the launch: the grid starts one thread per element, and each runs the body for its own `i`.",
           "correct": true,
           "feedback": "Yes. The grid is the loop: the launch provides one thread per element, and the kernel body is what one iteration did."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "Into the compiler, which unrolls the loop body so that the GPU can run the iterations in a quicker order.",
           "correct": false,
           "feedback": "No unrolling is involved. The kernel has no loop to unroll; it describes the work of one thread."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "Into each thread, which still loops over all `N` elements but finishes faster on the GPU's quicker cores.",
           "correct": false,
           "feedback": "If every thread looped over all elements, each element would be written by every thread. A thread handles one index."
-        },
-        {
-          "key": "d",
-          "text": "Into the host code, which calls the kernel once per element from a loop around the launch line.",
-          "correct": false,
-          "feedback": "The host launches the kernel once; that single launch starts all the threads."
         }
       ],
       "explanation": "Section 1: on a GPU the loop disappears into the launch. `vectorAdd<<<blocksPerGrid, blockSize>>>` starts one thread per element (plus a few surplus threads), and each thread computes its own `i` and does one iteration's work.",
@@ -154,27 +154,27 @@
       "options": [
         {
           "key": "a",
+          "text": "96 lanes, three warps, with the last 4 threads folded into the third warp.",
+          "correct": false,
+          "feedback": "A warp has 32 lanes; 4 threads cannot be folded into a full warp. They need a fourth one."
+        },
+        {
+          "key": "b",
           "text": "100 lanes, because the SM schedules each thread on its own until the block is done.",
           "correct": false,
           "feedback": "Threads are not scheduled one by one: the SM issues instructions to whole warps of 32."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "128 lanes, four warps of 32, because the hardware runs threads in whole warps.",
           "correct": true,
           "feedback": "Yes. 100 threads need four warps, 128 lanes, and 28 of them do nothing for the life of the block."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "1,024 lanes, because every block reserves the maximum block size on its SM.",
           "correct": false,
           "feedback": "A block reserves what it asks for in warps, registers and shared memory, not the maximum block size."
-        },
-        {
-          "key": "d",
-          "text": "96 lanes, three warps, with the last 4 threads folded into the third warp.",
-          "correct": false,
-          "feedback": "A warp has 32 lanes; 4 threads cannot be folded into a full warp. They need a fourth one."
         }
       ],
       "explanation": "Section 2: the hardware runs a block's threads in warps of 32, so a block of 100 threads occupies $\\lceil 100 / 32 \\rceil = 4$ warps, 128 lanes, and wastes 28. A multiple of 32 such as 128 or 256 wastes none.",
@@ -261,27 +261,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The kernel ran correctly: the driver split each block of 2,048 into two blocks of 1,024.",
-          "correct": false,
-          "feedback": "The driver never resizes a launch. A block above 1,024 threads is an invalid configuration."
-        },
-        {
-          "key": "b",
-          "text": "The kernel ran, but only the first 1,024 threads of every block did their work.",
-          "correct": false,
-          "feedback": "Nothing ran. A block that exceeds the limit is rejected at launch, not trimmed."
-        },
-        {
-          "key": "c",
           "text": "The kernel never ran: the launch was refused, and only `cudaGetLastError()` would say so.",
           "correct": true,
           "feedback": "Yes. The post reproduced it: `cudaDeviceSynchronize()` reports `no error`, `cudaGetLastError()` reports `invalid configuration argument`."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The kernel crashed the device, and the synchronize call reset it before returning success.",
           "correct": false,
           "feedback": "A bad configuration does not crash anything; the launch is refused and the error is recorded for `cudaGetLastError()`."
+        },
+        {
+          "key": "c",
+          "text": "The kernel ran correctly: the driver split each block of 2,048 into two blocks of 1,024.",
+          "correct": false,
+          "feedback": "The driver never resizes a launch. A block above 1,024 threads is an invalid configuration."
+        },
+        {
+          "key": "d",
+          "text": "The kernel ran, but only the first 1,024 threads of every block did their work.",
+          "correct": false,
+          "feedback": "Nothing ran. A block that exceeds the limit is rejected at launch, not trimmed."
         }
       ],
       "explanation": "Sections 3 and 8: a launch whose configuration is invalid never runs, and the error is reported by `cudaGetLastError()` right after the launch. `cudaDeviceSynchronize()` reports faults from kernels that did run, so it returned success, and the program read back whatever `d_C` held. Each check catches what the other misses.",
@@ -525,27 +525,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The kernel itself, which runs from cache because the same arrays were used in the previous launch.",
-          "correct": false,
-          "feedback": "120 MB does not fit in the 1,024 KB L2 cache; the kernel needs about 828 µs, and the clock stopped long before that."
-        },
-        {
-          "key": "b",
-          "text": "The time to queue the launch: the call returns to the CPU well before the GPU has run the kernel.",
-          "correct": true,
-          "feedback": "Yes. A launch is asynchronous; with `cudaDeviceSynchronize()` before the second reading the same clock reads about 875 µs."
-        },
-        {
-          "key": "c",
           "text": "The kernel time minus the copies, which the host clock subtracts automatically for a launch line.",
           "correct": false,
           "feedback": "A host clock knows nothing about copies or kernels; it measures wall time between two readings on the CPU."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The first launch's start-up cost, which the warm-up of a correct benchmark would have removed.",
           "correct": false,
           "feedback": "The first launch is slower, not faster; the 12 to 15 µs is the queueing time and appears on every launch."
+        },
+        {
+          "key": "c",
+          "text": "The kernel itself, which runs from cache because the same arrays were used in the previous launch.",
+          "correct": false,
+          "feedback": "120 MB does not fit in the 1,024 KB L2 cache; the kernel needs about 828 µs, and the clock stopped long before that."
+        },
+        {
+          "key": "d",
+          "text": "The time to queue the launch: the call returns to the CPU well before the GPU has run the kernel.",
+          "correct": true,
+          "feedback": "Yes. A launch is asynchronous; with `cudaDeviceSynchronize()` before the second reading the same clock reads about 875 µs."
         }
       ],
       "explanation": "Section 3 and section 8: the CPU queues the kernel and runs on, so a host clock stopped right after the launch measures the queueing. Synchronize before stopping the clock, or time the kernel with CUDA events, as the benchmark does.",
@@ -575,27 +575,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Report 15.5 ms, because the first launch is what a user waits for on every run.",
-          "correct": false,
-          "feedback": "The extra cost is paid once per program, not per launch; it says nothing about how fast the kernel is."
-        },
-        {
-          "key": "b",
-          "text": "Average all four launches, so that the one-time cost is spread over the repetitions.",
-          "correct": false,
-          "feedback": "Averaging a one-time cost into the result makes the number depend on how many repetitions were run."
-        },
-        {
-          "key": "c",
           "text": "Run one untimed launch first, then time the following repetitions and report their average.",
           "correct": true,
           "feedback": "Yes. The first launch pays one-time start-up costs; the warm-up absorbs them, as in `vector_add_bench.cu`."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "Switch to a host clock, because CUDA events include start-up costs that a host clock leaves out.",
           "correct": false,
           "feedback": "A host clock around the same launches would include the same start-up cost, and the asynchronous launch on top."
+        },
+        {
+          "key": "c",
+          "text": "Report 15.5 ms, because the first launch is what a user waits for on every run.",
+          "correct": false,
+          "feedback": "The extra cost is paid once per program, not per launch; it says nothing about how fast the kernel is."
+        },
+        {
+          "key": "d",
+          "text": "Average all four launches, so that the one-time cost is spread over the repetitions.",
+          "correct": false,
+          "feedback": "Averaging a one-time cost into the result makes the number depend on how many repetitions were run."
         }
       ],
       "explanation": "Section 4 and section 8: the first launch carries one-time start-up costs (such as loading the kernel onto the device), so an honest benchmark runs every variant once untimed and averages the repetitions after it.",
@@ -798,27 +798,27 @@
       "options": [
         {
           "key": "a",
+          "text": "It falls by a quarter, the share of the time that the kernel spends on its single addition.",
+          "correct": false,
+          "feedback": "There is no fixed arithmetic share to remove; with memory as the limit, faster arithmetic changes almost nothing."
+        },
+        {
+          "key": "b",
           "text": "It halves, because the kernel performs half as many cycles of arithmetic per element.",
           "correct": false,
           "feedback": "The arithmetic was never the bottleneck: one addition per 12 bytes leaves the arithmetic units idle most of the time."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "It stays about the same, because the kernel waits on memory bandwidth, not on arithmetic.",
           "correct": true,
           "feedback": "Yes. At $I = 1/12$ the time is the bytes divided by the bandwidth, which did not change."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "It doubles, because the faster arithmetic units drain the shared caches twice as quickly.",
           "correct": false,
           "feedback": "Faster arithmetic does not slow the memory; the time is set by the bandwidth, which is unchanged."
-        },
-        {
-          "key": "d",
-          "text": "It falls by a quarter, the share of the time that the kernel spends on its single addition.",
-          "correct": false,
-          "feedback": "There is no fixed arithmetic share to remove; with memory as the limit, faster arithmetic changes almost nothing."
         }
       ],
       "explanation": "Section 5: the kernel is memory bound, running at 91% of the card's peak bandwidth; doubling the arithmetic leaves the bytes and the bandwidth, and so the time, unchanged.",

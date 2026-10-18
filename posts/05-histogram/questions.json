@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "The count wrapped around because a 32-bit bin cannot hold the sum of two increments.",
+          "correct": false,
+          "feedback": "Overflow needs more than 2,147,483,647 counts in a signed bin; adding 2 to 5 is nowhere near it."
+        },
+        {
+          "key": "b",
           "text": "Both threads read 5 before either wrote, so both wrote 6 and one increment was lost.",
           "correct": true,
           "feedback": "Yes. The increment is a read, an add and a write; when the two threads interleave them, both read the old count and the second write overwrites the first."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "The two threads belong to one warp, so the hardware merged their two increments into one.",
           "correct": false,
           "feedback": "Lanes of a warp do not merge plain stores into a sum; the loss comes from two read-modify-writes overlapping, which happens between warps too."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "One thread's increment is still in its registers and will reach memory when the kernel ends.",
           "correct": false,
           "feedback": "Every write reaches memory before the kernel finishes; a later flush does not restore a lost increment."
-        },
-        {
-          "key": "d",
-          "text": "The count wrapped around because a 32-bit bin cannot hold the sum of two increments.",
-          "correct": false,
-          "feedback": "Overflow needs more than 2,147,483,647 counts in a signed bin; adding 2 to 5 is nowhere near it."
         }
       ],
       "explanation": "Section 1: `bins[v]++` is three steps, read, add 1, write back. When two threads both read 5 before either writes, both compute 6 and write 6, so one increment is lost, which is the model's 'both read, then both write' line.",
@@ -100,27 +100,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Atomics on one address cannot overlap, so the threads that hit that bin are served one after another.",
-          "correct": true,
-          "feedback": "Yes. Indivisibility means the updates to one address are applied one at a time, so a hot bin turns parallel threads into a queue."
-        },
-        {
-          "key": "b",
-          "text": "An `atomicAdd` must retry until no other thread has touched the bin, and most of its retries fail under load.",
-          "correct": false,
-          "feedback": "That describes a loop built on `atomicCAS`. `atomicAdd` does not fail and retry; it is applied in turn."
-        },
-        {
-          "key": "c",
           "text": "Each `atomicAdd` waits at a barrier for all the other threads of the block before it is applied.",
           "correct": false,
           "feedback": "An atomic is not a barrier; it orders only the updates to its own address, not the threads of a block."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The atomics bypass the caches and write to off-chip memory, which every other kind of store avoids.",
           "correct": false,
           "feedback": "The post makes no such claim and the cost does not come from bypassing caches; the slowdown is the queue on one address."
+        },
+        {
+          "key": "c",
+          "text": "Atomics on one address cannot overlap, so the threads that hit that bin are served one after another.",
+          "correct": true,
+          "feedback": "Yes. Indivisibility means the updates to one address are applied one at a time, so a hot bin turns parallel threads into a queue."
+        },
+        {
+          "key": "d",
+          "text": "An `atomicAdd` must retry until no other thread has touched the bin, and most of its retries fail under load.",
+          "correct": false,
+          "feedback": "That describes a loop built on `atomicCAS`. `atomicAdd` does not fail and retry; it is applied in turn."
         }
       ],
       "explanation": "Section 1: two atomics on one address cannot overlap, so threads that hit it take turns, as the hero figure draws for eight threads. Correctness and speed are separate questions.",
@@ -411,27 +411,27 @@
       "options": [
         {
           "key": "a",
-          "text": "No bin is merged into global memory before every thread of the block has finished counting.",
-          "correct": true,
-          "feedback": "Yes. Without it a thread can merge `s[b]` while others still increment it, and their late increments never reach the result."
-        },
-        {
-          "key": "b",
           "text": "No block starts merging until every block of the grid has finished counting.",
           "correct": false,
           "feedback": "`__syncthreads()` holds one block only; an ordinary launch has no barrier across blocks inside the kernel, and the merge does not need one."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "No thread starts counting into the shared array until every one of its bins has been set back to zero.",
           "correct": false,
           "feedback": "That is the first barrier's job, between phase 1 and phase 2."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "The global bins are zeroed before the block merges into them.",
           "correct": false,
           "feedback": "The kernel never zeroes the global bins; the host does that with `cudaMemset` before the launch."
+        },
+        {
+          "key": "d",
+          "text": "No bin is merged into global memory before every thread of the block has finished counting.",
+          "correct": true,
+          "feedback": "Yes. Without it a thread can merge `s[b]` while others still increment it, and their late increments never reach the result."
         }
       ],
       "explanation": "Section 3: the second barrier makes every thread of the block finish counting before any bin is merged; it holds one block, which is enough because no block reads another's shared memory and the merge is made safe by its atomics.",

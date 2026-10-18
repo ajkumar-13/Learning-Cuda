@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "8 sectors, one for every four lanes",
+          "correct": false,
+          "feedback": "Four lanes cover only 16 bytes; a 32-byte sector holds eight floats, so eight lanes share each sector."
+        },
+        {
+          "key": "b",
           "text": "4 sectors, which together make one 128-byte line",
           "correct": true,
           "feedback": "Yes. 32 floats are 128 contiguous bytes, which is four 32-byte sectors, all of them used."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "1 sector, because a coalesced access is a single transaction",
           "correct": false,
           "feedback": "A sector holds 32 bytes, eight floats; 128 bytes need four sectors. One line, not one sector."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "32 sectors, one for each lane",
           "correct": false,
           "feedback": "That is the cost of a strided access, where every lane's float sits in its own sector; here the lanes share sectors."
-        },
-        {
-          "key": "d",
-          "text": "8 sectors, one for every four lanes",
-          "correct": false,
-          "feedback": "Four lanes cover only 16 bytes; a 32-byte sector holds eight floats, so eight lanes share each sector."
         }
       ],
       "explanation": "Section 2: on compute capability 6.0 and later a warp's accesses are served as the 32-byte transactions they need. 32 consecutive floats are 128 bytes, one line of four sectors, which is the model's row: 1 line, 4 sectors, 100% used.",
@@ -149,27 +149,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The block's other warps write neighboring rows into the same sectors of `B`, and the L2 cache can merge those partial writes before they reach memory.",
-          "correct": true,
-          "feedback": "Yes. The model counts one warp's store alone; the eight warps of a block write rows `row` to `row + 31`, which fill the same sectors while they can still be merged in the L2 cache."
-        },
-        {
-          "key": "b",
-          "text": "Each thread's four elements are contiguous in `B`, so every thread writes a full 16 bytes.",
-          "correct": false,
-          "feedback": "A thread's four elements are rows `row`, `row + 8`, `row + 16` and `row + 24` of one column of `A`, which land 8 floats apart in a row of `B`, not contiguous."
-        },
-        {
-          "key": "c",
           "text": "The compiler turns the strided store into row writes, so the naive kernel is partly coalesced.",
           "correct": false,
           "feedback": "The compiler does not reorder which thread writes which address; the store stays strided, 32 sectors per warp instruction."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "On compute capability 7.5 a strided warp costs only 4 sectors, the same as a row.",
           "correct": false,
           "feedback": "The Best Practices Guide's rule counts the 32-byte transactions needed; 32 floats a column apart need 32 of them."
+        },
+        {
+          "key": "c",
+          "text": "The block's other warps write neighboring rows into the same sectors of `B`, and the L2 cache can merge those partial writes before they reach memory.",
+          "correct": true,
+          "feedback": "Yes. The model counts one warp's store alone; the eight warps of a block write rows `row` to `row + 31`, which fill the same sectors while they can still be merged in the L2 cache."
+        },
+        {
+          "key": "d",
+          "text": "Each thread's four elements are contiguous in `B`, so every thread writes a full 16 bytes.",
+          "correct": false,
+          "feedback": "A thread's four elements are rows `row`, `row + 8`, `row + 16` and `row + 24` of one column of `A`, which land 8 floats apart in a row of `B`, not contiguous."
         }
       ],
       "explanation": "Section 3: the model counts one warp's store in isolation (8 times the sector bytes of a row; for a load and a store together, 1,152 bytes against the copy's 256, 4.5 times). Other warps of the same block write the adjacent rows of `B`, so the partial sectors fill up, and the 1,024 KB L2 cache can merge them; the post reads what remains as the cost of sending 32 sector writes per store instead of 4, an inference a profiler's sector counts would confirm.",
@@ -360,27 +360,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The tile is filled once and read once, so no thread overwrites it while another may still be reading it.",
-          "correct": true,
-          "feedback": "Yes. The second barrier of the matrix multiply protects the reads of one step from the next step's writes; a transpose never refills its tile."
-        },
-        {
-          "key": "b",
           "text": "A transpose has no arithmetic, so its threads cannot race.",
           "correct": false,
           "feedback": "Races are about reads and writes of shared data, not arithmetic; without its one barrier the transpose does race."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "The `32 x 8` block is small enough to run in lockstep.",
           "correct": false,
           "feedback": "A block of 256 threads is eight warps that run independently; nothing makes them lockstep."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "The padding of the tile removes the need for the second barrier.",
           "correct": false,
           "feedback": "Padding changes which banks a column hits; it has no effect on when slots are written or read."
+        },
+        {
+          "key": "d",
+          "text": "The tile is filled once and read once, so no thread overwrites it while another may still be reading it.",
+          "correct": true,
+          "feedback": "Yes. The second barrier of the matrix multiply protects the reads of one step from the next step's writes; a transpose never refills its tile."
         }
       ],
       "explanation": "Section 4: the barrier that remains protects the hand-over from the loads to the column reads. Post 03's second barrier protects a step's reads from the next step's refill of the tiles; the transpose has no next step.",
@@ -732,27 +732,27 @@
       "options": [
         {
           "key": "a",
-          "text": "A copy moves the same bytes with both sides coalesced, so it is the ceiling a kernel that only moves data can actually reach on that card.",
-          "correct": true,
-          "feedback": "Yes. The copy reached 139.1 GB/s, 87% of the theoretical peak; a correct transpose is not expected to beat a copy of the same bytes, so the copy is the realistic target."
-        },
-        {
-          "key": "b",
-          "text": "The theoretical peak is a marketing number that has no relation to the card.",
-          "correct": false,
-          "feedback": "The peak follows from the 128-bit bus and the memory clock; it is real but not reachable in practice by any kernel."
-        },
-        {
-          "key": "c",
           "text": "A transpose reads twice as many bytes as a copy, so the peak would understate it.",
           "correct": false,
           "feedback": "Both read one matrix and write one matrix of the same size; they move the same bytes."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The copy kernel shares the same bank conflicts, so it cancels them out of the comparison.",
           "correct": false,
           "feedback": "The copy kernel uses no shared memory at all, so it has no bank conflicts."
+        },
+        {
+          "key": "c",
+          "text": "A copy moves the same bytes with both sides coalesced, so it is the ceiling a kernel that only moves data can actually reach on that card.",
+          "correct": true,
+          "feedback": "Yes. The copy reached 139.1 GB/s, 87% of the theoretical peak; a correct transpose is not expected to beat a copy of the same bytes, so the copy is the realistic target."
+        },
+        {
+          "key": "d",
+          "text": "The theoretical peak is a marketing number that has no relation to the card.",
+          "correct": false,
+          "feedback": "The peak follows from the 128-bit bus and the memory clock; it is real but not reachable in practice by any kernel."
         }
       ],
       "explanation": "Section 6 and Common pitfalls, 5: the copy kernel on the same card, at 87% of the theoretical peak here, is the practical ceiling for a data-movement kernel, so the padded transpose's 89.5% of copy measures how close the kernel comes to what the card can do.",

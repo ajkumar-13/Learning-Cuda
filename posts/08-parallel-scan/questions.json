@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "There is only one addition per element, too little work to share among threads.",
+          "correct": false,
+          "feedback": "A map such as vector addition also has one operation per element and parallelizes perfectly; the obstacle is the dependency, not the amount of work."
+        },
+        {
+          "key": "b",
           "text": "Each iteration reads `out[i - 1]`, which the previous iteration writes, so iteration $i$ cannot start before iteration $i - 1$ ends.",
           "correct": true,
           "feedback": "Right: the loop-carried dependency makes the $N - 1$ additions a chain, which is what the parallel algorithms reorganize."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "Floating-point addition is not associative, so any reordering gives a wrong answer.",
           "correct": false,
           "feedback": "Reordering changes the rounding of float sums slightly, but the algorithms of the post rely on associativity and are exact for integers; that is not why the loop is serial."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "Each iteration reads a different element of `in`, so the threads' loads would not coalesce.",
           "correct": false,
           "feedback": "Adjacent threads reading adjacent elements of `in` is a coalesced pattern; memory access is not the obstacle."
-        },
-        {
-          "key": "d",
-          "text": "There is only one addition per element, too little work to share among threads.",
-          "correct": false,
-          "feedback": "A map such as vector addition also has one operation per element and parallelizes perfectly; the obstacle is the dependency, not the amount of work."
         }
       ],
       "explanation": "Section 1: `out[i]` reads `out[i - 1]`, so every addition waits for the one before it, a chain of $N - 1$ steps. A parallel scan rearranges the additions so that the ones inside a step are independent.",
@@ -262,27 +262,27 @@
       "options": [
         {
           "key": "a",
-          "text": "1, because each thread writes a different address.",
-          "correct": false,
-          "feedback": "Distinct addresses only help when they fall in distinct banks; these are 32 apart and all land in one bank."
-        },
-        {
-          "key": "b",
           "text": "2, because the indices are odd.",
           "correct": false,
           "feedback": "Being odd puts them in odd banks, but the spacing of 32 puts all of them in the same one."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "16, because half the threads are idle at that level.",
           "correct": false,
           "feedback": "At offset 16 of a 2,048 tile 64 threads are active, so every lane of the first two warps writes; the conflict degree comes from the spacing."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "32, because the indices `32t + 31` all fall in bank 31.",
           "correct": true,
           "feedback": "Right: 32 distinct addresses in one bank take 32 passes, the worst case the model prints for offsets 16 and 32."
+        },
+        {
+          "key": "d",
+          "text": "1, because each thread writes a different address.",
+          "correct": false,
+          "feedback": "Distinct addresses only help when they fall in distinct banks; these are 32 apart and all land in one bank."
         }
       ],
       "explanation": "Section 4: `16 * (2t + 2) - 1 = 32t + 31`, so every address is in bank 31 and the warp's access is a 32-way bank conflict; the model's table gives 32 for offset 16 with plain indices and 1 with the offset `index + (index >> 5)`.",
@@ -711,27 +711,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Indices 32 apart, which shared one bank, are shifted by different amounts and land in different banks.",
-          "correct": true,
-          "feedback": "Right: each run of 32 consecutive indices moves one bank further than the run before, so a stride of 32 no longer maps to one bank."
-        },
-        {
-          "key": "b",
           "text": "It halves the number of active threads at each level, so fewer threads collide.",
           "correct": false,
           "feedback": "The padding changes where values live, not how many threads work; the active counts per level are the same."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "It makes every access a broadcast, since threads read the same padded address.",
           "correct": false,
           "feedback": "A broadcast needs one address for the whole warp; the padded addresses are all distinct."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "It aligns every tree node to a 128-byte segment, so global loads coalesce.",
           "correct": false,
           "feedback": "The tree lives in shared memory, where banks and not 128-byte segments decide the cost; the offset does not align anything to 128 bytes."
+        },
+        {
+          "key": "d",
+          "text": "Indices 32 apart, which shared one bank, are shifted by different amounts and land in different banks.",
+          "correct": true,
+          "feedback": "Right: each run of 32 consecutive indices moves one bank further than the run before, so a stride of 32 no longer maps to one bank."
         }
       ],
       "explanation": "Section 4: the tree's indices at large offsets are multiples of 32 apart and fall in one bank; adding `k >> 5` shifts each group of 32 one bank further, and the model's count drops from 2,681 passes to 511 against an ideal 476.",
@@ -760,27 +760,27 @@
       "options": [
         {
           "key": "a",
-          "text": "4, the last value of the exclusive scan.",
-          "correct": false,
-          "feedback": "The exclusive scan's last value counts the kept elements before the last one and misses the last element itself, which is kept."
-        },
-        {
-          "key": "b",
           "text": "5, the last scan value plus the last predicate.",
           "correct": true,
           "feedback": "Right: the output length is the total of the predicate, the exclusive scan's last value plus the last flag."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "9, the length of the input.",
           "correct": false,
           "feedback": "Compaction drops the elements whose predicate is 0; the output is shorter than the input."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "19, the sum of the scan values.",
           "correct": false,
           "feedback": "The scan values are output indices; their sum has no meaning for the output's length."
+        },
+        {
+          "key": "d",
+          "text": "4, the last value of the exclusive scan.",
+          "correct": false,
+          "feedback": "The exclusive scan's last value counts the kept elements before the last one and misses the last element itself, which is kept."
         }
       ],
       "explanation": "Section 7: the predicate's total, 5, is the output length, equal to the exclusive scan's last value, 4, plus the last predicate, 1; the model keeps `[3, 7, 4, 1, 6]`.",

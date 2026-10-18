@@ -24,27 +24,27 @@
       "options": [
         {
           "key": "a",
+          "text": "Launching more blocks than the card has streaming multiprocessors.",
+          "correct": false,
+          "feedback": "More blocks fill the card, which helps reach the roof; the ceiling itself is $\\min(\\pi, I \\times \\beta)$ and does not change."
+        },
+        {
+          "key": "b",
           "text": "Moving fewer bytes per FLOP, for example by reusing loaded values from shared memory or registers.",
           "correct": true,
           "feedback": "Right: left of the ridge the ceiling is $I \\times \\beta$, so only a higher intensity (or more bandwidth) raises it."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "Replacing its multiplies and adds with fused multiply-adds so each lane does more FLOP per cycle.",
           "correct": false,
           "feedback": "The compute roof already counts every lane doing a fused multiply-add each cycle, and a kernel at 0.5 FLOP per byte is nowhere near it; its ceiling is set by the bandwidth slope."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "Raising its occupancy from 50% to 100% by using fewer registers per thread.",
           "correct": false,
           "feedback": "Occupancy can help a kernel get closer to its roof, but it does not move the roof; the ceiling depends only on $I$ and the card."
-        },
-        {
-          "key": "d",
-          "text": "Launching more blocks than the card has streaming multiprocessors.",
-          "correct": false,
-          "feedback": "More blocks fill the card, which helps reach the roof; the ceiling itself is $\\min(\\pi, I \\times \\beta)$ and does not change."
         }
       ],
       "explanation": "Section 3: below the ridge point a kernel is memory bound and its ceiling is $I \\times \\beta$; the lever is fewer bytes per FLOP, which raises $I$. Faster arithmetic and more occupancy do not move that roof.",
@@ -152,27 +152,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The count sends every read to DRAM, but the caches served many repeats, so the kernel's real DRAM intensity was at least 1.225 FLOP per byte.",
-          "correct": true,
-          "feedback": "Right: a kernel cannot beat the roof of the bytes it really moves, so it moved fewer bytes than counted; 196 / 160 = 1.225 is the least intensity that allows it."
-        },
-        {
-          "key": "b",
-          "text": "The card's memory briefly ran faster than its theoretical 160 GB/s while the kernel ran.",
-          "correct": false,
-          "feedback": "The theoretical bandwidth is the most the memory bus can carry; the measured copy kernels stay below it."
-        },
-        {
-          "key": "c",
           "text": "The FLOP count is too high: a fused multiply-add should count as 1 FLOP, which would put the kernel under its roof.",
           "correct": false,
           "feedback": "Counting an FMA as 1 FLOP halves both the measured rate and the intensity, so the ratio to the roof stays 4.9."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "The roofline does not apply to matrix multiplication, only to streaming kernels such as vector addition.",
           "correct": false,
           "feedback": "The roofline applies to any kernel; it needs the intensity of the traffic that actually reaches DRAM."
+        },
+        {
+          "key": "c",
+          "text": "The count sends every read to DRAM, but the caches served many repeats, so the kernel's real DRAM intensity was at least 1.225 FLOP per byte.",
+          "correct": true,
+          "feedback": "Right: a kernel cannot beat the roof of the bytes it really moves, so it moved fewer bytes than counted; 196 / 160 = 1.225 is the least intensity that allows it."
+        },
+        {
+          "key": "d",
+          "text": "The card's memory briefly ran faster than its theoretical 160 GB/s while the kernel ran.",
+          "correct": false,
+          "feedback": "The theoretical bandwidth is the most the memory bus can carry; the measured copy kernels stay below it."
         }
       ],
       "explanation": "Section 4: a dot above its roof means the byte count is wrong, never the card. Post 03 inferred that the L1 and L2 caches serve the naive kernel's repeated loads; at 196 GFLOP/s and at most 160 GB/s its DRAM intensity is at least 1.225.",
@@ -650,27 +650,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The launch fails: at 1,024 threads per block at most 64 registers per thread fit, so not one block of this kernel fits on an SM.",
-          "correct": true,
-          "feedback": "Right: 70 registers round to 2,304 per warp, a quarter of 16,384 holds 7 such warps, and the block needs 8 per quarter; the runtime reports too many resources requested for launch."
-        },
-        {
-          "key": "b",
           "text": "The kernel runs with one block per SM at 50% occupancy.",
           "correct": false,
           "feedback": "Blocks are placed whole; there is no half block. If the registers of one block do not fit, zero blocks fit."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "The kernel runs at 100% occupancy and the compiler spills the extra registers at run time.",
           "correct": false,
           "feedback": "Spilling is decided at compile time; the compiled kernel uses 70 registers, and the launch is checked against them."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "The runtime splits each block across two SMs.",
           "correct": false,
           "feedback": "A block runs on one SM for its whole life, which is what lets its threads share memory and barriers."
+        },
+        {
+          "key": "d",
+          "text": "The launch fails: at 1,024 threads per block at most 64 registers per thread fit, so not one block of this kernel fits on an SM.",
+          "correct": true,
+          "feedback": "Right: 70 registers round to 2,304 per warp, a quarter of 16,384 holds 7 such warps, and the block needs 8 per quarter; the runtime reports too many resources requested for launch."
         }
       ],
       "explanation": "Section 5: at 1,024 threads per block the block fits only at 64 registers per thread or fewer ($65{,}536 / 1{,}024$). Above that the launch fails; the Best Practices Guide warns of \"too many resources requested for launch\" errors and suggests `__launch_bounds__` to make the compiler respect the block size.",

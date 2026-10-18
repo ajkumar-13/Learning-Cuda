@@ -212,27 +212,27 @@
       "options": [
         {
           "key": "a",
+          "text": "The active threads are contiguous, so warps are all busy or all idle until fewer than 32 remain.",
+          "correct": true,
+          "feedback": "That is the whole difference: same additions, same result, but the active threads pack into whole warps."
+        },
+        {
+          "key": "b",
           "text": "It performs fewer additions, because each step skips the elements that are already summed.",
           "correct": false,
           "feedback": "Both schemes perform 255 additions for 256 values; any tree must, since each addition removes one value."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "It needs fewer steps, because the stride starts at the largest value instead of 1.",
           "correct": false,
           "feedback": "Both run 8 steps for 256 values; the strides only run in the opposite order."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "It removes the need for `__syncthreads()` between steps, because no thread reads a value another thread wrote in the same step.",
           "correct": false,
           "feedback": "Every step still reads partial sums written by other threads at the step before, so the barrier stays; `reduceShared` keeps it."
-        },
-        {
-          "key": "d",
-          "text": "The active threads are contiguous, so warps are all busy or all idle until fewer than 32 remain.",
-          "correct": true,
-          "feedback": "That is the whole difference: same additions, same result, but the active threads pack into whole warps."
         }
       ],
       "explanation": "Section 3: sequential addressing keeps the first `stride` threads active, so the 128, 64 and 32 active threads fill whole warps, and only the last five steps leave a split warp. The model counts 5 divergent warp-steps against 47 for interleaved addressing, with the same 255 additions and the same 8 steps.",
@@ -319,27 +319,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The lanes that skipped the call contribute 0, so the sum is still correct.",
-          "correct": false,
-          "feedback": "Nothing supplies a 0 for a lane that never executes the intrinsic. The post's kernels get that 0 by calling `warpReduce` from every thread and initializing out-of-range values to 0."
-        },
-        {
-          "key": "b",
-          "text": "Undefined: lanes the mask names never reach the call, and the program may hang.",
-          "correct": true,
-          "feedback": "All lanes in the mask must take part in the same `_sync` call. Lin and Grover warn that a full mask in code that some lanes never reach can hang."
-        },
-        {
-          "key": "c",
           "text": "The compiler rejects a `_sync` intrinsic inside a branch.",
           "correct": false,
           "feedback": "The `_sync` intrinsics may be called in divergent code; the mask must then name exactly the lanes that arrive, for example one computed before the branch with `__ballot_sync(0xffffffff, i < N)`."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "It is correct as long as a `__syncthreads()` follows the `if`, since the barrier gathers every lane of the block again.",
           "correct": false,
           "feedback": "A block barrier after the branch does nothing for the shuffle inside it; the exchange has already run with lanes missing from its mask."
+        },
+        {
+          "key": "c",
+          "text": "The lanes that skipped the call contribute 0, so the sum is still correct.",
+          "correct": false,
+          "feedback": "Nothing supplies a 0 for a lane that never executes the intrinsic. The post's kernels get that 0 by calling `warpReduce` from every thread and initializing out-of-range values to 0."
+        },
+        {
+          "key": "d",
+          "text": "Undefined: lanes the mask names never reach the call, and the program may hang.",
+          "correct": true,
+          "feedback": "All lanes in the mask must take part in the same `_sync` call. Lin and Grover warn that a full mask in code that some lanes never reach can hang."
         }
       ],
       "explanation": "Section 4 states the mask rule and section 8 this mistake: the mask names the participating lanes, and every one of them must execute the same intrinsic. The safe pattern is the post's: every thread calls `warpReduce`, and threads past the end hold 0.",
@@ -488,27 +488,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Warp shuffles run on a separate clock from the rest of the SM.",
-          "correct": false,
-          "feedback": "Shuffles are SM instructions and run on the SM clock like every other instruction."
-        },
-        {
-          "key": "b",
-          "text": "It launches fewer blocks, and a launch with fewer blocks is not affected by the clock.",
-          "correct": false,
-          "feedback": "The sequential-plus-stride row also launches 1,024 blocks, and it varied with the clock; the block count is not the reason."
-        },
-        {
-          "key": "c",
           "text": "It is memory bound, and the memory clock did not change.",
           "correct": true,
           "feedback": "A kernel limited by memory bandwidth follows the memory clock; the SM clock only changes how fast it handles bytes it is already waiting for."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "Its time is dominated by its 1,024 atomic additions, which run at a fixed rate.",
           "correct": false,
           "feedback": "1,024 atomics are a tiny part of a 0.44 ms kernel; the time is the 64 MiB read."
+        },
+        {
+          "key": "c",
+          "text": "Warp shuffles run on a separate clock from the rest of the SM.",
+          "correct": false,
+          "feedback": "Shuffles are SM instructions and run on the SM clock like every other instruction."
+        },
+        {
+          "key": "d",
+          "text": "It launches fewer blocks, and a launch with fewer blocks is not affected by the clock.",
+          "correct": false,
+          "feedback": "The sequential-plus-stride row also launches 1,024 blocks, and it varied with the clock; the block count is not the reason."
         }
       ],
       "explanation": "Section 6: the warp-shuffle kernel reaches about 97% of the theoretical bandwidth, so it is memory bound and its time is set by global memory, whose clock held steady. The tree kernels are limited by their instructions and barriers, so they slowed with the SM clock.",

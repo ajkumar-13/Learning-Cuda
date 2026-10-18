@@ -217,27 +217,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Each multiply-add waits on two 4-byte loads, so its time goes to fetching operands.",
-          "correct": true,
-          "feedback": "Yes. At 0.25 FLOP per byte requested, the arithmetic units sit idle waiting for operands; the FLOP count alone says nothing about the bottleneck."
-        },
-        {
-          "key": "b",
-          "text": "Each thread writes its result to global memory, and those stores dominate the time of the kernel.",
-          "correct": false,
-          "feedback": "Each thread writes once after 2K FLOP and 2K loads. The single store per output element is negligible next to the loads."
-        },
-        {
-          "key": "c",
           "text": "The loads of a warp are uncoalesced, because each thread of the warp reads a different row of `A`.",
           "correct": false,
           "feedback": "The threads of a warp share a row and differ in `col`: they read one address of `A` and consecutive addresses of `B`, which coalesces."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "Two billion operations is too few to keep a GPU busy, so the launch overhead dominates.",
           "correct": false,
           "feedback": "The naive kernel takes about 11 ms at this size on the GTX 1650, thousands of times a launch overhead. The problem is the ratio of loads to arithmetic, not the amount of work."
+        },
+        {
+          "key": "c",
+          "text": "Each multiply-add waits on two 4-byte loads, so its time goes to fetching operands.",
+          "correct": true,
+          "feedback": "Yes. At 0.25 FLOP per byte requested, the arithmetic units sit idle waiting for operands; the FLOP count alone says nothing about the bottleneck."
+        },
+        {
+          "key": "d",
+          "text": "Each thread writes its result to global memory, and those stores dominate the time of the kernel.",
+          "correct": false,
+          "feedback": "Each thread writes once after 2K FLOP and 2K loads. The single store per output element is negligible next to the loads."
         }
       ],
       "explanation": "Section 3: every multiply-add needs a value of `A` and one of `B`, two 4-byte loads per 2 FLOP, 0.25 FLOP per byte requested, and the same values are requested by every thread of a row or column. Most repeats never reach DRAM, but the load instructions remain, and the kernel reaches about 200 of the card's roughly 3,100 GFLOP/s.",
@@ -423,27 +423,27 @@
       "options": [
         {
           "key": "a",
-          "text": "Some threads of an edge block reach `__syncthreads()` and others skip it, which can hang the block.",
-          "correct": true,
-          "feedback": "Yes. A barrier must be reached by every thread of the block; in the last row and column of blocks the guard is false for some threads."
-        },
-        {
-          "key": "b",
           "text": "None: 1000 is not a multiple of 16, so the guard around the loop body is needed, and it makes the kernel correct.",
           "correct": false,
           "feedback": "The guard is needed, but not around the barriers. The post loads unconditionally with zero fill and guards only the final write."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "The compiler rejects a `__syncthreads()` placed inside an `if` statement, so the kernel does not even build.",
           "correct": false,
           "feedback": "It compiles. The rule is about what happens at run time when the threads of a block take different paths."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "Only speed: the threads past the edge sit idle in every edge block, which wastes a few percent of the launch.",
           "correct": false,
           "feedback": "Idle surplus threads are harmless; the danger is the barrier that only some threads of a block reach."
+        },
+        {
+          "key": "d",
+          "text": "Some threads of an edge block reach `__syncthreads()` and others skip it, which can hang the block.",
+          "correct": true,
+          "feedback": "Yes. A barrier must be reached by every thread of the block; in the last row and column of blocks the guard is false for some threads."
         }
       ],
       "explanation": "Section 7: a `__syncthreads()` inside a condition that differs within a block is undefined behavior. In the edge blocks of a $1000 \\times 1000$ product the guard splits each block, so the barrier is reached by only some threads. The fix is to load unconditionally with zero fill and guard only the write to `C`.",

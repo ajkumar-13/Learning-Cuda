@@ -74,27 +74,27 @@
       "options": [
         {
           "key": "a",
+          "text": "It moves the stalled warp's block to an idle SM, so that the original SM is free to start a new block meanwhile.",
+          "correct": false,
+          "feedback": "A block runs on one SM; the hardware does not shuffle blocks between SMs to hide a load. It switches warps within the SM."
+        },
+        {
+          "key": "b",
           "text": "It predicts the loaded value and keeps issuing the same warp's instructions speculatively until the load returns.",
           "correct": false,
           "feedback": "That is a CPU's strategy (prediction and speculation). A GPU spends little area on such control."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "It issues from another resident warp that is ready, and comes back to the first warp when its data arrives.",
           "correct": true,
           "feedback": "Yes. Switching to a ready warp is latency hiding: the wait costs nothing while another warp has work."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "It stalls the whole SM until the load returns, because all the warps of a block share a single instruction stream.",
           "correct": false,
           "feedback": "Only the 32 lanes of one warp share an instruction. Other warps are independent and can issue while it waits."
-        },
-        {
-          "key": "d",
-          "text": "It moves the stalled warp's block to an idle SM, so that the original SM is free to start a new block meanwhile.",
-          "correct": false,
-          "feedback": "A block runs on one SM; the hardware does not shuffle blocks between SMs to hide a load. It switches warps within the SM."
         }
       ],
       "explanation": "Section 2: an SM keeps many warps resident and each clock issues from any warp that is ready, so when one stalls on a load another runs. The Programming Guide calls this hiding memory access latencies with computation.",
@@ -391,27 +391,27 @@
       "options": [
         {
           "key": "a",
-          "text": "The launch fails with an error, because the grid is too small to cover all N elements.",
-          "correct": false,
-          "feedback": "The runtime does not know what N means to the kernel; 3 blocks of 256 is a valid launch and no error is reported."
-        },
-        {
-          "key": "b",
           "text": "The kernel runs without any error, and the last 232 elements are never processed.",
           "correct": true,
           "feedback": "Yes. N / 256 is 3 in integer arithmetic, 768 threads, so elements 768 to 999 have no thread; section 9 reproduced exactly this."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "The guard `i < N` makes the surplus threads of the last block cover the missing elements.",
           "correct": false,
           "feedback": "The guard only stops threads whose index is too large. It cannot create threads that were never launched."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "The last block reads past the end of the array, which compute-sanitizer then reports.",
           "correct": false,
           "feedback": "That is the missing-guard mistake. Here every launched thread has an index below 768, so nothing reads out of bounds."
+        },
+        {
+          "key": "d",
+          "text": "The launch fails with an error, because the grid is too small to cover all N elements.",
+          "correct": false,
+          "feedback": "The runtime does not know what N means to the kernel; 3 blocks of 256 is a valid launch and no error is reported."
         }
       ],
       "explanation": "Section 9: a floor division gives 3 blocks, 768 threads, and the program runs normally while elements 768 to 999 are never touched (`768 of 1000` in `add_one.cu`'s check). The block count must be the ceiling of $N / 256$.",
@@ -477,27 +477,27 @@
       "options": [
         {
           "key": "a",
-          "text": "`if (threadIdx.x < 128)`",
-          "correct": false,
-          "feedback": "Threads 0 to 127 are warps 0 to 3 and threads 128 to 255 are warps 4 to 7, so every warp agrees: no divergence."
-        },
-        {
-          "key": "b",
-          "text": "`if (threadIdx.x % 2 == 0)`",
-          "correct": true,
-          "feedback": "Yes. Even and odd lanes sit side by side in every warp, so all 8 warps split and need 2 passes each."
-        },
-        {
-          "key": "c",
           "text": "`if (blockIdx.x == 0)`",
           "correct": false,
           "feedback": "Every thread of a block has the same `blockIdx.x`, so the whole block, and every warp in it, takes one path."
         },
         {
-          "key": "d",
+          "key": "b",
           "text": "`if ((threadIdx.x / 32) % 2 == 0)`",
           "correct": false,
           "feedback": "`threadIdx.x / 32` is the warp number, so whole warps agree; this is the post's warp-uniform fix."
+        },
+        {
+          "key": "c",
+          "text": "`if (threadIdx.x < 128)`",
+          "correct": false,
+          "feedback": "Threads 0 to 127 are warps 0 to 3 and threads 128 to 255 are warps 4 to 7, so every warp agrees: no divergence."
+        },
+        {
+          "key": "d",
+          "text": "`if (threadIdx.x % 2 == 0)`",
+          "correct": true,
+          "feedback": "Yes. Even and odd lanes sit side by side in every warp, so all 8 warps split and need 2 passes each."
         }
       ],
       "explanation": "Section 5: divergence happens only inside a warp, when its 32 consecutive threads disagree. A condition on the lane's parity splits every warp; conditions on the half-block, on the block, or on the warp number are uniform across each warp.",
@@ -603,27 +603,27 @@
       "options": [
         {
           "key": "a",
-          "text": "A measured bandwidth: how fast a real kernel moved data across this card's memory bus.",
-          "correct": false,
-          "feedback": "No kernel moved any data. The program only read properties and did arithmetic on two of them; post 02 measures achieved bandwidth."
-        },
-        {
-          "key": "b",
           "text": "A theoretical peak, computed from the memory clock and bus width the driver reports.",
           "correct": true,
           "feedback": "Yes. 2 transfers per clock x 16 bytes x 5,001 MHz is 160 GB/s, an upper bound no kernel is promised to reach."
         },
         {
-          "key": "c",
+          "key": "b",
           "text": "A published figure that the program copies from NVIDIA's specification sheet for the card.",
           "correct": false,
           "feedback": "The program computes it from `cudaGetDeviceProperties`; nothing is looked up or copied."
         },
         {
-          "key": "d",
+          "key": "c",
           "text": "A count derived on the CPU by the post's model, `thread_model.py`, without the GPU.",
           "correct": false,
           "feedback": "The CPU model knows nothing about the card's memory; the line comes from `device_query.cu`."
+        },
+        {
+          "key": "d",
+          "text": "A measured bandwidth: how fast a real kernel moved data across this card's memory bus.",
+          "correct": false,
+          "feedback": "No kernel moved any data. The program only read properties and did arithmetic on two of them; post 02 measures achieved bandwidth."
         }
       ],
       "explanation": "Section 7: every line of the device query but the last is a property the driver reports; the last is derived from two of them, the 128-bit bus (16 bytes per transfer) and the 5,001 MHz memory clock at two transfers per clock. It is a theoretical peak, not a measurement.",
@@ -683,27 +683,27 @@
       "options": [
         {
           "key": "a",
+          "text": "The driver just-in-time compiles the code for 7.5, so it runs, only slower to start.",
+          "correct": false,
+          "feedback": "Just-in-time compilation needs PTX for a compute capability at or below the card's; PTX for 8.6 cannot be compiled down to 7.5."
+        },
+        {
+          "key": "b",
           "text": "It runs correctly, because newer architectures are backward compatible with older cards.",
           "correct": false,
           "feedback": "Compatibility runs the other way: code for an older compute capability can run on a newer card, not code for a newer one on an older card."
         },
         {
-          "key": "b",
+          "key": "c",
           "text": "The launch fails with `no kernel image is available for execution on the device`.",
           "correct": true,
           "feedback": "Yes. The binary holds code for compute capability 8.6 only, which a 7.5 card cannot run; section 9 reproduced this error."
         },
         {
-          "key": "c",
+          "key": "d",
           "text": "nvcc refuses to compile, because the build machine's card is only 7.5.",
           "correct": false,
           "feedback": "nvcc compiles for any target architecture regardless of the card in the machine; the failure comes at run time."
-        },
-        {
-          "key": "d",
-          "text": "The driver just-in-time compiles the code for 7.5, so it runs, only slower to start.",
-          "correct": false,
-          "feedback": "Just-in-time compilation needs PTX for a compute capability at or below the card's; PTX for 8.6 cannot be compiled down to 7.5."
         }
       ],
       "explanation": "Section 7: `-arch=sm_XX` is the compute capability with the dot dropped, and PTX for one compute capability can be compiled only to binary code of greater or equal capability. A build for `sm_86` therefore has nothing the GTX 1650 can run, and section 9 shows the launch error it gives.",
