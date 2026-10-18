@@ -1,51 +1,166 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Transpose bandwidth for the naive, shared-memory, and padded kernels against a plain copy</title>
-  <desc id="d">A bar chart of bandwidth in gigabytes per second for transposing a 4096 by 4096 matrix on an RTX 3080, with a plain memory copy at 350 gigabytes per second marked as a dashed reference line, the practical ceiling. The naive transpose reaches only 60, about 17 percent of the copy, drawn red, because its column writes are strided. The shared-memory tiled transpose reaches 220, about 63 percent, drawn neutral, with both global accesses coalesced but shared-memory bank conflicts remaining. The padded shared-memory transpose reaches 310, about 88 percent, drawn green and nearly touching the copy line. The note records the speedups: tiling 3.7 times, padding 1.4 times, combined 5.2 times.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:20px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .val{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px;fill:var(--cuda-ink);}
-    .axis{stroke:var(--cuda-ink);stroke-width:1;}
-    .grid{stroke:var(--cuda-grid);stroke-width:0.75;}
-    .ref{stroke:var(--cuda-ink-muted);stroke-width:1;stroke-dasharray:5 4;}
-    .naive{fill:var(--cuda-surface);stroke:var(--cuda-alert);stroke-width:1.5;}
-    .shared{fill:var(--cuda-surface);stroke:var(--cuda-ink-muted);stroke-width:1.5;}
-    .padded{fill:var(--cuda-surface);stroke:var(--cuda-success);stroke-width:1.5;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Coalescing then padding recover 88% of copy bandwidth (4096², RTX 3080)</text>
-
-  <g>
-    <line class="grid" x1="160" y1="440" x2="900" y2="440"/><text class="small" x="152" y="444" text-anchor="end">0</text>
-    <line class="grid" x1="160" y1="351" x2="900" y2="351"/><text class="small" x="152" y="355" text-anchor="end">100</text>
-    <line class="grid" x1="160" y1="262" x2="900" y2="262"/><text class="small" x="152" y="266" text-anchor="end">200</text>
-    <line class="grid" x1="160" y1="173" x2="900" y2="173"/><text class="small" x="152" y="177" text-anchor="end">300</text>
-  </g>
-  <line class="axis" x1="160" y1="110" x2="160" y2="440"/>
-  <text class="small" x="76" y="280" transform="rotate(-90 76 280)" text-anchor="middle">bandwidth (GB/s)</text>
-
-  <!-- copy reference line at 350 -->
-  <line class="ref" x1="160" y1="129" x2="900" y2="129"/>
-  <text class="small" x="900" y="124" text-anchor="end">plain copy 350 GB/s (practical ceiling)</text>
-
-  <rect class="naive"  x="240" y="387" width="130" height="53"/>
-  <text class="val" x="305" y="379" text-anchor="middle" fill="var(--cuda-alert)">60</text>
-  <text class="label" x="305" y="462" text-anchor="middle">naive transpose</text>
-  <text class="small" x="305" y="480" text-anchor="middle">17% · strided writes</text>
-
-  <rect class="shared" x="450" y="244" width="130" height="196"/>
-  <text class="val" x="515" y="236" text-anchor="middle">220</text>
-  <text class="label" x="515" y="462" text-anchor="middle">shared memory</text>
-  <text class="small" x="515" y="480" text-anchor="middle">63% · bank conflicts</text>
-
-  <rect class="padded" x="660" y="164" width="130" height="276"/>
-  <text class="val" x="725" y="156" text-anchor="middle" fill="var(--cuda-success)">310</text>
-  <text class="label" x="725" y="462" text-anchor="middle">shared + padding</text>
-  <text class="small" x="725" y="480" text-anchor="middle">88% · conflict-free</text>
-
-  <text class="small" x="40" y="512">Tiling fixes global coalescing (3.7x); padding fixes the shared-memory bank conflict (1.4x); together 5.2x over naive.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="cuda-04-transpose-perf-title" aria-describedby="cuda-04-transpose-perf-desc">
+<title id="cuda-04-transpose-perf-title">The padded tile reaches 89.5% of a plain copy</title>
+<desc id="cuda-04-transpose-perf-desc">Horizontal bars of bandwidth in GB/s for transposing a 4,096 by 4,096 float matrix on the GTX 1650: naive 41.5 and shared unpadded 77.7, in red for their hazards, and shared padded 124.4 in ink. Dotted lines mark the copy kernel at 139.1 GB/s and the theoretical peak at 160 GB/s. As shares of the copy: 30%, 56% and 89.5%.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-ink { fill: var(--cuda-ink); }
+  .f-ink-muted { fill: var(--cuda-ink-muted); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .s-ink-muted { stroke: var(--cuda-ink-muted); }
+</style>
+<defs>
+<marker id="cuda-04-transpose-perf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<clipPath id="cuda-04-transpose-perf-clip-1"><rect x="192" y="128" width="664" height="300"/></clipPath>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="540"/>
+<text x="40" y="48" class="t-title" data-w="556">The padded tile reaches 89.5% of a plain copy</text>
+<text x="40" y="76" class="t-subtitle" data-w="779">Measured: GTX 1650, compute capability 7.5, CUDA 12.3, October 2026; median of 5 rounds of 20 launches.</text>
+<g data-grid="skip">
+<path d="M192,128V428M339.56,128V428M487.11,128V428M634.67,128V428M782.22,128V428" class="gridline"/>
+<text x="192" y="448" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="339.56" y="448" text-anchor="middle" class="t-tick" data-w="16">40</text>
+<text x="487.11" y="448" text-anchor="middle" class="t-tick" data-w="16">80</text>
+<text x="634.67" y="448" text-anchor="middle" class="t-tick" data-w="23">120</text>
+<text x="782.22" y="448" text-anchor="middle" class="t-tick" data-w="23">160</text>
+<g clip-path="url(#cuda-04-transpose-perf-clip-1)">
+<rect x="192" y="166" width="153.09" height="24" class="f-red" data-fit="skip"/>
+<rect x="192" y="266" width="286.63" height="24" class="f-red" data-fit="skip"/>
+<rect x="192" y="366" width="458.9" height="24" class="f-ink" data-fit="skip"/>
+</g>
+<path d="M705.12,128V428" class="s-ink-muted w1 nofill d-ref"/>
+<path d="M782.22,128V428" class="s-ink-muted w1 nofill d-ref"/>
+<path d="M192,128V428" class="axis"/>
+<text x="711.12" y="120" class="t-note f-ink-muted" data-w="73">copy 139.1</text>
+<text x="788.22" y="120" class="t-note f-ink-muted" data-w="61">peak 160</text>
+<text x="40" y="183" class="t-label" data-w="36">naive</text>
+<text x="353.09" y="183" class="t-value f-red-ink" data-w="30">41.5</text>
+<text x="40" y="283" class="t-label" data-w="122">shared, unpadded</text>
+<text x="486.63" y="283" class="t-value f-red-ink" data-w="30">77.7</text>
+<text x="40" y="383" class="t-label" data-w="105">shared, padded</text>
+<text x="658.9" y="383" class="t-value f-ink" data-w="38">124.4</text>
+</g>
+<text x="524" y="472" text-anchor="middle" class="t-note" data-w="142">GB/s, read plus write</text>
+<text x="40" y="504" class="t-note" data-w="607">The tile fixes the strided writes (1.9 times); the pad fixes the bank conflict (1.6 times more).</text>
 </svg>

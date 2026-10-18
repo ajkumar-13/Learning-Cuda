@@ -1,70 +1,308 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="t d">
-  <title id="t">Coalesced access reads consecutive addresses as one memory transaction; strided access reads one transaction per thread</title>
-  <desc id="d">Two panels comparing how a warp accesses global memory. On the left, coalesced access reading a row: eight threads read eight consecutive addresses, which the GPU services as a single 128-byte transaction, drawn green, with all fetched data used. On the right, strided access reading a column: the matrix is row-major, so a column's elements are a full row width apart; each of the eight threads lands in a different cache line, shown as eight separate red lines, and only 4 of the 128 bytes in each line are used. The takeaway is that the same number of elements costs one transaction when coalesced and up to 32 when strided, which is why a naive transpose that writes columns runs at a fraction of peak bandwidth.</desc>
-  <style><![CDATA[
-    :root{--cuda-bg:#FAFAF7;--cuda-surface:#FFFFFF;--cuda-ink:#1A1A1A;--cuda-ink-muted:#5C5C5C;--cuda-border:#D9D9D4;--cuda-success:#5C9E78;--cuda-alert:#C66B5E;--cuda-grid:#E4E4DE;}
-    @media (prefers-color-scheme:dark){:root{--cuda-bg:#0E0F12;--cuda-surface:#16181C;--cuda-ink:#F2F2EE;--cuda-ink-muted:#B4B4AE;--cuda-border:#2A2D33;--cuda-success:#7FBF9B;--cuda-alert:#D88880;--cuda-grid:#23262D;}}
-    .bg{fill:var(--cuda-bg);}
-    .title{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:21px;fill:var(--cuda-ink);}
-    .label{font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;fill:var(--cuda-ink);}
-    .small{font-family:Inter,system-ui,sans-serif;font-weight:400;font-size:12px;fill:var(--cuda-ink-muted);}
-    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-weight:500;font-size:11px;fill:var(--cuda-ink);}
-    .panel{fill:none;stroke:var(--cuda-border);stroke-width:1;}
-    .th{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .cell{fill:var(--cuda-surface);stroke:var(--cuda-border);stroke-width:1;}
-    .used{fill:var(--cuda-surface);stroke:var(--cuda-alert);stroke-width:1.5;}
-    .line1{fill:none;stroke:var(--cuda-success);stroke-width:1.5;}
-    .lineN{fill:none;stroke:var(--cuda-alert);stroke-width:1.5;}
-    .flow{stroke:var(--cuda-ink-muted);stroke-width:1;fill:none;}
-  ]]></style>
-  <rect class="bg" width="960" height="540"/>
-  <text class="title" x="40" y="44">Coalesced is one transaction; strided is 32</text>
-  <text class="small" x="40" y="66">The GPU fetches global memory in 128-byte lines. Whether a warp's reads share a line decides the bandwidth.</text>
-
-  <!-- LEFT: coalesced -->
-  <rect class="panel" x="40" y="92" width="430" height="380" rx="10"/>
-  <text class="label" x="60" y="120">Coalesced — reading a row</text>
-  <g>
-    <rect class="th" x="60"  y="138" width="44" height="34"/><text class="mono" x="82"  y="160" text-anchor="middle">t0</text>
-    <rect class="th" x="106" y="138" width="44" height="34"/><text class="mono" x="128" y="160" text-anchor="middle">t1</text>
-    <rect class="th" x="152" y="138" width="44" height="34"/><text class="mono" x="174" y="160" text-anchor="middle">t2</text>
-    <rect class="th" x="198" y="138" width="44" height="34"/><text class="mono" x="220" y="160" text-anchor="middle">t3</text>
-    <rect class="th" x="244" y="138" width="44" height="34"/><text class="mono" x="266" y="160" text-anchor="middle">t4</text>
-    <rect class="th" x="290" y="138" width="44" height="34"/><text class="mono" x="312" y="160" text-anchor="middle">t5</text>
-    <rect class="th" x="336" y="138" width="44" height="34"/><text class="mono" x="358" y="160" text-anchor="middle">t6</text>
-    <rect class="th" x="382" y="138" width="44" height="34"/><text class="mono" x="404" y="160" text-anchor="middle">t7</text>
-  </g>
-  <g class="flow">
-    <path d="M82,172 L82,238"/><path d="M128,172 L128,238"/><path d="M174,172 L174,238"/><path d="M220,172 L220,238"/>
-    <path d="M266,172 L266,238"/><path d="M312,172 L312,238"/><path d="M358,172 L358,238"/><path d="M404,172 L404,238"/>
-  </g>
-  <g>
-    <rect class="cell" x="60"  y="240" width="44" height="34"/><rect class="cell" x="106" y="240" width="44" height="34"/><rect class="cell" x="152" y="240" width="44" height="34"/><rect class="cell" x="198" y="240" width="44" height="34"/><rect class="cell" x="244" y="240" width="44" height="34"/><rect class="cell" x="290" y="240" width="44" height="34"/><rect class="cell" x="336" y="240" width="44" height="34"/><rect class="cell" x="382" y="240" width="44" height="34"/>
-  </g>
-  <rect class="line1" x="54" y="234" width="378" height="46" rx="6"/>
-  <text class="small" x="60" y="318" fill="var(--cuda-success)">1 transaction (128 bytes), 100% used</text>
-  <text class="small" x="60" y="350">All 8 threads (32 in a warp) share one cache line.</text>
-
-  <!-- RIGHT: strided -->
-  <rect class="panel" x="500" y="92" width="430" height="380" rx="10"/>
-  <text class="label" x="520" y="120">Strided — reading a column</text>
-  <g>
-    <rect class="th" x="520" y="138" width="44" height="34"/><text class="mono" x="542" y="160" text-anchor="middle">t0</text>
-    <rect class="th" x="566" y="138" width="44" height="34"/><text class="mono" x="588" y="160" text-anchor="middle">t1</text>
-    <rect class="th" x="612" y="138" width="44" height="34"/><text class="mono" x="634" y="160" text-anchor="middle">t2</text>
-    <rect class="th" x="658" y="138" width="44" height="34"/><text class="mono" x="680" y="160" text-anchor="middle">t3</text>
-  </g>
-  <text class="small" x="712" y="160">... (stride = width apart)</text>
-  <!-- 4 separate cache lines, each with one used cell -->
-  <g>
-    <rect class="lineN" x="560" y="206" width="350" height="26" rx="4"/><rect class="used" x="564" y="210" width="34" height="18"/><text class="small" x="700" y="223">line 0 — 4 B used of 128</text>
-    <rect class="lineN" x="560" y="244" width="350" height="26" rx="4"/><rect class="used" x="564" y="248" width="34" height="18"/><text class="small" x="700" y="261">line 1 — 4 B used of 128</text>
-    <rect class="lineN" x="560" y="282" width="350" height="26" rx="4"/><rect class="used" x="564" y="286" width="34" height="18"/><text class="small" x="700" y="299">line 2 — 4 B used of 128</text>
-    <rect class="lineN" x="560" y="320" width="350" height="26" rx="4"/><rect class="used" x="564" y="324" width="34" height="18"/><text class="small" x="700" y="337">line 3 — 4 B used of 128</text>
-  </g>
-  <g class="flow">
-    <path d="M542,172 L580,206"/><path d="M588,172 L584,244"/><path d="M634,172 L586,282"/><path d="M680,172 L588,320"/>
-  </g>
-  <text class="small" x="520" y="372" fill="var(--cuda-alert)">up to 32 transactions, ~3% used</text>
-  <text class="small" x="520" y="396">Each thread lands in its own line; the rest of each line is wasted.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="cuda-01-coalesced-vs-strided-title" aria-describedby="cuda-01-coalesced-vs-strided-desc">
+<title id="cuda-01-coalesced-vs-strided-title">A row costs a warp one line; a column costs 32</title>
+<desc id="cuda-01-coalesced-vs-strided-desc">Left: the 32 lanes of a warp read a row of A, 32 consecutive floats, which fill one 128-byte line of 4 sectors of 32 bytes, every word used: 1 line, 4 sectors, 128 bytes moved, 100% used. Right: lanes 0 to 7 of the same warp write a column of B; each lane's float lands in its own line, and its sector moves 7 other words for nothing. For all 32 lanes: 32 lines, 32 sectors, 1,024 bytes moved for 128 used, 12.5%.</desc>
+<style>
+  :root {
+    --cuda-bg: #FAFAF7;
+    --cuda-surface: #FFFFFF;
+    --cuda-ink: #1A1A1A;
+    --cuda-ink-muted: #5C5C5C;
+    --cuda-ink-subtle: #9A9A9A;
+    --cuda-border: #D9D9D4;
+    --cuda-primary: #5B7FBF;
+    --cuda-accent: #D98E5F;
+    --cuda-success: #5C9E78;
+    --cuda-warn: #B8895A;
+    --cuda-alert: #C66B5E;
+    --cuda-neutral-1: #EAEAE4;
+    --cuda-neutral-2: #CFCFC8;
+    --cuda-neutral-3: #8E8E88;
+    --cuda-on-fill: #FFFDF9;
+    --cuda-on-accent: #1A1A1A;
+    --cuda-grid: #E4E4DE;
+    --cuda-rule: #8E8E88;
+    --cuda-arrow: #6E6E68;
+    --cuda-neutral-soft: #F2F2EE;
+    --cuda-blue: #0072B2;
+    --cuda-blue-ink: #005A8C;
+    --cuda-blue-soft: #E3F0F8;
+    --cuda-blue-line: #9CC6E0;
+    --cuda-orange: #C98500;
+    --cuda-orange-ink: #8A5B00;
+    --cuda-orange-soft: #FBF0D9;
+    --cuda-orange-line: #E5C27A;
+    --cuda-green: #008F68;
+    --cuda-green-ink: #006B4E;
+    --cuda-green-soft: #DFF3EC;
+    --cuda-green-line: #8FCDB8;
+    --cuda-red: #A8322A;
+    --cuda-red-ink: #8F2A23;
+    --cuda-red-soft: #F8E3E1;
+    --cuda-red-line: #DDA49F;
+    --cuda-purple: #A14D8C;
+    --cuda-purple-ink: #833E72;
+    --cuda-purple-soft: #F4E4EF;
+    --cuda-purple-line: #D3A5C6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cuda-bg: #0E0F12;
+      --cuda-surface: #16181C;
+      --cuda-ink: #F2F2EE;
+      --cuda-ink-muted: #B4B4AE;
+      --cuda-ink-subtle: #6E6E68;
+      --cuda-border: #2A2D33;
+      --cuda-primary: #8BA8E0;
+      --cuda-accent: #E8B088;
+      --cuda-success: #7FBF9B;
+      --cuda-warn: #D4B58A;
+      --cuda-alert: #D88880;
+      --cuda-neutral-1: #1F2229;
+      --cuda-neutral-2: #2C3038;
+      --cuda-neutral-3: #6E6E68;
+      --cuda-on-fill: #14161A;
+      --cuda-on-accent: #1A1A1A;
+      --cuda-grid: #23262D;
+      --cuda-rule: #6A6D74;
+      --cuda-arrow: #9A9A94;
+      --cuda-neutral-soft: #1C1E23;
+      --cuda-blue: #5AA8E0;
+      --cuda-blue-ink: #7DBBE8;
+      --cuda-blue-soft: #14283A;
+      --cuda-blue-line: #2E5878;
+      --cuda-orange: #E8B040;
+      --cuda-orange-ink: #F0C060;
+      --cuda-orange-soft: #33260F;
+      --cuda-orange-line: #6E5222;
+      --cuda-green: #3CC497;
+      --cuda-green-ink: #62D1AC;
+      --cuda-green-soft: #10302A;
+      --cuda-green-line: #2A6A55;
+      --cuda-red: #E8796E;
+      --cuda-red-ink: #F09A90;
+      --cuda-red-soft: #3A1A18;
+      --cuda-red-line: #7A3A34;
+      --cuda-purple: #D58CC4;
+      --cuda-purple-ink: #E2A6D3;
+      --cuda-purple-soft: #331F2E;
+      --cuda-purple-line: #6E4466;
+    }
+  }
+  .bg { fill: var(--cuda-bg); }
+  text { font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif; fill: var(--cuda-ink); }
+  .t-title { font-size: 24px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-subtitle { font-size: 15px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-head { font-size: 16px; font-weight: 600; fill: var(--cuda-ink); }
+  .t-label { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); }
+  .t-note { font-size: 14px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-value { font-size: 14px; font-weight: 600; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-tick { font-size: 13px; font-weight: 400; fill: var(--cuda-ink-muted); font-variant-numeric: tabular-nums; }
+  .t-math { font-size: 17px; font-weight: 400; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-op { font-size: 24px; font-weight: 400; fill: var(--cuda-ink-muted); }
+  .t-code { font-size: 14px; font-weight: 400; fill: var(--cuda-ink); font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  .t-cell14 { font-size: 14px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell16 { font-size: 16px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .t-cell18 { font-size: 18px; font-weight: 500; fill: var(--cuda-ink); font-variant-numeric: tabular-nums; }
+  .i { font-style: italic; }
+  .sub { font-size: 13px; }
+  .b { font-weight: 700; }
+  .nofill { fill: none; }
+  .cell { fill: var(--cuda-surface); stroke: var(--cuda-rule); stroke-width: 1; }
+  .card { fill: var(--cuda-neutral-soft); stroke: var(--cuda-border); stroke-width: 1; }
+  .frame { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1.5; }
+  .rule1 { fill: none; stroke: var(--cuda-rule); stroke-width: 1; }
+  .fine { fill: none; stroke: var(--cuda-border); stroke-width: 0.75; }
+  .gridline { fill: none; stroke: var(--cuda-grid); stroke-width: 0.75; }
+  .axis { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .flow { fill: none; stroke: var(--cuda-arrow); stroke-width: 1.5; }
+  .lead { fill: none; stroke: var(--cuda-arrow); stroke-width: 1; stroke-dasharray: 4 4; }
+  .brace { fill: none; stroke: var(--cuda-ink-muted); stroke-width: 1; }
+  .arrowhead { fill: var(--cuda-arrow); }
+  .emph { fill: none; stroke-width: 2.5; }
+  .w1 { stroke-width: 1; }
+  .w15 { stroke-width: 1.5; }
+  .d-proj { stroke-dasharray: 6 4; }
+  .d-ref { stroke-dasharray: 1.5 3.5; stroke-linecap: round; }
+  .d-lead { stroke-dasharray: 4 4; }
+  .f-green { fill: var(--cuda-green); }
+  .f-green-ink { fill: var(--cuda-green-ink); }
+  .f-orange-soft { fill: var(--cuda-orange-soft); }
+  .f-red { fill: var(--cuda-red); }
+  .f-red-ink { fill: var(--cuda-red-ink); }
+  .f-red-soft { fill: var(--cuda-red-soft); }
+  .f-surface-bg { fill: var(--cuda-surface); }
+  .s-green { stroke: var(--cuda-green); }
+  .s-orange { stroke: var(--cuda-orange); }
+  .s-red { stroke: var(--cuda-red); }
+  .s-rule { stroke: var(--cuda-rule); }
+</style>
+<defs>
+<marker id="cuda-01-coalesced-vs-strided-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" class="arrowhead"/></marker>
+<clipPath id="cuda-01-coalesced-vs-strided-clip-1"><rect x="144" y="464" width="248" height="80"/></clipPath>
+</defs>
+<rect class="bg" data-fit="skip" x="0" y="0" width="960" height="720"/>
+<text x="40" y="48" class="t-title" data-w="573">A row costs a warp one line; a column costs 32</text>
+<text x="40" y="76" class="t-subtitle" data-w="775">One warp, 4-byte floats, a 4,096 × 4,096 row-major matrix; counts derived by snippets/transpose_model.py.</text>
+<text x="40" y="136" class="t-head" data-w="221">Read a row of A: coalesced</text>
+<rect x="40" y="168" width="384" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="40" y="168" width="384" height="24" class="f-orange-soft" data-fit="skip"/>
+<path d="M52,168V192M64,168V192M76,168V192M88,168V192M100,168V192M112,168V192M124,168V192M136,168V192M148,168V192M160,168V192M172,168V192M184,168V192M196,168V192M208,168V192M220,168V192M232,168V192M244,168V192M256,168V192M268,168V192M280,168V192M292,168V192M304,168V192M316,168V192M328,168V192M340,168V192M352,168V192M364,168V192M376,168V192M388,168V192M400,168V192M412,168V192" class="fine"/>
+</g>
+<rect x="40" y="168" width="384" height="24" class="frame" data-fit="skip"/>
+<text x="40" y="160" class="t-tick" data-w="80">lanes 0 to 31</text>
+<rect x="40" y="264" width="384" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="40" y="264" width="384" height="24" class="f-green" data-fit="skip"/>
+<path d="M52,264V288M64,264V288M76,264V288M88,264V288M100,264V288M112,264V288M124,264V288M136,264V288M148,264V288M160,264V288M172,264V288M184,264V288M196,264V288M208,264V288M220,264V288M232,264V288M244,264V288M256,264V288M268,264V288M280,264V288M292,264V288M304,264V288M316,264V288M328,264V288M340,264V288M352,264V288M364,264V288M376,264V288M388,264V288M400,264V288M412,264V288" class="fine"/>
+</g>
+<rect x="40" y="264" width="384" height="24" class="frame" data-fit="skip"/>
+<path d="M232,196 L232,257" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<text x="244" y="232" class="t-note" data-w="75">one access</text>
+<path d="M42,296 V304 H134 V296" class="brace"/>
+<g data-grid="skip">
+<text x="88" y="324" text-anchor="middle" class="t-note" data-w="54">sector 0</text>
+</g>
+<path d="M138,296 V304 H230 V296" class="brace"/>
+<g data-grid="skip">
+<text x="184" y="324" text-anchor="middle" class="t-note" data-w="54">sector 1</text>
+</g>
+<path d="M234,296 V304 H326 V296" class="brace"/>
+<g data-grid="skip">
+<text x="280" y="324" text-anchor="middle" class="t-note" data-w="54">sector 2</text>
+</g>
+<path d="M330,296 V304 H422 V296" class="brace"/>
+<g data-grid="skip">
+<text x="376" y="324" text-anchor="middle" class="t-note" data-w="54">sector 3</text>
+</g>
+<text x="40" y="364" class="t-label" data-w="271">1 line of 128 bytes, 4 sectors of 32 bytes</text>
+<text x="40" y="388" class="t-label f-green-ink" data-w="197">128 bytes moved, 100% used</text>
+<text x="40" y="448" class="t-head" data-w="289">Bytes moved for the same 32 floats</text>
+<g data-grid="skip">
+<path d="M144,464V544M206,464V544M268,464V544M330,464V544M392,464V544" class="gridline"/>
+<text x="144" y="564" text-anchor="middle" class="t-tick" data-w="8">0</text>
+<text x="206" y="564" text-anchor="middle" class="t-tick" data-w="23">256</text>
+<text x="268" y="564" text-anchor="middle" class="t-tick" data-w="23">512</text>
+<text x="330" y="564" text-anchor="middle" class="t-tick" data-w="23">768</text>
+<text x="392" y="564" text-anchor="middle" class="t-tick" data-w="35">1,024</text>
+<g clip-path="url(#cuda-01-coalesced-vs-strided-clip-1)">
+<rect x="144" y="472" width="31" height="24" class="f-green" data-fit="skip"/>
+<rect x="144" y="512" width="248" height="24" class="f-red" data-fit="skip"/>
+</g>
+<path d="M144,464V544" class="axis"/>
+<text x="40" y="489" class="t-label" data-w="59">row read</text>
+<text x="183" y="489" class="t-value f-green-ink" data-w="26">128</text>
+<text x="40" y="529" class="t-label" data-w="86">column write</text>
+<text x="400" y="529" class="t-value f-red-ink" data-w="38">1,024</text>
+</g>
+<text x="268" y="588" text-anchor="middle" class="t-note" data-w="37">bytes</text>
+<text x="504" y="136" class="t-head" data-w="230">Write a column of B: strided</text>
+<rect x="560" y="168" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="168" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="184" class="t-label" data-w="41">lane 0</text>
+<path d="M588,180 L593,180" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="168" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="168" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="168" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,168V192M616,168V192M624,168V192M632,168V192M640,168V192M648,168V192M656,168V192M664,168V192M672,168V192M680,168V192M688,168V192M696,168V192M704,168V192M712,168V192M720,168V192M728,168V192M736,168V192M744,168V192M752,168V192M760,168V192M768,168V192M776,168V192M784,168V192M792,168V192M800,168V192M808,168V192M816,168V192M824,168V192M832,168V192M840,168V192M848,168V192" class="fine"/>
+</g>
+<rect x="600" y="168" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="184" class="t-label" data-w="36">line 0</text>
+<rect x="560" y="208" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="208" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="224" class="t-label" data-w="41">lane 1</text>
+<path d="M588,220 L593,220" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="208" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="208" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="208" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,208V232M616,208V232M624,208V232M632,208V232M640,208V232M648,208V232M656,208V232M664,208V232M672,208V232M680,208V232M688,208V232M696,208V232M704,208V232M712,208V232M720,208V232M728,208V232M736,208V232M744,208V232M752,208V232M760,208V232M768,208V232M776,208V232M784,208V232M792,208V232M800,208V232M808,208V232M816,208V232M824,208V232M832,208V232M840,208V232M848,208V232" class="fine"/>
+</g>
+<rect x="600" y="208" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="224" class="t-label" data-w="36">line 1</text>
+<rect x="560" y="248" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="248" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="264" class="t-label" data-w="41">lane 2</text>
+<path d="M588,260 L593,260" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="248" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="248" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="248" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,248V272M616,248V272M624,248V272M632,248V272M640,248V272M648,248V272M656,248V272M664,248V272M672,248V272M680,248V272M688,248V272M696,248V272M704,248V272M712,248V272M720,248V272M728,248V272M736,248V272M744,248V272M752,248V272M760,248V272M768,248V272M776,248V272M784,248V272M792,248V272M800,248V272M808,248V272M816,248V272M824,248V272M832,248V272M840,248V272M848,248V272" class="fine"/>
+</g>
+<rect x="600" y="248" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="264" class="t-label" data-w="36">line 2</text>
+<rect x="560" y="288" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="288" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="304" class="t-label" data-w="41">lane 3</text>
+<path d="M588,300 L593,300" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="288" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="288" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="288" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,288V312M616,288V312M624,288V312M632,288V312M640,288V312M648,288V312M656,288V312M664,288V312M672,288V312M680,288V312M688,288V312M696,288V312M704,288V312M712,288V312M720,288V312M728,288V312M736,288V312M744,288V312M752,288V312M760,288V312M768,288V312M776,288V312M784,288V312M792,288V312M800,288V312M808,288V312M816,288V312M824,288V312M832,288V312M840,288V312M848,288V312" class="fine"/>
+</g>
+<rect x="600" y="288" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="304" class="t-label" data-w="36">line 3</text>
+<rect x="560" y="328" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="328" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="344" class="t-label" data-w="41">lane 4</text>
+<path d="M588,340 L593,340" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="328" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="328" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="328" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,328V352M616,328V352M624,328V352M632,328V352M640,328V352M648,328V352M656,328V352M664,328V352M672,328V352M680,328V352M688,328V352M696,328V352M704,328V352M712,328V352M720,328V352M728,328V352M736,328V352M744,328V352M752,328V352M760,328V352M768,328V352M776,328V352M784,328V352M792,328V352M800,328V352M808,328V352M816,328V352M824,328V352M832,328V352M840,328V352M848,328V352" class="fine"/>
+</g>
+<rect x="600" y="328" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="344" class="t-label" data-w="36">line 4</text>
+<rect x="560" y="368" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="368" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="384" class="t-label" data-w="41">lane 5</text>
+<path d="M588,380 L593,380" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="368" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="368" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="368" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,368V392M616,368V392M624,368V392M632,368V392M640,368V392M648,368V392M656,368V392M664,368V392M672,368V392M680,368V392M688,368V392M696,368V392M704,368V392M712,368V392M720,368V392M728,368V392M736,368V392M744,368V392M752,368V392M760,368V392M768,368V392M776,368V392M784,368V392M792,368V392M800,368V392M808,368V392M816,368V392M824,368V392M832,368V392M840,368V392M848,368V392" class="fine"/>
+</g>
+<rect x="600" y="368" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="384" class="t-label" data-w="36">line 5</text>
+<rect x="560" y="408" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="408" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="424" class="t-label" data-w="41">lane 6</text>
+<path d="M588,420 L593,420" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="408" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="408" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="408" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,408V432M616,408V432M624,408V432M632,408V432M640,408V432M648,408V432M656,408V432M664,408V432M672,408V432M680,408V432M688,408V432M696,408V432M704,408V432M712,408V432M720,408V432M728,408V432M736,408V432M744,408V432M752,408V432M760,408V432M768,408V432M776,408V432M784,408V432M792,408V432M800,408V432M808,408V432M816,408V432M824,408V432M832,408V432M840,408V432M848,408V432" class="fine"/>
+</g>
+<rect x="600" y="408" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="424" class="t-label" data-w="36">line 6</text>
+<rect x="560" y="448" width="24" height="24" class="cell f-orange-soft"/>
+<rect x="560" y="448" width="24" height="24" class="frame" data-fit="skip"/>
+<text x="504" y="464" class="t-label" data-w="41">lane 7</text>
+<path d="M588,460 L593,460" class="flow" marker-end="url(#cuda-01-coalesced-vs-strided-arrow)"/>
+<rect x="600" y="448" width="256" height="24" class="f-surface-bg" data-fit="skip"/>
+<g data-grid="skip">
+<rect x="600" y="448" width="8" height="24" class="f-green" data-fit="skip"/>
+<rect x="608" y="448" width="56" height="24" class="f-red-soft" data-fit="skip"/>
+<path d="M608,448V472M616,448V472M624,448V472M632,448V472M640,448V472M648,448V472M656,448V472M664,448V472M672,448V472M680,448V472M688,448V472M696,448V472M704,448V472M712,448V472M720,448V472M728,448V472M736,448V472M744,448V472M752,448V472M760,448V472M768,448V472M776,448V472M784,448V472M792,448V472M800,448V472M808,448V472M816,448V472M824,448V472M832,448V472M840,448V472M848,448V472" class="fine"/>
+</g>
+<rect x="600" y="448" width="256" height="24" class="frame" data-fit="skip"/>
+<text x="868" y="464" class="t-label" data-w="36">line 7</text>
+<text x="504" y="508" class="t-note" data-w="185">lanes 8 to 31: 24 more lines</text>
+<text x="504" y="544" class="t-label" data-w="129">32 lines, 32 sectors</text>
+<text x="504" y="568" class="t-label f-red-ink" data-w="247">1,024 bytes moved, 128 used: 12.5%</text>
+<rect x="40" y="612" width="16" height="16" class="f-orange-soft s-orange w1"/>
+<text x="72" y="624" class="t-label" data-w="29">lane</text>
+<rect x="128" y="612" width="16" height="16" class="f-green s-green w1"/>
+<text x="160" y="624" class="t-label" data-w="113">word a lane uses</text>
+<rect x="304" y="612" width="16" height="16" class="f-red-soft s-red w1"/>
+<text x="336" y="624" class="t-label" data-w="185">moved in its sector, unused</text>
+<rect x="552" y="612" width="16" height="16" class="s-rule w15 nofill"/>
+<text x="584" y="624" class="t-label" data-w="72">not moved</text>
+<text x="40" y="684" class="t-note" data-w="543">The column write moves 8 times the bytes of the row read for the same 32 floats.</text>
 </svg>

@@ -1,8 +1,30 @@
 id: cuda-006
 slug: 06-matrix-transpose
-title: "06 · Matrix transpose — coalescing, shared memory, and bank conflicts"
+title: "06 - Matrix transpose: coalescing, shared memory, and bank conflicts"
+summary: "Why a transpose with no arithmetic runs at 30% of a plain copy's bandwidth on the GTX 1650, and how a shared-memory tile and one column of padding bring it to 89.5%."
 date: 2026-07-08
-tags: [parallel-patterns, cuda, coalescing]
-hero: diagrams/01-coalesced-vs-strided.svg
-reading_time: 15
+updated: 2026-10-18
+status: complete
 part: "Part II - Parallel Patterns"
+level: intermediate
+reading_time: 15
+tags: [cuda, transpose, coalescing, shared-memory, bank-conflicts, parallel-patterns]
+hero: diagrams/01-coalesced-vs-strided.svg
+prerequisites: [cuda-003]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain coalesced against strided access by counting the 128-byte lines and 32-byte sectors one warp's access touches."
+  - id: o2
+    text: "Diagnose why the naive transpose's strided writes waste most of the bytes each sector moves."
+  - id: o3
+    text: "Stage a 32 x 32 tile through shared memory so that both global accesses of a transpose are coalesced, with the block and tile indices swapped."
+  - id: o4
+    text: "Place the barrier between the tile's load and its transposed read, and say what it protects."
+  - id: o5
+    text: "Compute the bank of a shared-memory word, recognize a 32-way bank conflict, and remove it by padding the tile to `[TILE][TILE + 1]`."
+  - id: o6
+    text: "Measure a transpose against a copy kernel and read each fix as a share of the copy's bandwidth."
+recommended: [cuda-005]
+compute: gpu-small
+hardware: gtx-1650

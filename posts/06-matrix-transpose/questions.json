@@ -1,0 +1,764 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-006",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-006-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 2,
+      "tags": [
+        "coalescing",
+        "sectors"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The 32 lanes of a warp read 32 consecutive 4-byte floats that start on a 128-byte boundary. On compute capability 7.5, how many 32-byte sectors does the access cost?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "4 sectors, which together make one 128-byte line",
+          "correct": true,
+          "feedback": "Yes. 32 floats are 128 contiguous bytes, which is four 32-byte sectors, all of them used."
+        },
+        {
+          "key": "b",
+          "text": "1 sector, because a coalesced access is a single transaction",
+          "correct": false,
+          "feedback": "A sector holds 32 bytes, eight floats; 128 bytes need four sectors. One line, not one sector."
+        },
+        {
+          "key": "c",
+          "text": "32 sectors, one for each lane",
+          "correct": false,
+          "feedback": "That is the cost of a strided access, where every lane's float sits in its own sector; here the lanes share sectors."
+        },
+        {
+          "key": "d",
+          "text": "8 sectors, one for every four lanes",
+          "correct": false,
+          "feedback": "Four lanes cover only 16 bytes; a 32-byte sector holds eight floats, so eight lanes share each sector."
+        }
+      ],
+      "explanation": "Section 2: on compute capability 6.0 and later a warp's accesses are served as the 32-byte transactions they need. 32 consecutive floats are 128 bytes, one line of four sectors, which is the model's row: 1 line, 4 sectors, 100% used.",
+      "hints": [
+        "Count the bytes the warp asks for, then divide by the size of one sector."
+      ]
+    },
+    {
+      "id": "cuda-006-q02",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "bank-conflicts",
+        "shared-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Shared memory on compute capability 7.5 has 32 banks, and successive 4-byte words go to successive banks. Give the bank of the word with index `w` as a formula in `w`.",
+      "answer": {
+        "model": "`w % 32`, the remainder of `w` divided by 32.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\bnot\\s+(the\\s+)?(bank\\s+)?`?w\\s*(%|mod))(?![\\s\\S]*\\bw\\s*(%|mod(ulo)?)\\s*(?!32\\b)\\d+)(?![\\s\\S]*\\b32\\s*(%|mod(ulo)?)\\s*`?w\\b)(?![\\s\\S]*\\bw`?\\s*(%|\\bmod\\b|\\bmodulo\\b)\\s*32\\s*\\)?\\s*(%|\\+|-|\\*|/|<<|>>)\\s*\\(?\\s*\\w)[\\s\\S]*(\\bw`?\\s*(%|\\bmod\\b|\\bmodulo\\b)\\s*32\\b|\\bw\\s*&\\s*31\\b|remainder\\s+(of|when)\\s+`?w`?\\s+(is\\s+)?divided\\s+by\\s+32\\b|`?w`?\\s+mod(ulo)?\\s+32\\b)"
+        ]
+      },
+      "explanation": "Section 5: successive 4-byte words go to successive banks and the mapping wraps after 32, so word `w` lives in bank `w % 32`. In `tile[32][32]` element `tile[r][c]` is word `32 * r + c`, in bank `c`.",
+      "hints": [
+        "After bank 31 the next word goes back to bank 0."
+      ]
+    },
+    {
+      "id": "cuda-006-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 4,
+      "tags": [
+        "coalescing",
+        "sectors",
+        "strided-access"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A warp of 32 lanes reads 8-byte `double` values from a row-major `[4096, 4096]` matrix of doubles, first along a row (32 consecutive elements starting on a 128-byte boundary), then down a column. Give (a) the 32-byte sectors the row read touches, (b) the sectors the column read touches, and (c) the percentage of the column read's sector bytes that the lanes use.",
+      "answer": {
+        "parts": [
+          {
+            "label": "sectors, row read",
+            "value": 8,
+            "tolerance": 0,
+            "unit": "sectors"
+          },
+          {
+            "label": "sectors, column read",
+            "value": 32,
+            "tolerance": 0,
+            "unit": "sectors"
+          },
+          {
+            "label": "share of the column's sector bytes used",
+            "value": 25,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "Row: 32 x 8 = 256 contiguous bytes = 8 sectors (2 lines). Column: neighbors are 4096 x 8 bytes apart, so each lane is in its own sector: 32 sectors, 1,024 bytes, of which 256 are used, 25%. snippets/transpose_model.py's global_cost with WORD = 8 gives the same. Assuming 4-byte elements gives 4 sectors and 12.5%, the wrong element size.",
+      "explanation": "Section 2: the cost is the number of distinct 32-byte sectors. A row of 32 doubles is 256 contiguous bytes, eight sectors, all used. A column puts each lane in its own sector, 32 sectors moving 1,024 bytes for 256 used, 25%: wider elements waste less of each sector than floats do.",
+      "hints": [
+        "Count the bytes of the row read first.",
+        "In the column read, each lane uses 8 bytes of its own 32-byte sector."
+      ]
+    },
+    {
+      "id": "cuda-006-q04",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "coalescing",
+        "measurement",
+        "l2-cache"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "If every sector the model counts went to memory, the naive transpose would move 4.5 times the copy kernel's bytes for a load and a store, yet on the GTX 1650 the copy kernel is only 3.4 times faster than the naive transpose. Which explanation does the post offer?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The block's other warps write neighboring rows into the same sectors of `B`, and the L2 cache can merge those partial writes before they reach memory.",
+          "correct": true,
+          "feedback": "Yes. The model counts one warp's store alone; the eight warps of a block write rows `row` to `row + 31`, which fill the same sectors while they can still be merged in the L2 cache."
+        },
+        {
+          "key": "b",
+          "text": "Each thread's four elements are contiguous in `B`, so every thread writes a full 16 bytes.",
+          "correct": false,
+          "feedback": "A thread's four elements are rows `row`, `row + 8`, `row + 16` and `row + 24` of one column of `A`, which land 8 floats apart in a row of `B`, not contiguous."
+        },
+        {
+          "key": "c",
+          "text": "The compiler turns the strided store into row writes, so the naive kernel is partly coalesced.",
+          "correct": false,
+          "feedback": "The compiler does not reorder which thread writes which address; the store stays strided, 32 sectors per warp instruction."
+        },
+        {
+          "key": "d",
+          "text": "On compute capability 7.5 a strided warp costs only 4 sectors, the same as a row.",
+          "correct": false,
+          "feedback": "The Best Practices Guide's rule counts the 32-byte transactions needed; 32 floats a column apart need 32 of them."
+        }
+      ],
+      "explanation": "Section 3: the model counts one warp's store in isolation (8 times the sector bytes of a row; for a load and a store together, 1,152 bytes against the copy's 256, 4.5 times). Other warps of the same block write the adjacent rows of `B`, so the partial sectors fill up, and the 1,024 KB L2 cache can merge them; the post reads what remains as the cost of sending 32 sector writes per store instead of 4, an inference a profiler's sector counts would confirm.",
+      "hints": [
+        "Which other threads write next to lane 0's float in `B`?",
+        "Think about a cache that holds a sector between two partial writes to it."
+      ]
+    },
+    {
+      "id": "cuda-006-q05",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 8,
+      "tags": [
+        "coalescing",
+        "sectors",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Write `warp_cost(addresses)`, which takes the 32 byte addresses one warp accesses and returns `(lines, sectors)`: the number of distinct 128-byte lines and of distinct 32-byte sectors they fall in, as `snippets/transpose_model.py` counts them. Addresses may repeat.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def warp_cost(addresses, line=128, sector=32):\n    \"\"\"Return (lines, sectors): how many distinct 128-byte lines and 32-byte sectors the byte addresses touch.\"\"\"\n    return 0, 0\n",
+      "solution": "def warp_cost(addresses, line=128, sector=32):\n    \"\"\"Return (lines, sectors): how many distinct 128-byte lines and 32-byte sectors the byte addresses touch.\"\"\"\n    lines = {a // line for a in addresses}\n    sectors = {a // sector for a in addresses}\n    return len(lines), len(sectors)\n",
+      "tests": "row = [4 * c for c in range(32)]                       # 32 consecutive floats\nassert warp_cost(row) == (1, 4)\ncol = [4 * 4096 * r for r in range(32)]               # a column of a 4096-wide float matrix\nassert warp_cost(col) == (32, 32)\nassert warp_cost([8 * c for c in range(32)]) == (2, 8)    # 32 consecutive doubles\nassert warp_cost([64 + 4 * c for c in range(32)]) == (2, 4)   # a row that starts mid-line\nassert warp_cost([256] * 32) == (1, 1)                # every lane reads one address\nassert warp_cost([4 * 2 * c for c in range(32)]) == (2, 8)    # stride 2: half of each sector used\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Section 2: an address `a` lies in line `a // 128` and sector `a // 32`; the cost is the number of distinct values of each. A row of 32 floats gives (1, 4), a column (32, 32), and lanes that read one address share it.",
+      "hints": [
+        "Map each address to the index of the line, and of the sector, that holds it.",
+        "Count distinct indices, so that repeated addresses cost nothing extra."
+      ]
+    },
+    {
+      "id": "cuda-006-q06",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 10,
+      "tags": [
+        "tiling",
+        "transpose",
+        "debugging"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`tiled_transpose` models `transposeShared` on the CPU, block by block and thread by thread, with `BLOCK_ROWS` rows of threads each moving `TILE / BLOCK_ROWS` elements. It returns a wrong matrix on every input larger than one element. Fix it so that it returns the transpose of `A` for any `M` and `N`.",
+      "kind": "fix",
+      "language": "python",
+      "starter": "def tiled_transpose(A, M, N, TILE=4, BLOCK_ROWS=2):\n    \"\"\"transposeShared on the CPU: A is a list of M rows of N values; return B, N rows of M values.\"\"\"\n    B = [[None] * M for _ in range(N)]\n    for by in range((M + TILE - 1) // TILE):\n        for bx in range((N + TILE - 1) // TILE):\n            tile = [[None] * TILE for _ in range(TILE)]\n            for ty in range(BLOCK_ROWS):\n                for tx in range(TILE):\n                    col, row = bx * TILE + tx, by * TILE + ty\n                    for j in range(0, TILE, BLOCK_ROWS):\n                        if row + j < M and col < N:\n                            tile[ty + j][tx] = A[row + j][col]\n            # __syncthreads()\n            for ty in range(BLOCK_ROWS):\n                for tx in range(TILE):\n                    col, row = by * TILE + tx, bx * TILE + ty\n                    for j in range(0, TILE, BLOCK_ROWS):\n                        if row + j < N and col < M:\n                            B[row + j][col] = tile[ty + j][tx]\n    return B\n",
+      "solution": "def tiled_transpose(A, M, N, TILE=4, BLOCK_ROWS=2):\n    \"\"\"transposeShared on the CPU: A is a list of M rows of N values; return B, N rows of M values.\"\"\"\n    B = [[None] * M for _ in range(N)]\n    for by in range((M + TILE - 1) // TILE):\n        for bx in range((N + TILE - 1) // TILE):\n            tile = [[None] * TILE for _ in range(TILE)]\n            for ty in range(BLOCK_ROWS):\n                for tx in range(TILE):\n                    col, row = bx * TILE + tx, by * TILE + ty\n                    for j in range(0, TILE, BLOCK_ROWS):\n                        if row + j < M and col < N:\n                            tile[ty + j][tx] = A[row + j][col]\n            # __syncthreads()\n            for ty in range(BLOCK_ROWS):\n                for tx in range(TILE):\n                    col, row = by * TILE + tx, bx * TILE + ty\n                    for j in range(0, TILE, BLOCK_ROWS):\n                        if row + j < N and col < M:\n                            B[row + j][col] = tile[tx][ty + j]\n    return B\n",
+      "tests": "def ref(A, M, N):\n    return [[A[r][c] for r in range(M)] for c in range(N)]\nfor M, N in [(4, 4), (8, 8), (8, 4), (5, 7), (7, 5), (1, 9), (9, 1)]:\n    A = [[r * 100 + c for c in range(N)] for r in range(M)]\n    assert tiled_transpose(A, M, N) == ref(A, M, N), (M, N)\nA = [[r * 10 + c for c in range(6)] for r in range(6)]\nassert tiled_transpose(A, 6, 6, TILE=3, BLOCK_ROWS=3) == ref(A, 6, 6)\nprint(\"all tests passed\")\n",
+      "expected_output": "all tests passed\n",
+      "explanation": "Section 4: two swaps make the kernel a transpose. The starter swaps the block indices for the store but not the tile indices: it reads `tile[ty + j][tx]`, the same slot the thread loaded, so each tile is copied to the mirrored block position without being turned. Reading `tile[tx][ty + j]` makes a warp that stores a row of `B` read a column of the tile.",
+      "hints": [
+        "Compare which tile slot a thread writes in the load with the slot it reads in the store.",
+        "One of the post's two swaps is missing; the block one is there."
+      ]
+    },
+    {
+      "id": "cuda-006-q07",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o3",
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "tiling",
+        "barriers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put these steps of one block of `transposeShared` in the order the kernel performs them.",
+      "items": [
+        {
+          "key": "a",
+          "text": "a warp reads a row of the tile of `A` from global memory"
+        },
+        {
+          "key": "b",
+          "text": "the warp writes those values into a row of `tile`"
+        },
+        {
+          "key": "c",
+          "text": "every thread of the block waits at `__syncthreads()`"
+        },
+        {
+          "key": "d",
+          "text": "a warp reads a column of `tile`"
+        },
+        {
+          "key": "e",
+          "text": "the warp writes those values as a row of the tile of `B` in global memory"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "explanation": "Section 4: load by rows into the tile, wait for every thread at the barrier, then read the tile by columns and store by rows. The barrier sits between the last write of `tile` and the first column read.",
+      "hints": [
+        "The barrier separates the steps that write `tile` from the steps that read it."
+      ]
+    },
+    {
+      "id": "cuda-006-q08",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "barriers",
+        "shared-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "What does the `__syncthreads()` in `transposeShared` guarantee?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Every thread of the block has finished writing its slots of `tile` before any thread reads a column of it.",
+          "correct": true,
+          "feedback": "Yes. A column of `tile` was written by all eight warps of the block; the barrier makes those writes complete and visible before any warp reads it."
+        },
+        {
+          "key": "b",
+          "text": "Every block of the grid has loaded its tile before any block stores to `B`.",
+          "correct": false,
+          "feedback": "`__syncthreads()` holds one block only; blocks never read each other's tiles, so no grid-wide wait is needed."
+        },
+        {
+          "key": "c",
+          "text": "The stores to `B` of the 32 lanes of a warp coalesce into four sectors.",
+          "correct": false,
+          "feedback": "Coalescing comes from the addresses a warp's lanes use, not from a barrier."
+        },
+        {
+          "key": "d",
+          "text": "The reads of `tile` are free of bank conflicts.",
+          "correct": false,
+          "feedback": "Bank conflicts depend on the tile's row length; the padding, not the barrier, removes them."
+        }
+      ],
+      "explanation": "Section 4: a warp that stores a row of `B` reads a column of `tile` whose values were loaded by all eight warps of the block, four rows each. Without the barrier a warp can read a slot whose owner has not yet written it; section 8 reproduced `MISMATCH` in three runs out of three.",
+      "hints": [
+        "Which threads wrote the values that one warp reads in the store?"
+      ]
+    },
+    {
+      "id": "cuda-006-q09",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "barriers",
+        "tiling"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 03's tiled matrix multiply needs two `__syncthreads()` per step of its loop, while `transposeShared` needs one. Why is one enough here?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "The tile is filled once and read once, so no thread overwrites it while another may still be reading it.",
+          "correct": true,
+          "feedback": "Yes. The second barrier of the matrix multiply protects the reads of one step from the next step's writes; a transpose never refills its tile."
+        },
+        {
+          "key": "b",
+          "text": "A transpose has no arithmetic, so its threads cannot race.",
+          "correct": false,
+          "feedback": "Races are about reads and writes of shared data, not arithmetic; without its one barrier the transpose does race."
+        },
+        {
+          "key": "c",
+          "text": "The `32 x 8` block is small enough to run in lockstep.",
+          "correct": false,
+          "feedback": "A block of 256 threads is eight warps that run independently; nothing makes them lockstep."
+        },
+        {
+          "key": "d",
+          "text": "The padding of the tile removes the need for the second barrier.",
+          "correct": false,
+          "feedback": "Padding changes which banks a column hits; it has no effect on when slots are written or read."
+        }
+      ],
+      "explanation": "Section 4: the barrier that remains protects the hand-over from the loads to the column reads. Post 03's second barrier protects a step's reads from the next step's refill of the tiles; the transpose has no next step.",
+      "hints": [
+        "What does post 03's second barrier keep from happening, and does the transpose ever do it?"
+      ]
+    },
+    {
+      "id": "cuda-006-q10",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "bank-conflicts",
+        "padding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Write the declaration size, as `[rows][columns]`, of the padded shared tile that removes the 32-way bank conflict of a `32 x 32` transpose tile.",
+      "answer": {
+        "model": "`[32][33]`, that is `__shared__ float tile[TILE][TILE + 1]` with `TILE` 32.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*(?<!not )(?<!not `)(?<!than )(?<!than `)(?<!of )(?<!of `)\\[\\s*(33|tile\\s*\\+\\s*1)\\s*\\]\\s*\\[\\s*(32|tile)\\s*\\])(?![\\s\\S]*\\b(not|never|instead of|rather than)\\s+`?(\\w+\\s*)?\\[\\s*(32|tile)\\s*\\]\\s*\\[\\s*(33|tile\\s*\\+\\s*1)\\s*\\])[\\s\\S]*(?<!\\])(?<!\\] )\\[\\s*(32|tile)\\s*\\]\\s*\\[\\s*(33|tile\\s*\\+\\s*1)\\s*\\](?!\\s*\\[)"
+        ]
+      },
+      "explanation": "Section 5: `tile[TILE][TILE + 1]` makes each row 33 words long, so `tile[r][c]` is word `33 * r + c`, in bank `(r + c) % 32`, and a column's 32 elements fall in 32 banks. `[33][32]` adds a row instead and keeps the conflict.",
+      "hints": [
+        "The pad lengthens each row by one word."
+      ]
+    },
+    {
+      "id": "cuda-006-q11",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "5",
+      "est_minutes": 5,
+      "tags": [
+        "bank-conflicts",
+        "padding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A warp reads column 0 of a shared tile of floats with 32 rows. How many ways is the bank conflict (the most distinct words in one bank) when each row is (a) 34 words long, and (b) 48 words long?",
+      "answer": {
+        "parts": [
+          {
+            "label": "rows of 34 words",
+            "value": 2,
+            "tolerance": 0,
+            "unit": "way"
+          },
+          {
+            "label": "rows of 48 words",
+            "value": 16,
+            "tolerance": 0,
+            "unit": "way"
+          }
+        ]
+      },
+      "precision_note": "Row r of column 0 is word 34r, bank 34r mod 32 = 2r mod 32: banks 0, 2, ..., 30 each hold 2 of the 32 words, a 2-way conflict. With 48 words, 48r mod 32 = 16r mod 32 is 0 or 16, each holding 16 words, a 16-way conflict. transpose_model.passes([r * width for r in range(32)]) prints 2 and 16. Counting distinct banks (16 and 2) instead of words per bank swaps the answers.",
+      "explanation": "Section 5: the bank of column 0's element in row `r` is `(width * r) % 32`. A row length that is odd, such as 33, gives 32 distinct banks; an even one shares banks, and the conflict is 32 divided by the number of distinct banks.",
+      "hints": [
+        "Write the word index of row r's first element, then reduce it mod 32.",
+        "Count how many of the 32 rows land in each bank that is used."
+      ]
+    },
+    {
+      "id": "cuda-006-q12",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o6"
+      ],
+      "section": "6",
+      "est_minutes": 4,
+      "tags": [
+        "bandwidth",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On another card, `transpose.cu` times the copy kernel at 0.500 ms and the padded transpose at 0.625 ms on its `4096 x 4096` matrix. (a) What GB/s does it print for the padded row? (b) What does it print in the `% of copy` column for that row?",
+      "stimulus": {
+        "kind": "code",
+        "language": "cuda",
+        "content": "const size_t bytes = (size_t)M * N * sizeof(float);    // 64 MiB per matrix\ndouble gbs = 2.0 * bytes / (t * 1e6);              // read plus write\nprintf(\"%-8s %10.3f %7.1f %9.1f%%  %s\\n\", RUNS[r].name, t, gbs, 100.0 * gbs / copyGBs,\n       ok ? \"ok\" : \"MISMATCH\");",
+        "caption": "The lines of snippets/transpose.cu that compute and print a row, with M = N = 4096."
+      },
+      "answer": {
+        "parts": [
+          {
+            "label": "printed bandwidth",
+            "value": 214.7,
+            "tolerance": 0.05,
+            "unit": "GB/s"
+          },
+          {
+            "label": "% of copy",
+            "value": 80.0,
+            "tolerance": 0.05,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "bytes = 4096 x 4096 x 4 = 67,108,864; 2 x 67,108,864 / (0.625 x 1e6) = 214.748, printed 214.7. Copy: 2 x 67,108,864 / 0.5e6 = 268.4 GB/s; 214.748 / 268.435 = 80.0%. Counting only the bytes read gives 107.4 GB/s, half the printed value.",
+      "explanation": "Section 6: bandwidth counts the bytes read plus the bytes written, $2 \\times 4{,}096^2 \\times 4$, over the time in decimal GB/s; `% of copy` divides by the copy kernel's bandwidth, which is the ratio of the two times, $0.500 / 0.625 = 80\\%$.",
+      "hints": [
+        "A transpose reads one matrix and writes another of the same size.",
+        "With equal bytes, the bandwidth ratio is the inverse ratio of the times."
+      ]
+    },
+    {
+      "id": "cuda-006-q13",
+      "type": "match",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o2",
+        "o5"
+      ],
+      "section": "8",
+      "est_minutes": 4,
+      "tags": [
+        "debugging",
+        "symptoms"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each mistake in a transpose harness or kernel to the symptom it produced on the author's GTX 1650.",
+      "left": [
+        {
+          "key": "1",
+          "text": "the store indexes `B` with `* N` instead of `* M`"
+        },
+        {
+          "key": "2",
+          "text": "the tile is declared `[TILE][TILE]`"
+        },
+        {
+          "key": "3",
+          "text": "a kernel written for `32 x 8` blocks is launched with `32 x 32` threads"
+        },
+        {
+          "key": "4",
+          "text": "the host checks each kernel's output between timed rows"
+        }
+      ],
+      "right": [
+        {
+          "key": "a",
+          "text": "correct on the square matrix, `MISMATCH` on the `1000 x 700` one"
+        },
+        {
+          "key": "b",
+          "text": "correct on both matrices, but 56% of the copy's bandwidth"
+        },
+        {
+          "key": "c",
+          "text": "the program stops with an illegal memory access"
+        },
+        {
+          "key": "d",
+          "text": "the copy row times at 54.4 GB/s and the padded transpose at 227.5% of copy"
+        },
+        {
+          "key": "e",
+          "text": "a build error before anything runs"
+        }
+      ],
+      "answer": {
+        "1": "a",
+        "2": "b",
+        "3": "c",
+        "4": "d"
+      },
+      "explanation": "Section 8 and section 6: a swapped `M` and `N` is invisible when they are equal; the unpadded tile is correct but pays a 32-way bank conflict; a `32 x 32` block sends `threadIdx.y + j` up to 55, past the tile and `B`; host work between rows lets the clock fall to 990 MHz, so rows are timed at different clocks. None of the mistakes fails to build.",
+      "hints": [
+        "Which mistake changes speed but not correctness?",
+        "Which one depends on whether `M` equals `N`?"
+      ]
+    },
+    {
+      "id": "cuda-006-q14",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 10,
+      "tags": [
+        "tiling",
+        "shared-memory"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "connects": [
+        "cuda-003",
+        "cuda-007"
+      ],
+      "prompt": "Post 03 and this post both stage tiles of a matrix in shared memory. Compare what the tile buys in each kernel, how many barriers each needs and why, and what post 07's convolution must add to the tile that neither of them needs.",
+      "kind": "compare",
+      "solution": "In post 03's matrix multiply the tile cuts the number of global loads: each value of `A` and `B` loaded into `s_A` and `s_B` is used `TILE` times by the threads of the block, which divides the loads per multiply-add by `TILE`. In the transpose every element is still read once and written once; the tile changes the order of the accesses, so that both the read of `A` and the write of `B` are rows and coalesce, while the column access happens in shared memory.\n\nThe multiply loops over tiles along `K`, refilling `s_A` and `s_B` each step, so it needs two barriers per step: one so that no thread multiplies with a slot before it is written, one so that no thread overwrites a slot for the next step while another still reads it. The transpose fills its tile once and reads it once, so it needs only the first kind: one barrier between the loads and the column reads.\n\nA convolution's output tile depends on input pixels beyond its edges, so post 07's shared tile must also load a halo of neighbors around the block's region (an 18 x 18 tile for a 16 x 16 output with a 3 x 3 filter), loads that cross into the neighboring blocks' regions. Neither the multiply nor the transpose reads outside its own tile.",
+      "rubric": [
+        {
+          "criterion": "States that the multiply's tile reduces global loads by reuse (a factor of TILE) while the transpose's tile only reorders accesses so both sides coalesce",
+          "points": 3
+        },
+        {
+          "criterion": "Explains two barriers in the multiply (write before read, read before refill) against one in the transpose (filled and read once)",
+          "points": 3
+        },
+        {
+          "criterion": "Names the halo as what the convolution's tile adds, with why (outputs depend on neighbors beyond the tile)",
+          "points": 2
+        }
+      ],
+      "answer_length": "three short paragraphs",
+      "explanation": "Section 4 contrasts the transpose's one barrier with post 03's two and calls the transpose's tile post 03's tile used to change the order of accesses rather than their number; post 07 adds the halo.",
+      "hints": [
+        "Ask how many times each element in the tile is used in each kernel.",
+        "Ask whether either kernel ever writes the tile a second time."
+      ]
+    },
+    {
+      "id": "cuda-006-q15",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o2",
+        "o6"
+      ],
+      "section": "6",
+      "est_minutes": 10,
+      "tags": [
+        "bandwidth",
+        "critique"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A reader looks at the measured output and writes: \"The padded transpose reaches 89.5% of the copy, so the remaining 10.5% must be bank conflicts that the pad did not remove, and the naive kernel at 30% shows that strided writes cost exactly the model's factor.\" Critique both halves of the claim using the post's model output and measurements.",
+      "kind": "critique",
+      "solution": "First half: the model shows that the padded tile's column read is 1-way, conflict-free, and the row write to the tile is 1-way too, so no bank conflict remains in the padded kernel. Its global accesses are coalesced like the copy's. The remaining gap most likely comes from work the copy does not do: the round trip through shared memory and the barrier, which holds a block's stores until all its loads have arrived. The bank conflict is what separates the unpadded tile (77.7 GB/s, 56%) from the padded one (124.4 GB/s).\n\nSecond half: the model's factor of 8 is for one warp's store alone (1,024 against 128 sector bytes); for a load and a store together, if every sector went to memory, the naive kernel would move 1,152 bytes to the copy's 256, 4.5 times, which would put it at 22% of the copy. The copy is only 3.4 times faster (0.965 against 3.235 ms), 30%. The model counts one warp's instruction alone; the block's other warps write neighboring rows into the same sectors, which the L2 cache can likely merge. So the measured penalty is smaller than either of the model's factors, and the 12.5% of a sector that one strided store uses is not a prediction of the kernel's share of the copy.\n\nBoth halves misread a measured ratio as a single mechanism; the post's numbers are one card's measurements, and each needs the model's counts and the right denominator to interpret.",
+      "rubric": [
+        {
+          "criterion": "Uses the model's 1-way result to show the padded kernel has no bank conflict left",
+          "points": 2
+        },
+        {
+          "criterion": "Attributes the remaining gap to the shared-memory round trip and the barrier, not to conflicts",
+          "points": 2
+        },
+        {
+          "criterion": "Shows that the naive kernel's measured penalty (3.4 times) is smaller than the model's counts predict (8 times for the store alone, 4.5 times for the kernel's load and store) and gives the likely reason (other warps fill the sectors; L2 merging)",
+          "points": 3
+        },
+        {
+          "criterion": "Notes that the numbers are one card's measurements",
+          "points": 1
+        }
+      ],
+      "answer_length": "two or three paragraphs",
+      "explanation": "Section 6 attributes the padded kernel's remaining gap to the barrier and the shared-memory round trip and puts the whole unpadded-to-padded gap on the conflict; section 3 gives the likely reason the naive penalty is smaller than the model's counts.",
+      "hints": [
+        "What does the model print for the padded tile's column read?",
+        "Compare the copy-to-naive time ratio with the model's sector ratio."
+      ]
+    },
+    {
+      "id": "cuda-006-q16",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o5"
+      ],
+      "section": "pitfalls",
+      "est_minutes": 3,
+      "tags": [
+        "bank-conflicts",
+        "padding"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A programmer pads the transpose tile as `__shared__ float tile[TILE + 1][TILE];` with `TILE` 32. What happens to a warp's column read `tile[threadIdx.x][threadIdx.y + j]`?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It is still a 32-way conflict: the rows are still 32 words long, so a column stays in one bank.",
+          "correct": true,
+          "feedback": "Yes. `tile[r][c]` is word `32 * r + c` whatever the number of rows; an extra row changes nothing about a column's banks."
+        },
+        {
+          "key": "b",
+          "text": "It becomes conflict-free, because the tile now holds 33 x 32 = 1,056 words.",
+          "correct": false,
+          "feedback": "The size of the tile does not matter; the stride between two elements of a column, the row length, does, and it is still 32."
+        },
+        {
+          "key": "c",
+          "text": "It becomes a 2-way conflict, because the extra row splits the column in two banks.",
+          "correct": false,
+          "feedback": "An extra row at the end does not shift any element; every element of a column stays in bank `c`."
+        },
+        {
+          "key": "d",
+          "text": "It reads past the end of the tile.",
+          "correct": false,
+          "feedback": "Indices up to 31 in each dimension stay inside a `[33][32]` array; the problem is speed, not bounds."
+        }
+      ],
+      "explanation": "Common pitfalls, 3: only a longer row, `[TILE][TILE + 1]`, makes the stride between a column's elements 33 words, which puts row `r` in bank `(r + c) % 32`. `[TILE + 1][TILE]` keeps the stride at 32.",
+      "hints": [
+        "Write the word index of `tile[r][c]` for this declaration.",
+        "Which number in the declaration sets the distance between two elements of a column?"
+      ]
+    },
+    {
+      "id": "cuda-006-q17",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o6"
+      ],
+      "section": "6",
+      "est_minutes": 2,
+      "tags": [
+        "bandwidth",
+        "measurement"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Why does the post judge each transpose by its share of a copy kernel's bandwidth on the same card, rather than only by its share of the 160 GB/s theoretical peak?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A copy moves the same bytes with both sides coalesced, so it is the ceiling a kernel that only moves data can actually reach on that card.",
+          "correct": true,
+          "feedback": "Yes. The copy reached 139.1 GB/s, 87% of the theoretical peak; a correct transpose is not expected to beat a copy of the same bytes, so the copy is the realistic target."
+        },
+        {
+          "key": "b",
+          "text": "The theoretical peak is a marketing number that has no relation to the card.",
+          "correct": false,
+          "feedback": "The peak follows from the 128-bit bus and the memory clock; it is real but not reachable in practice by any kernel."
+        },
+        {
+          "key": "c",
+          "text": "A transpose reads twice as many bytes as a copy, so the peak would understate it.",
+          "correct": false,
+          "feedback": "Both read one matrix and write one matrix of the same size; they move the same bytes."
+        },
+        {
+          "key": "d",
+          "text": "The copy kernel shares the same bank conflicts, so it cancels them out of the comparison.",
+          "correct": false,
+          "feedback": "The copy kernel uses no shared memory at all, so it has no bank conflicts."
+        }
+      ],
+      "explanation": "Section 6 and Common pitfalls, 5: the copy kernel on the same card, at 87% of the theoretical peak here, is the practical ceiling for a data-movement kernel, so the padded transpose's 89.5% of copy measures how close the kernel comes to what the card can do.",
+      "hints": [
+        "What is the fastest any kernel that only moves these bytes could run on this card?"
+      ]
+    }
+  ]
+}
