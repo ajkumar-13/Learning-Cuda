@@ -1,8 +1,26 @@
 id: cuda-014
 slug: 14-kernel-fusion
-title: "14 · Kernel fusion — the fastest kernel is the one you don't launch"
+title: "14 - Kernel fusion: the fastest kernel is the one never launched"
+summary: "Why a chain of elementwise kernels moves its intermediates through global memory, how one fused kernel keeps them in registers, what fusion measured on a GTX 1650, and where register pressure stops it."
 date: 2026-07-16
-tags: [systems, cuda, memory-bound]
-hero: diagrams/01-fusion-traffic.svg
-reading_time: 14
+updated: 2026-10-18
+status: complete
 part: "Part IV - Systems & Execution"
+level: intermediate
+reading_time: 18
+tags: [cuda, kernel-fusion, memory-bound, arithmetic-intensity, registers, occupancy]
+hero: diagrams/01-fusion-traffic.svg
+prerequisites: [cuda-010]
+code: included
+outcomes:
+  - id: o1
+    text: "Explain why separate elementwise kernels waste bandwidth on intermediates, and count the traffic that fusing a chain saves."
+  - id: o2
+    text: "Fuse a chain of elementwise operations into one kernel that reads its input once, computes in registers, and writes once."
+  - id: o3
+    text: "Use arithmetic intensity to say when a fused operation is nearly free and when the fused kernel stops being memory bound."
+  - id: o4
+    text: "Compute the occupancy a fused kernel's register count allows on compute capability 7.5, and say when not to fuse."
+recommended: [cuda-003, cuda-007]
+compute: gpu-small
+hardware: gtx-1650

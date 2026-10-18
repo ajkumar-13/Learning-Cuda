@@ -1,0 +1,771 @@
+{
+  "standard": "2.1.0",
+  "post": "cuda-014",
+  "next_ordinal": 18,
+  "questions": [
+    {
+      "id": "cuda-014-q01",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 2,
+      "tags": [
+        "intermediate",
+        "bandwidth"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "`y = relu(x + b)` over a large float array runs as two kernels: an add kernel, then a ReLU kernel. Where does the time the fused version saves come from?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Two launches cost more than one, and the launch is most of the time for a large array.",
+          "correct": false,
+          "feedback": "For 16,777,216 floats each kernel moves tens of megabytes; a launch costs microseconds, so launches are a small share at this size."
+        },
+        {
+          "key": "b",
+          "text": "The add kernel writes the intermediate array to global memory and the ReLU kernel reads it back; fused, it stays in a register.",
+          "correct": true,
+          "feedback": "Right: each separate kernel reads and writes the whole array, so the intermediate's write and read are traffic the fused kernel never makes."
+        },
+        {
+          "key": "c",
+          "text": "The ReLU kernel does more arithmetic than the add, and fusing lets the two share one instruction.",
+          "correct": false,
+          "feedback": "Both operations are one instruction per element; the separate kernels are slow because of their bytes, not their arithmetic."
+        },
+        {
+          "key": "d",
+          "text": "The fused kernel can use shared memory for the intermediate, which separate kernels cannot.",
+          "correct": false,
+          "feedback": "The fused kernel keeps the intermediate in a register, not shared memory; no thread needs another thread's value."
+        }
+      ],
+      "explanation": "Section 1: an elementwise kernel is memory bound, so its time is its bytes; the separate pair writes the intermediate to global memory and reads it back, which the fused kernel replaces with a register.",
+      "hints": [
+        "Count what each kernel reads from and writes to global memory."
+      ]
+    },
+    {
+      "id": "cuda-014-q02",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "1",
+      "est_minutes": 4,
+      "tags": [
+        "traffic",
+        "chain"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A chain of 5 elementwise operations runs over 8,388,608 floats (4 bytes each). Give (a) the megabytes (10^6 bytes) the five separate kernels move to and from global memory, (b) the megabytes one fused kernel moves, and (c) the share of the traffic fusing saves, in percent.",
+      "answer": {
+        "parts": [
+          {
+            "label": "separate",
+            "value": 335.5,
+            "tolerance": 0.1,
+            "unit": "MB"
+          },
+          {
+            "label": "fused",
+            "value": 67.1,
+            "tolerance": 0.1,
+            "unit": "MB"
+          },
+          {
+            "label": "saved",
+            "value": 80,
+            "tolerance": 0.5,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "One array is 8,388,608 x 4 = 33,554,432 bytes = 33.55 MB. Separate: 5 x (read + write) = 10 arrays = 335.5 MB; fused: read x and write z = 67.1 MB; saved (n - 1)/n = 4/5 = 80%. Counting only the separate chain's input and output (67.1 MB) gives no saving.",
+      "explanation": "Section 1: each separate kernel reads and writes the whole array, $8n$ bytes per element for $n$ operations, against 8 bytes for the fused kernel, so fusing saves $(n-1)/n$ of the traffic.",
+      "hints": [
+        "Each separate kernel moves two whole arrays.",
+        "The fused kernel moves two arrays in all; the saving is (separate - fused) / separate."
+      ]
+    },
+    {
+      "id": "cuda-014-q03",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "3",
+      "est_minutes": 5,
+      "tags": [
+        "prediction",
+        "memory-bound"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "On some card a chain of 6 separate elementwise kernels (bias, scale, ReLU, and three more one-instruction operations) over one array takes 5.70 ms, every kernel running at the same bandwidth. Estimate (a) the time of the one fused kernel and (b) its speed-up over the separate chain, assuming the fused kernel stays memory bound at that bandwidth.",
+      "answer": {
+        "parts": [
+          {
+            "label": "fused time",
+            "value": 0.95,
+            "tolerance": 0.02,
+            "unit": "ms"
+          },
+          {
+            "label": "speed-up",
+            "value": 6,
+            "tolerance": 0.1,
+            "unit": "x"
+          }
+        ]
+      },
+      "precision_note": "Memory bound at one bandwidth, time is proportional to bytes: the separate chain moves 12 arrays, the fused kernel 2, so 5.70 x 2 / 12 = 0.95 ms and 6 times. Section 3's measured 2-, 3- and 4-operation chains gave 2.00, 3.00 and 3.95 times. Taking the saving 5/6 as the speed-up gives 0.83, the nearest wrong method.",
+      "explanation": "Section 3: while every kernel is memory bound the time follows the bytes, so the speed-up of fusing an elementwise chain sits near its length, as the GTX 1650's measured chains showed.",
+      "hints": [
+        "How many whole arrays does each version move?",
+        "Time is proportional to bytes at a fixed bandwidth."
+      ]
+    },
+    {
+      "id": "cuda-014-q04",
+      "type": "mcq",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "fused-kernel",
+        "registers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A programmer \"fuses\" a bias-then-ReLU chain into one kernel in which thread `i` writes `t[i] = x[i] + b` to a global scratch array `t` and then computes `z[i] = fmaxf(t[i], 0.0f)`. Which statement about this kernel is right?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "It moves the same bytes as one fused kernel, because the write and read of `t[i]` happen in one launch.",
+          "correct": false,
+          "feedback": "Being in one launch does not remove the traffic: the store to `t` and, unless the compiler removes it, the load go to global memory."
+        },
+        {
+          "key": "b",
+          "text": "It is wrong: thread `i` must call `__syncthreads()` between writing and reading `t[i]`.",
+          "correct": false,
+          "feedback": "Thread `i` reads only the element it wrote itself, so no other thread is involved and no barrier is needed."
+        },
+        {
+          "key": "c",
+          "text": "It is slower than two separate kernels, because one kernel cannot both read and write global memory.",
+          "correct": false,
+          "feedback": "A kernel can read and write global memory freely; the separate chain does exactly that in each kernel."
+        },
+        {
+          "key": "d",
+          "text": "It still writes the intermediate array `t` to global memory; holding `x[i] + b` in a local variable and writing only `z[i]` is the fusion.",
+          "correct": true,
+          "feedback": "Right: the saving comes from never writing the intermediate. A local scalar lives in a register, so only `x` is read and only `z` is written."
+        }
+      ],
+      "explanation": "Section 2: the fused kernel reads `x[i]` into a register, applies every operation to that register, and writes `z[i]` once; an intermediate written to a global array is still a round trip, wherever it sits.",
+      "hints": [
+        "Ask which arrays each thread writes to global memory."
+      ]
+    },
+    {
+      "id": "cuda-014-q05",
+      "type": "code",
+      "track": "run",
+      "difficulty": 3,
+      "outcomes": [
+        "o2",
+        "o1"
+      ],
+      "section": "2",
+      "est_minutes": 15,
+      "tags": [
+        "traffic",
+        "model"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Implement `chain_bytes(kernels, outputs, n)`. Each entry of `kernels` is `(inputs, output)`: an elementwise kernel that reads the arrays named in `inputs` (each read once even if named twice) and writes the array `output`, all arrays of `n` 4-byte floats. Return `(separate, fused)`: the bytes moved to and from global memory when every entry runs as its own kernel, and when one fused kernel reads every array the chain does not itself produce once and writes only the arrays named in `outputs`.",
+      "kind": "implement",
+      "language": "python",
+      "starter": "def chain_bytes(kernels, outputs, n):\n    \"\"\"Bytes moved to and from global memory by a chain of elementwise kernels over arrays of n floats.\n\n    kernels: list of (inputs, output), inputs a tuple of array names, output one array name, in launch order.\n    outputs: the arrays the program needs after the chain.\n    Returns (separate, fused): one kernel per entry against one fused kernel.\n    \"\"\"\n    raise NotImplementedError\n",
+      "solution": "def chain_bytes(kernels, outputs, n):\n    \"\"\"Bytes moved to and from global memory by a chain of elementwise kernels over arrays of n floats.\n\n    kernels: list of (inputs, output), inputs a tuple of array names, output one array name, in launch order.\n    outputs: the arrays the program needs after the chain.\n    Returns (separate, fused): one kernel per entry against one fused kernel.\n    \"\"\"\n    size = 4 * n\n    separate = sum((len(set(ins)) + 1) * size for ins, _ in kernels)\n    produced = {out for _, out in kernels}\n    external = {a for ins, _ in kernels for a in ins if a not in produced}\n    fused = (len(external) + len(set(outputs))) * size\n    return separate, fused\n",
+      "tests": "chain = [((\"x\",), \"t0\"), ((\"t0\",), \"t1\"), ((\"t1\",), \"t2\"), ((\"t2\",), \"z\")]\nassert chain_bytes(chain, [\"z\"], 1000) == (32000, 8000)\nassert chain_bytes(chain[:2], [\"t1\"], 16777216) == (268435456, 134217728)\nresidual = [((\"x\",), \"t0\"), ((\"t0\",), \"t1\"), ((\"t1\", \"x\"), \"z\")]\nassert chain_bytes(residual, [\"z\"], 10) == (280, 80)\nsquare = [((\"x\",), \"t0\"), ((\"t0\", \"t0\"), \"z\")]\nassert chain_bytes(square, [\"z\"], 1) == (16, 8)\ntwo_in = [((\"a\", \"b\"), \"c\"), ((\"c\",), \"d\")]\nassert chain_bytes(two_in, [\"d\"], 5) == (100, 60)\nkeep = [((\"x\",), \"t0\"), ((\"t0\",), \"z\")]\nassert chain_bytes(keep, [\"t0\", \"z\"], 2) == (32, 24)\nprint(\"ok\")\n",
+      "entry": "python solution.py",
+      "expected_output": "ok\n",
+      "explanation": "Section 2: a separate kernel moves every array it reads and the one it writes; the fused kernel moves only what crosses the chain's boundary, the external inputs once and the outputs the program keeps. A residual input used twice is read once, and an intermediate the program keeps is still written.",
+      "hints": [
+        "A separate kernel moves its distinct inputs and its output.",
+        "For the fused kernel, the arrays the chain produces never need reading back.",
+        "Add the arrays the program still needs afterwards, once each."
+      ]
+    },
+    {
+      "id": "cuda-014-q06",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "epilogue",
+        "intensity"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Post 03's tiled matrix multiplication at 1,024 cubed does about 2,048 FLOP for every output element it writes. A ReLU on each output is added either as a separate kernel over `C` or in the kernel's epilogue, before the write of `C`. Which statement is right?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "In the epilogue the ReLU adds one instruction per output and no bytes; as a separate kernel it adds a full read and write of `C`.",
+          "correct": true,
+          "feedback": "Right: the value is in a register when the kernel writes it, so the ReLU costs one instruction against about 2,048 FLOP; separately it is a memory-bound pass over `C`."
+        },
+        {
+          "key": "b",
+          "text": "In the epilogue the ReLU makes the multiplication memory bound, because it is a memory-bound operation.",
+          "correct": false,
+          "feedback": "The ReLU adds no bytes to the multiplication; its intensity as a separate kernel describes that kernel, not the fused one."
+        },
+        {
+          "key": "c",
+          "text": "Either way it costs the same, because the ReLU does the same number of operations.",
+          "correct": false,
+          "feedback": "The operations are the same, but the separate kernel also moves `C` through global memory twice; that traffic is its cost."
+        },
+        {
+          "key": "d",
+          "text": "In the epilogue it costs more, because every thread must wait at a barrier before applying it.",
+          "correct": false,
+          "feedback": "Each thread applies the ReLU to its own `sum`; no barrier is involved beyond the ones the tile loop already has."
+        }
+      ],
+      "explanation": "Section 4: a memory-bound operation fused into a compute-bound producer adds a few instructions and no bytes; run separately it costs a full pass over memory, which the GTX 1650 measured as a separate ReLU kernel over `C`.",
+      "hints": [
+        "Count the bytes each version adds to the multiplication.",
+        "Compare one instruction with about 2,048 FLOP per output."
+      ]
+    },
+    {
+      "id": "cuda-014-q07",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 5,
+      "tags": [
+        "intensity",
+        "roofline"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A fused elementwise kernel reads one float and writes one float per element. Its chain is bias (1 FLOP), scale (1 FLOP), ReLU (counted as 1 FLOP) and an activation counted as 20 FLOP. On the GTX 1650 (ridge point 19.5 FLOP per byte), give (a) the fused kernel's arithmetic intensity in FLOP per byte and (b) the most FLOP per element a chain on these 8 bytes can do before the kernel reaches the ridge.",
+      "answer": {
+        "parts": [
+          {
+            "label": "intensity",
+            "value": 2.875,
+            "tolerance": 0.005,
+            "unit": "FLOP/byte"
+          },
+          {
+            "label": "FLOP per element at the ridge",
+            "value": 156,
+            "tolerance": 0.5,
+            "unit": "FLOP"
+          }
+        ]
+      },
+      "precision_note": "(1 + 1 + 1 + 20) / 8 = 23 / 8 = 2.875 FLOP per byte; ridge 19.5 x 8 bytes = 156 FLOP per element. Dividing by 4 bytes instead of 8 gives 5.75 and 78.",
+      "explanation": "Section 4: the fused kernel's intensity is the FLOP of the whole chain over the 8 bytes it moves per element; it stays memory bound, and its fused operations nearly free, until that reaches the ridge of 19.5.",
+      "hints": [
+        "Add the chain's FLOP and divide by the bytes per element.",
+        "At the ridge, FLOP per element = 19.5 x bytes per element."
+      ]
+    },
+    {
+      "id": "cuda-014-q08",
+      "type": "numeric",
+      "track": "workout",
+      "difficulty": 3,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 5,
+      "tags": [
+        "occupancy",
+        "registers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A fused kernel compiled for `sm_75` uses 88 registers per thread and no shared memory, launched in blocks of 256 threads. With post 10's rule (32 warp slots, at most 16 blocks and 65,536 registers per SM in four quarters of 16,384 that each hold whole warps, registers allocated per warp in units of 256), give (a) the resident blocks per SM and (b) the theoretical occupancy in percent.",
+      "answer": {
+        "parts": [
+          {
+            "label": "blocks per SM",
+            "value": 2,
+            "tolerance": 0,
+            "unit": "blocks"
+          },
+          {
+            "label": "theoretical occupancy",
+            "value": 50,
+            "tolerance": 0,
+            "unit": "%"
+          }
+        ]
+      },
+      "precision_note": "Per warp ceil(88 x 32 / 256) x 256 = 2,816; a quarter holds floor(16,384 / 2,816) = 5 warps, the SM 20, so 2 blocks of 8 warps, 16 of 32 slots, 50%. Dividing the whole file, 65,536 / (88 x 256) = 2.9, also gives 2; forgetting whole blocks gives 20 of 32, 62.5%. fusion_model.py's rule gives the same.",
+      "explanation": "Section 5: past 64 registers per thread a 256-thread block loses warp slots on compute capability 7.5; at 88 registers the quarters hold 20 warps, which make 2 whole blocks, 50%.",
+      "hints": [
+        "Round the registers of one warp up to a multiple of 256.",
+        "Count whole warps per quarter, times 4, then whole blocks of 8 warps."
+      ]
+    },
+    {
+      "id": "cuda-014-q09",
+      "type": "mcq",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 4,
+      "tags": [
+        "register-pressure",
+        "when-not-to-fuse"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Fusing two more operations into a kernel on a GTX 1650 raises its register count from 40 to 70 per thread, with no spills reported, launched in blocks of 256 threads. What should the programmer conclude?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "Nothing changes: occupancy stays 100% while the count is under 128.",
+          "correct": false,
+          "feedback": "On compute capability 7.5 the cliff is at 64 registers, $65{,}536 / 1{,}024$; 128 is the count at which a block of 256 still fits twice."
+        },
+        {
+          "key": "b",
+          "text": "The fused kernel will now spill to local memory, so the fusion must be undone.",
+          "correct": false,
+          "feedback": "`-Xptxas=-v` reported no spills; a spill happens past the hardware limit or a cap, not at 70 registers."
+        },
+        {
+          "key": "c",
+          "text": "Theoretical occupancy falls from 100% to 75%, which may or may not cost time: the fused kernel is measured against the unfused one before it is kept.",
+          "correct": true,
+          "feedback": "Right: at 70 registers a quarter holds 7 warps, so 3 blocks of 8 fit; post 10 showed lower occupancy can still cover the latency, so only a measurement decides."
+        },
+        {
+          "key": "d",
+          "text": "Occupancy is halved, because 70 registers is more than twice 32.",
+          "correct": false,
+          "feedback": "That reasoning uses a 32-register threshold from a card with 2,048 threads per SM; on 7.5 the count is 75%."
+        }
+      ],
+      "explanation": "Section 5: on compute capability 7.5 a 256-thread kernel keeps 100% theoretical occupancy up to 64 registers; at 65 to 80 it holds 3 blocks, 75%. Lower occupancy is a risk to measure, not a verdict.",
+      "hints": [
+        "Apply the quarter rule at 70 registers.",
+        "Does lower theoretical occupancy always mean a slower kernel?"
+      ]
+    },
+    {
+      "id": "cuda-014-q10",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 1,
+      "outcomes": [
+        "o4"
+      ],
+      "section": "5",
+      "est_minutes": 1,
+      "tags": [
+        "nvcc-flags",
+        "registers"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Which `nvcc` option makes the compiler print each kernel's registers per thread and its spill stores and loads?",
+      "answer": {
+        "model": "`-Xptxas=-v` (also written `-Xptxas -v` or `--ptxas-options=-v`); nvcc's `--resource-usage` (`-res-usage`) prints the same lines.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|without|no)\\b\\W*(-{1,2})?(xptxas|ptxas-options|res(ource)?-usage))[\\s\\S]*((?<![\\w-])-{1,2}xptxas\\s*=?\\s*-{1,2}v(erbose)?\\b|--ptxas-options\\s*=?\\s*-{1,2}v(erbose)?\\b|(?<![\\w-])-{1,2}res(ource)?-usage\\b)"
+        ]
+      },
+      "explanation": "Section 5 builds `fusion.cu` with `-Xptxas=-v`, which passes `-v` to `ptxas` and prints lines such as `Used 10 registers, 380 bytes cmem[0]` and `0 bytes spill stores, 0 bytes spill loads`.",
+      "hints": [
+        "The option passes a verbose flag to the assembler, `ptxas`."
+      ]
+    },
+    {
+      "id": "cuda-014-q11",
+      "type": "short",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 2,
+      "tags": [
+        "epilogue"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In a matrix multiplication or convolution kernel, what is the name of the code that runs on each output value after its last multiply-add and before it is written, where libraries fuse a bias or an activation?",
+      "answer": {
+        "model": "The epilogue.",
+        "accept": [
+          "^(?![\\s\\S]*\\b(maybe|perhaps|probably|possibly|i think|i guess|not sure|might be|could be)\\b)(?![\\s\\S]*\\b(not|never|isn't|no)\\b\\W+(the\\s+|an\\s+)?epilogue)(?![\\s\\S]*\\bprologue\\s*(or|and|/)\\s*(the\\s+)?epilogue)(?![\\s\\S]*\\bepilogue\\s*(or|/)\\s*(the\\s+)?prologue)[\\s\\S]*\\bepilogues?\\b"
+        ]
+      },
+      "explanation": "Section 4: the epilogue applies to each output while it is still in a register; a ReLU there added no bytes to post 03's tiled multiplication, and cuDNN's convolution-bias-activation call fuses the same way.",
+      "hints": [
+        "It is the opposite end of the kernel from the prologue that loads the first tiles."
+      ]
+    },
+    {
+      "id": "cuda-014-q12",
+      "type": "order",
+      "track": "workout",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "fused-kernel"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Put the steps of one thread of the fused 4-operation kernel `fusedChain<4>` in the order the thread executes them.",
+      "items": [
+        {
+          "key": "a",
+          "text": "Compute `i = blockIdx.x * blockDim.x + threadIdx.x`."
+        },
+        {
+          "key": "b",
+          "text": "Check `i < n`, so surplus threads do nothing."
+        },
+        {
+          "key": "c",
+          "text": "Read `x[i]` from global memory, add the bias, and keep the result in the register `v`."
+        },
+        {
+          "key": "d",
+          "text": "Multiply `v` by the scale."
+        },
+        {
+          "key": "e",
+          "text": "Apply ReLU to `v`."
+        },
+        {
+          "key": "f",
+          "text": "Apply GELU to `v`."
+        },
+        {
+          "key": "g",
+          "text": "Write `v` to `z[i]`, the kernel's only store."
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "explanation": "Section 2: the thread computes and guards its index, reads its element once, applies bias, scale, ReLU and GELU to one register in the chain's order, and writes once; the order of the operations is the chain's, since they do not commute.",
+      "hints": [
+        "The guard comes before any memory access.",
+        "The chain's order is bias, scale, ReLU, GELU."
+      ]
+    },
+    {
+      "id": "cuda-014-q13",
+      "type": "match",
+      "track": "intuition",
+      "difficulty": 2,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "4",
+      "est_minutes": 3,
+      "tags": [
+        "fusion",
+        "vocabulary"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "Match each situation to what it costs or saves.",
+      "left": [
+        {
+          "key": "a",
+          "text": "A separate bias kernel over a float array"
+        },
+        {
+          "key": "b",
+          "text": "A ReLU applied in a matrix multiplication's epilogue"
+        },
+        {
+          "key": "c",
+          "text": "A fused kernel that spills registers"
+        },
+        {
+          "key": "d",
+          "text": "FlashAttention's fused attention layer"
+        }
+      ],
+      "right": [
+        {
+          "key": "p",
+          "text": "1 FLOP per 8 bytes, priced by its bytes"
+        },
+        {
+          "key": "q",
+          "text": "a few instructions per output and no extra bytes"
+        },
+        {
+          "key": "r",
+          "text": "values stored to and loaded from local memory, which resides in device memory"
+        },
+        {
+          "key": "s",
+          "text": "the score matrix never written to global memory"
+        },
+        {
+          "key": "t",
+          "text": "a grid-wide barrier between its operations"
+        }
+      ],
+      "answer": {
+        "a": "p",
+        "b": "q",
+        "c": "r",
+        "d": "s"
+      },
+      "explanation": "Sections 1, 4, 5 and 6: a separate elementwise kernel has $I = 0.125$; an epilogue operation adds no bytes; spilled registers go to local memory in device memory; FlashAttention keeps the $S \\times S$ scores on chip. No fused kernel here uses a grid-wide barrier.",
+      "hints": [
+        "One item on the right describes none of the four."
+      ]
+    },
+    {
+      "id": "cuda-014-q14",
+      "type": "long",
+      "track": "connect",
+      "difficulty": 4,
+      "outcomes": [
+        "o1",
+        "o3"
+      ],
+      "section": "6",
+      "est_minutes": 15,
+      "tags": [
+        "flashattention",
+        "roofline"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "The FlashAttention paper reports, for GPT-2 medium attention at sequence length 1,024 on an A100, 66.6 billion FLOP, 40.3 GB of memory reads and writes and 41.7 ms for standard attention, against 75.2 billion FLOP, 4.4 GB and 7.3 ms for FlashAttention. Using this post and post 10, explain (1) why standard attention moves so many bytes, (2) why FlashAttention is faster although it does more arithmetic, and (3) what kind of number these are and how they relate to this post's measured chains.",
+      "kind": "connect",
+      "solution": "1. Standard attention runs as several kernels: one computes the $S \\times S$ score matrix $\\mathbf{Q}\\mathbf{K}^\\top$ and writes it to global memory, the next reads it for the softmax and writes the probabilities, the next reads them for the product with $\\mathbf{V}$. Like the separate elementwise chain of this post, each intermediate is written only to be read back, and here the intermediates grow with $S^2$, so they dominate the traffic.\n2. FlashAttention fuses the whole layer: it computes the scores, the softmax and the product block by block in on-chip memory, so the score matrix never reaches global memory; its Theorem 2 counts $\\Theta(S^2 d^2/M)$ accesses against $\\Theta(Sd + S^2)$. The extra FLOP (75.2 against 66.6 billion, from recomputation) are cheap because the layer was limited by memory traffic, not arithmetic: on the roofline, removing bytes raises the intensity and the attainable rate. 40.3 / 4.4 is about 9 times fewer bytes and 41.7 / 7.3 about 5.7 times less time.\n3. They are published figures, from the paper's Figure 2, measured by its authors on an A100, not reproduced in this series. This post's chains are measured on the GTX 1650: there the time followed the bytes almost exactly (2.00, 3.00, 3.95 times for 2, 3, 4 operations); FlashAttention's speed-up is smaller than its byte ratio because the fused layer also does real arithmetic, the regime where fused work stops being free.",
+      "rubric": [
+        {
+          "criterion": "Identifies the written and re-read score and probability matrices as the intermediates that dominate traffic",
+          "points": 3
+        },
+        {
+          "criterion": "Explains that fusing keeps them on chip and that the extra FLOP are cheap because the layer was memory bound",
+          "points": 3
+        },
+        {
+          "criterion": "Computes the byte and time ratios (about 9 and 5.7)",
+          "points": 2
+        },
+        {
+          "criterion": "Labels the numbers as published A100 figures and contrasts them with the measured GTX 1650 chains",
+          "points": 2
+        }
+      ],
+      "answer_length": "half a page",
+      "connects": [
+        "cuda-018",
+        "cuda-010"
+      ],
+      "explanation": "Section 6 quotes the paper's Figure 2 and Theorem 2 as published figures; sections 1 and 3 give the traffic argument and its measurement on the GTX 1650.",
+      "hints": [
+        "Which arrays does standard attention write only to read them back?",
+        "Divide the bytes and the times; why does the time ratio fall short of the byte ratio?"
+      ]
+    },
+    {
+      "id": "cuda-014-q15",
+      "type": "long",
+      "track": "edge",
+      "difficulty": 4,
+      "outcomes": [
+        "o4",
+        "o3"
+      ],
+      "section": "5",
+      "est_minutes": 12,
+      "tags": [
+        "when-not-to-fuse"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A colleague proposes: \"Every chain of kernels should be fused into one, since fusion always removes traffic.\" Critique the claim with this post's evidence, and state when fusing is not the right choice.",
+      "kind": "critique",
+      "solution": "Fusion removes the traffic of intermediates, and for memory-bound elementwise chains the GTX 1650 confirmed it: 2.00, 3.00 and 3.95 times faster for 2, 3 and 4 operations. But the claim fails in four ways.\n\nRegister pressure: a fused kernel holds more live values; on compute capability 7.5 a 256-thread kernel keeps 100% theoretical occupancy only up to 64 registers per thread, and drops to 75%, 50% and 25% above. Lower occupancy is not always slower, so the fused kernel has to be measured against the unfused one.\n\nSpills: past the 255-register limit or a cap from `-maxrregcount` or `__launch_bounds__`, the compiler spills to local memory, which resides in device memory, putting back the traffic fusion removed; `-Xptxas=-v` reports it.\n\nArithmetic: an operation with real arithmetic, like a GELU's tanh, carries its instruction cost into the fused kernel; once the chain's FLOP per byte approaches the ridge (19.5 on the GTX 1650), fusing more adds time.\n\nDependencies: an operation that needs a result over the whole array, such as a mean, cannot share a kernel with the reduction that produces it without a grid-wide barrier, which needs a cooperative launch with every block resident.\n\nSo fuse memory-bound chains freely, check the register report and any spills, and keep separate kernels where a whole-array dependency or a measured slowdown says so.",
+      "rubric": [
+        {
+          "criterion": "Accepts the traffic argument with the measured chain speed-ups",
+          "points": 2
+        },
+        {
+          "criterion": "Explains register pressure with the 64-register threshold on 7.5 and the need to measure",
+          "points": 3
+        },
+        {
+          "criterion": "Explains spills to local memory in device memory",
+          "points": 2
+        },
+        {
+          "criterion": "Names a whole-array dependency or arithmetic-heavy operations as limits",
+          "points": 3
+        }
+      ],
+      "answer_length": "one to two paragraphs",
+      "explanation": "Section 5 gives the register limit and spills; section 4 the arithmetic limit; section 8 the whole-array dependency. Fusion is a measured trade, not a rule.",
+      "hints": [
+        "What does a fused kernel hold that the separate ones did not?",
+        "Which operations need a result from every element?"
+      ]
+    },
+    {
+      "id": "cuda-014-q16",
+      "type": "numeric",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o1"
+      ],
+      "section": "3",
+      "est_minutes": 3,
+      "tags": [
+        "measured",
+        "speed-up"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "In `fusion.cu`'s run on the GTX 1650, the 4-operation chain took 3.811 ms as separate kernels and 0.965 ms fused. Give (a) the measured speed-up and (b) the speed-up the traffic count predicts for a memory-bound chain.",
+      "answer": {
+        "parts": [
+          {
+            "label": "measured",
+            "value": 3.95,
+            "tolerance": 0.02,
+            "unit": "x"
+          },
+          {
+            "label": "predicted",
+            "value": 4,
+            "tolerance": 0,
+            "unit": "x"
+          }
+        ]
+      },
+      "precision_note": "3.811 / 0.965 = 3.95; the traffic ratio separate / fused is 536.9 / 134.2 = 4 (fusion_model.py). The saving 75% is the share of traffic removed, not the speed-up.",
+      "explanation": "Section 3: the separate chain moves 4 times the bytes of the fused kernel, and both run at about the same bandwidth, so the measured speed-up sits just under 4.",
+      "hints": [
+        "Divide the separate time by the fused time.",
+        "The model prints the traffic ratio for 4 operations."
+      ]
+    },
+    {
+      "id": "cuda-014-q17",
+      "type": "mcq",
+      "track": "run",
+      "difficulty": 2,
+      "outcomes": [
+        "o2"
+      ],
+      "section": "2",
+      "est_minutes": 3,
+      "tags": [
+        "rounding",
+        "checks"
+      ],
+      "status": "reviewed",
+      "updated": "2026-10-18",
+      "prompt": "A programmer sets the scale to `s = 1.1`, rewrites the fused chain to compute `v = x[i] * s + b` (scale, then bias) and keeps the separate kernels as scale, then bias. The program's check that the fused output equals the separate output bit for bit now fails on many elements. What is the most likely cause?",
+      "select": "single",
+      "options": [
+        {
+          "key": "a",
+          "text": "A race between threads of the fused kernel, which needs a `__syncthreads()`.",
+          "correct": false,
+          "feedback": "Each thread reads and writes only its own element; there is no shared data to race on."
+        },
+        {
+          "key": "b",
+          "text": "The compiler contracts `x[i] * s + b` into one fused multiply-add with a single rounding, while the separate kernels round after the multiply and again after the add.",
+          "correct": true,
+          "feedback": "Right: the fused multiply-add skips the intermediate rounding, so a few results differ in the last bit; the order bias, then scale has no such contraction."
+        },
+        {
+          "key": "c",
+          "text": "The fused kernel keeps `v` in a register with more precision than a 32-bit float.",
+          "correct": false,
+          "feedback": "A float register holds a 32-bit float; the difference is the number of roundings, not the register's width."
+        },
+        {
+          "key": "d",
+          "text": "The separate kernels read stale values of the intermediate array from the cache.",
+          "correct": false,
+          "feedback": "Kernels in one stream run in order and see each other's writes; the separate result is the correctly rounded two-step one."
+        }
+      ],
+      "explanation": "Section 2 orders the chain bias, then scale so that the fused output equals the separate one bit for bit; section 8 explains the contraction a multiply-then-add order allows.",
+      "hints": [
+        "What does the compiler do with a multiply followed by an add?"
+      ]
+    }
+  ]
+}
